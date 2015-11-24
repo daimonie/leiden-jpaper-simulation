@@ -695,28 +695,26 @@ void estimate_beta_c(char *output)
 	double S1, S2, Cv; 
 	double foo2_n, Q1_n, Q2_n, chi_n;
 	double foo_s, s1, s2, chi_s;
-	int i, j, site, iterator;
+	int i, j, site;
 	
 	
 	ofstream output_file;
 	output_file.open(output); 
-	
-	iterator = 0;
+	 
 	while ( ( (beta >= beta_lower) && (beta <= beta_upper) ))
 		{ 
 
 /** re-initialize quantites for the acception ratio **/
 //Racc = 0; Rrej = 0; xacc = 0; xrej = 0;
 //yacc = 0; yrej = 0; zacc = 0; zrej = 0;
-
-		  iterator++; 
-		  printf ("Current iteration %d.\n",iterator);
+ 
 		/**** re-thermalization and reset all quantities need for one temperature****/
 		  thermalization();
 		  S1 = 0; S2 = 0;
 		  s1 = 0; s2 = 0;
 		  Q1_n = 0; Q2_n = 0;
-		  /**** measure ****/	  
+		  /**** measure ****/	
+		   #pragma omp for  
 		  for (j = 0; j < sample_amount; j++)
 		  { for (i = 0; i < L3*4*tau ; i++)
 			 {

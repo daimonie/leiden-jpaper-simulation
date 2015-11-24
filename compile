@@ -1,6 +1,6 @@
 rm figure.png
 rm D2d_test.dat
-g++  -O2 -fno-strict-aliasing -std=c++11 -Wall -Wextra -msse2 -DHAVE_SEE2=1  -DDSFMT_MEXP=19937 -o D_2d D2d.cpp ~/Documents/dSFMT*/dSFMT.c  -lgsl -lgslcblas -lm
+g++  -O2 -fno-strict-aliasing -std=c++11 -Wall -Wextra -msse2 -DHAVE_SEE2=1  -DDSFMT_MEXP=19937 -o D_2d D2d.cpp ~/Documents/dSFMT*/dSFMT.c  -lgsl -lgslcblas -lm -fopenmp -lpthread
 echo "Easy Test, arbitrary parameters..."
 #/****
 # * argv = filename, C_or_H, 
