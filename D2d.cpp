@@ -17,6 +17,7 @@
 #include <gsl/gsl_cblas.h>
 #include <iomanip> 
 #include "/home/deboer/Documents/dSFMT-src-2.2.3/dSFMT.h"
+#include <ctime>
 
 #ifndef SIZE
 	#define SIZE 4
@@ -70,6 +71,8 @@ int sample_amount;
 
 int main(int argc, char **argv)
 {
+	time_t tstart, tend;
+	tstart = time(0);
 	dsfmt_init_gen_rand(&dsfmt, time(0)); //seed dsfmt
 	
 	build_gauge_bath();
@@ -136,8 +139,12 @@ int main(int argc, char **argv)
 	if(*choice == 'J')
 		measure_effective_J(argv[10]);							
 	
+	tend = time(0);
+	
+	printf("#// Time taken is %2.3f seconds", difftime(tend,tstart));
+
 	return 0;
-	}
+}
 
 
 /**** build gauge bath ****/
@@ -696,90 +703,94 @@ void estimate_beta_c(char *output)
 	double foo2_n, Q1_n, Q2_n, chi_n;
 	double foo_s, s1, s2, chi_s;
 	int i, j, site;
-	
-	
-	ofstream output_file;
-	output_file.open(output); 
-	 
-	while ( ( (beta >= beta_lower) && (beta <= beta_upper) ))
-		{ 
-
-/** re-initialize quantites for the acception ratio **/
-//Racc = 0; Rrej = 0; xacc = 0; xrej = 0;
-//yacc = 0; yrej = 0; zacc = 0; zrej = 0;
  
+	while ( ( (beta >= beta_lower) && (beta <= beta_upper) ))
+	{ 
+
+		/** re-initialize quantites for the acception ratio **/
+		//Racc = 0; Rrej = 0; xacc = 0; xrej = 0;
+		//yacc = 0; yrej = 0; zacc = 0; zrej = 0;
 		/**** re-thermalization and reset all quantities need for one temperature****/
-		  thermalization();
-		  S1 = 0; S2 = 0;
-		  s1 = 0; s2 = 0;
-		  Q1_n = 0; Q2_n = 0;
-		  /**** measure ****/	
-		   #pragma omp for  
-		  for (j = 0; j < sample_amount; j++)
-		  { for (i = 0; i < L3*4*tau ; i++)
-			 {
+		thermalization();
+		S1 = 0; S2 = 0;
+		s1 = 0; s2 = 0;
+		Q1_n = 0; Q2_n = 0;
+		/**** measure ****/	
+		#pragma omp for private(foo_s)
+		for (j = 0; j < sample_amount; j++)
+		{
+			for (i = 0; i < L3*4*tau ; i++)
+			{
 				/**** choose a site ****/
 				site = int(L3*dsfmt_genrand_close_open(&dsfmt));
 
 				/**** randomly flip R, Ux, Uy, Uz ****/
 				switch(int(4 * dsfmt_genrand_close_open(&dsfmt))) 
-					{  
-						case 0 : flip_R(site); 
-									break;
-						case 1 : flip_Ux(site);
-									break;
-						case 2 : flip_Uy(site); 
-									break;
-						case 3 : flip_Uz(site); 
-									break;					 
-							}
-					}
+				{  
+					case 0 : flip_R(site); 
+					break;
+					case 1 : flip_Ux(site);
+					break;
+					case 2 : flip_Uy(site); 
+					break;
+					case 3 : flip_Uz(site); 
+					break;					 
+				}
+			}
 			S1 += E_total;	 
 			S2 += E_total * E_total;	
-			
+
 			foo2_n = orderparameter_n(); //intensive
 			Q2_n += foo2_n;
 			Q1_n += sqrt(foo2_n);					
-			
+
 			foo_s = 0;
 			for(int k = 0; k < L3; k++) 
-				{ foo_s += s[k];} //extensive
+			{
+				foo_s += s[k];
+			} //extensive
 			foo_s /= L3; // intensive
 			s1 += foo_s;
 			s2 += foo_s*foo_s;
-			 }	 
-			
+		}	 
+
 		S1 /= sample_amount;
 		S2 /= sample_amount;
-		
+
 		Cv = (S2 - S1 * S1) * beta * beta / L3;	 
 		S1 /= E_g;	
-		
+
 		Q1_n/=sample_amount;
 		Q2_n /= sample_amount;
 		chi_n = (Q2_n - Q1_n*Q1_n)*beta*L3;									
-		
+
 		s1 /= sample_amount;
 		s2 /= sample_amount;
 		chi_s = (s2 -s1*s1)*beta*L3;
 
-		output_file << 1/beta << '\t'<< S1 << '\t' << Cv << '\t' 
-								<< s1<< '\t' << chi_s << '\t' 
-								<< Q1_n << '\t' << chi_n << endl;
-		
+		printf("%2.3f\t%2.3f\t%2.3f\t%2.3f\t%2.3f\t%2.3f\t%2.3f\t", beta, S1, Cv, s1, chi_s, Q1_n, chi_n);
+
+		//output_file << 1/beta << '\t'<< S1 << '\t' << Cv << '\t' 
+		//						<< s1<< '\t' << chi_s << '\t' 
+		//						<< Q1_n << '\t' << chi_n << endl;
+
 		if ( (beta >= beta_1) && (beta <= beta_2) )
-			{beta += beta_step_small;}
-		else {beta += beta_step_big;}
-		
-/** acception ratio**/		
-//cout << "R, Ux, Uy, Uz" << endl;
-//cout << beta << '\t' << Racc << '\t' << Rrej << '\t' << Racc*1.0/(Racc+Rrej) << endl; 
-//cout << beta << '\t' << xacc << '\t' << xrej << '\t' << xacc*1.0/(xacc+xrej) << endl;
-//cout << beta << '\t' << yacc << '\t' << yrej << '\t' << yacc*1.0/(yacc+yrej) << endl;  
-//cout << beta << '\t' << zacc << '\t' << zrej << '\t' << zacc*1.0/(zacc+zrej) << endl; 		 		
-			}
-	output_file.close();
-	}
+		{
+			beta += beta_step_small;
+		}
+		else
+		{
+			beta += beta_step_big;
+		}
+
+		/** acception ratio**/		
+		//cout << "R, Ux, Uy, Uz" << endl;
+		//cout << beta << '\t' << Racc << '\t' << Rrej << '\t' << Racc*1.0/(Racc+Rrej) << endl; 
+		//cout << beta << '\t' << xacc << '\t' << xrej << '\t' << xacc*1.0/(xacc+xrej) << endl;
+		//cout << beta << '\t' << yacc << '\t' << yrej << '\t' << yacc*1.0/(yacc+yrej) << endl;  
+		//cout << beta << '\t' << zacc << '\t' << zrej << '\t' << zacc*1.0/(zacc+zrej) << endl; 		 		
+	} 
+}
 
 
 void measure_energy(char *output)

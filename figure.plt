@@ -18,8 +18,8 @@ set clip two
 load 'parula.pal'
 
 set key outside right top
-set lmargin 6
-plot "test_output.dat" u 1:2 t 'Energy' w l ls 11, \
-	"test_output.dat" u 1:3 t 'Heat Capacity' w l ls 12, \
-	"test_output.dat" u 1:5 t 'Order Parameter' w l ls 13
+set lmargin 6 
+plot "D2d_test.dat" u 1:2 t 'Energy' w l ls 11, \
+	"D2d_test.dat" u 1:3 t 'Heat Capacity' w l ls 12, \
+	"D2d_test.dat" u 1:5 t 'Order Parameter' w l ls 13
 

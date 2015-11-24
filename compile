@@ -1,5 +1,6 @@
 rm figure.png
 rm D2d_test.dat
+rm D_2d
 g++  -O2 -fno-strict-aliasing -std=c++11 -Wall -Wextra -msse2 -DHAVE_SEE2=1  -DDSFMT_MEXP=19937 -o D_2d D2d.cpp ~/Documents/dSFMT*/dSFMT.c  -lgsl -lgslcblas -lm -fopenmp -lpthread
 echo "Easy Test, arbitrary parameters..."
 #/****
@@ -8,7 +9,8 @@ echo "Easy Test, arbitrary parameters..."
 # * accurate, choice (E or S or Q Or F), output file
 # * J1, J2, J3 ,sample_amount
 # * ****/
-./D_2d C 0.0 10.0 0.1 0.5 1.0 2.0 0.05 E D2d_test.dat 0.1 0.1 1.0 10 
+./D_2d C 0.0 10.0 0.1 0.5 1.0 2.0 0.15 E D2d_test.dat 0.1 0.1 1.0 10 >> D2d_test.dat;
+cat D2d_test.dat
 
 gnuplot figure.plt
 firefox figure.png
