@@ -18,6 +18,7 @@
 #include <iomanip> 
 #include "/home/deboer/Documents/dSFMT-src-2.2.3/dSFMT.h"
 #include <ctime>
+#include "omp.h"
 
 #ifndef SIZE
 	#define SIZE 8
@@ -35,7 +36,7 @@ void flip_Ux(int i);
 void flip_Uy(int i);
 void flip_Uz(int i);
 void thermalization();
-void estimate_beta_c(char *output);
+void estimate_beta_c();
 void measure_energy(char *output);
 double orderparameter_n();
 void measure_J_distribution(char *output);
@@ -129,8 +130,9 @@ int main(int argc, char **argv)
 	char *choice = argv[9];
 
 	printf("#//Calculate from %2.3f to %2.3f, using {%2.3f, %2.3f, %2.3f} and %d samples \n", beta_lower, beta_upper, J1, J2, J3, sample_amount);
+	printf("#//Maximum cores %d \n", omp_get_max_threads());
 	if(*choice == 'E')
-		{ estimate_beta_c(argv[10]);}
+		{ estimate_beta_c();}
 	
 	if(*choice == 'S')
 		{ measure_energy(argv[10]);}
@@ -699,13 +701,13 @@ void thermalization()
 //cout << beta << '\t' << steps << "\t *1000 O(3)_D2" << endl;		
 	}
 	
-void estimate_beta_c(char *output)
+void estimate_beta_c()
 {
 	double S1, S2, Cv; 
 	double foo2_n, Q1_n, Q2_n, chi_n;
 	double foo_s, s1, s2, chi_s;
 	int i, j, site;
- 
+  
 	while ( ( (beta >= beta_lower) && (beta <= beta_upper) ))
 	{ 
 
@@ -718,9 +720,12 @@ void estimate_beta_c(char *output)
 		s1 = 0; s2 = 0;
 		Q1_n = 0; Q2_n = 0;
 		/**** measure ****/	
-		#pragma omp for private(foo_s)
+		//omp_set_num_threads(omp_get_max_threads());
+		omp_set_num_threads(3); //I still want to use my computer :)
+		#pragma omp parallel for private(foo_s)
 		for (j = 0; j < sample_amount; j++)
 		{
+			printf("Num threads %d \n", omp_get_num_threads());
 			for (i = 0; i < L3*4*tau ; i++)
 			{
 				/**** choose a site ****/
