@@ -9,11 +9,12 @@ echo "Easy Test, arbitrary parameters..."
 # * accurate, choice (E or S or Q Or F), output file
 # * J1, J2, J3 ,sample_amount
 # * ****/
-./D_2d C 0.0 10.0 0.1 0.5 1.0 2.0 0.15 E D2d_test.dat 0.1 0.1 1.0 10 >> D2d_test.dat;
-cat D2d_test.dat
 
-gnuplot figure.plt
-firefox figure.png
+./D_2d C 0.0 10.0 0.01 0.1 1.6 2.4 0.1 E D2d_test.dat 0.1 0.1 1.0 100 >> D2d_test.dat;
+cat D2d_test.dat
+gnuplot figure.plt 
+
+
 
 
 #echo "Temperature\tEnergy\tHeatCapacity_V\tmagnetization\tMagneticSusceptibility\tOrderParameterTensor\tSortOfTraceSusceptibilityOfOrderParam" >> D2d_test.dat

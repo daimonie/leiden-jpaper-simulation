@@ -20,7 +20,7 @@
 #include <ctime>
 
 #ifndef SIZE
-	#define SIZE 4
+	#define SIZE 8
 #endif
 
 using namespace std; 
@@ -80,7 +80,8 @@ int main(int argc, char **argv)
 	J1 = -atof(argv[11]);
 	J2 = -atof(argv[12]);
 	J3 = -atof(argv[13]);
-	
+		
+
 	sample_amount = atof(argv[14]);
 
 	char *C_or_H = argv[1];
@@ -127,6 +128,7 @@ int main(int argc, char **argv)
 	
 	char *choice = argv[9];
 
+	printf("#//Calculate from %2.3f to %2.3f, using {%2.3f, %2.3f, %2.3f} and %d samples \n", beta_lower, beta_upper, J1, J2, J3, sample_amount);
 	if(*choice == 'E')
 		{ estimate_beta_c(argv[10]);}
 	
@@ -768,7 +770,7 @@ void estimate_beta_c(char *output)
 		s2 /= sample_amount;
 		chi_s = (s2 -s1*s1)*beta*L3;
 
-		printf("%2.3f\t%2.3f\t%2.3f\t%2.3f\t%2.3f\t%2.3f\t%2.3f\t", beta, S1, Cv, s1, chi_s, Q1_n, chi_n);
+		printf("%2.3f\t%2.3f\t%2.3f\t%2.3f\t%2.3f\t%2.3f\t%2.3f\n", beta, S1, Cv, s1, chi_s, Q1_n, chi_n);
 
 		//output_file << 1/beta << '\t'<< S1 << '\t' << Cv << '\t' 
 		//						<< s1<< '\t' << chi_s << '\t' 

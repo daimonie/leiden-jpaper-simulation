@@ -1,0 +1,11 @@
+#!/bin/bash 
+
+#Three regions of J1/J3 which are interesting
+for i in 0.0 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1.0 1.1 1.2 1.3 1.4 1.5 1.6 1.7 1.8 1.9 2.0 2.1 2.2 2.3 2.4 2.5 2.6 2.7 2.8 2.9 3.0
+do
+	echo "Testing J1=J2=$i, J3=1.0, generating figure. Lattice size 8, beta 0 to 5"
+	./D_2d C 0.0 3.0 0.01 0.05 2.0 4.0 0.05 E D2d_test.dat $i $i 1.0 2000 >> D2d_test.dat; 
+	gnuplot figure.plt 
+	mv figure.png "figure_$i.png"
+	mv D2d_test.dat "data_$i.dat"
+done
