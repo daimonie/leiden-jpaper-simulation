@@ -710,6 +710,7 @@ void estimate_beta_c()
   
 	while ( ( (beta >= beta_lower) && (beta <= beta_upper) ))
 	{ 
+		//printf("#//Calculating for beta=%2.3f < %2.3f \n", beta, beta_upper);
 
 		/** re-initialize quantites for the acception ratio **/
 		//Racc = 0; Rrej = 0; xacc = 0; xrej = 0;
@@ -721,11 +722,12 @@ void estimate_beta_c()
 		Q1_n = 0; Q2_n = 0;
 		/**** measure ****/	
 		//omp_set_num_threads(omp_get_max_threads());
-		omp_set_num_threads(3); //I still want to use my computer :)
+		omp_set_num_threads(omp_get_max_threads); //I still want to use my computer :)
 		#pragma omp parallel for private(foo_s)
 		for (j = 0; j < sample_amount; j++)
 		{
-			printf("Num threads %d \n", omp_get_num_threads());
+			//printf("Num threads %d \n", omp_get_num_threads());
+			//line used to check core number. 
 			for (i = 0; i < L3*4*tau ; i++)
 			{
 				/**** choose a site ****/

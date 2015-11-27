@@ -8,4 +8,4 @@ echo "Easy Test, arbitrary parameters..."
 # * J1, J2, J3 ,sample_amount
 # * ****/
 
-./D_2d C 0.0 10.0 0.01 0.1 1.6 2.4 0.1 E D2d_test.dat 0.1 0.1 1.0 100
+./D_2d C 0.0 10.0 0.01 0.1 1.6 2.4 0.1 E D2d_test.dat 0.1 0.1 1.0 5
