@@ -1,11 +1,7 @@
-g++  -O2 -fno-strict-aliasing -std=c++11 -Wall -Wextra -msse2 -DHAVE_SEE2=1  -DDSFMT_MEXP=19937 -o D_2d D2d.cpp ~/Documents/dSFMT*/dSFMT.c  -lgsl -lgslcblas -lm -fopenmp -lpthread
+g++  -O3 -pg -fno-strict-aliasing -std=c++11 -Wall -Wextra -msse2 -DHAVE_SSE2=1  -DDSFMT_MEXP=19937 -o simulate simulation.cpp ~/Documents/dSFMT*/dSFMT.c  -lgsl -lgslcblas -lm -fopenmp -lpthread
 
 echo "Easy Test, arbitrary parameters..."
-#/****
-# * argv = filename, C_or_H, 
-# * beta_lower, beta_upper, beta_step_small, beta_step_big, beta_1, beta_2,
-# * accurate, choice (E or S or Q Or F), output file
-# * J1, J2, J3 ,sample_amount
-# * ****/
 
-./D_2d C 0.0 10.0 0.01 0.1 1.6 2.4 0.1 E D2d_test.dat 0.1 0.1 1.0 5
+./simulate C 0.0 10.0 2 2 2 4 0.5 E D2d_test.dat 0.1 0.1 1.0 50
+
+gprof simulate gmon.out -Q -p

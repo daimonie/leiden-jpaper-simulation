@@ -465,19 +465,13 @@ void flip_R(int i)
 
 void flip_Ux(int i)
 {
-	/**** find neighbour, only one****/
-	int xp;
-	xp = i % L == 0 ? i - 1 + L : i - 1;
-	
-	/**** bond energy s[xp] s[i] Ux[i] R[i] R^T[xp] ****/
+	int xp = 0; 
 
+	xp = i % L == 0 ? i - 1 + L : i - 1; 
+	
 	double Bond[9] = {0};
 	double foo[9] = {0};
-	
-	/** Bond = s[xp] s[i] Ux[i] R[i] R[xp]^T
-	 * foo = s[xp] s[i] R[i] R[xp]^T
-	 * Bond = Ux[i] foo
-	 * **/ 
+
 	 
 	cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasTrans,
 	3,3,3,s[i]*s[xp],
@@ -521,13 +515,22 @@ void flip_Ux(int i)
 	
 	/**** decide flip and change E_total ****/
 	if (E_change < 0)
-		{E_total += E_change;}
-	 else { if (exp(-beta * E_change) > dsfmt_genrand_close_open(&dsfmt))
-				{E_total += E_change;}
-			 else {copy(U_save,U_save+9,Ux[i]);}	
-			}		
-	
+	{
+		E_total += E_change;
 	}
+	else
+	{
+		if (exp(-beta * E_change) > dsfmt_genrand_close_open(&dsfmt))
+		{
+			E_total += E_change;
+		}
+		else
+		{
+			copy(U_save,U_save+9,Ux[i]);
+		}	
+	}		
+	
+}
 
 void flip_Uy(int i)
 {
@@ -720,10 +723,9 @@ void estimate_beta_c()
 		S1 = 0; S2 = 0;
 		s1 = 0; s2 = 0;
 		Q1_n = 0; Q2_n = 0;
-		/**** measure ****/	
-		//omp_set_num_threads(omp_get_max_threads());
-		omp_set_num_threads(omp_get_max_threads); //I still want to use my computer :)
-		#pragma omp parallel for private(foo_s)
+		/**** measure ****/	 
+		omp_set_num_threads(omp_get_max_threads()); //I still want to use my computer :)
+		#pragma omp parallel for
 		for (j = 0; j < sample_amount; j++)
 		{
 			//printf("Num threads %d \n", omp_get_num_threads());
@@ -777,12 +779,7 @@ void estimate_beta_c()
 		s2 /= sample_amount;
 		chi_s = (s2 -s1*s1)*beta*L3;
 
-		printf("%2.3f\t%2.3f\t%2.3f\t%2.3f\t%2.3f\t%2.3f\t%2.3f\n", beta, S1, Cv, s1, chi_s, Q1_n, chi_n);
-
-		//output_file << 1/beta << '\t'<< S1 << '\t' << Cv << '\t' 
-		//						<< s1<< '\t' << chi_s << '\t' 
-		//						<< Q1_n << '\t' << chi_n << endl;
-
+		printf("%2.3f\t%2.3f\t%2.3f\t%2.3f\t%2.3f\t%2.3f\t%2.3f\n", beta, S1, Cv, s1, chi_s, Q1_n, chi_n); 
 		if ( (beta >= beta_1) && (beta <= beta_2) )
 		{
 			beta += beta_step_small;
@@ -790,14 +787,7 @@ void estimate_beta_c()
 		else
 		{
 			beta += beta_step_big;
-		}
-
-		/** acception ratio**/		
-		//cout << "R, Ux, Uy, Uz" << endl;
-		//cout << beta << '\t' << Racc << '\t' << Rrej << '\t' << Racc*1.0/(Racc+Rrej) << endl; 
-		//cout << beta << '\t' << xacc << '\t' << xrej << '\t' << xacc*1.0/(xacc+xrej) << endl;
-		//cout << beta << '\t' << yacc << '\t' << yrej << '\t' << yacc*1.0/(yacc+yrej) << endl;  
-		//cout << beta << '\t' << zacc << '\t' << zrej << '\t' << zacc*1.0/(zacc+zrej) << endl; 		 		
+		} 		 		
 	} 
 }
 
