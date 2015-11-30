@@ -76,6 +76,10 @@ int main(int argc, char **argv)
 	tstart = time(0);
 	dsfmt_init_gen_rand(&dsfmt, time(0)); //seed dsfmt
 	
+       
+        
+        omp_set_num_threads(4); //I still want to use my computer :)
+        
 	build_gauge_bath();
 	
 	J1 = -atof(argv[11]);
@@ -134,18 +138,25 @@ int main(int argc, char **argv)
 
 	printf("#//Calculate from %2.3f to %2.3f, using {%2.3f, %2.3f, %2.3f} and %d samples \n", beta_lower, beta_upper, J1, J2, J3, sample_amount);
 	printf("#//Maximum cores %d \n", omp_get_max_threads());
-	if(*choice == 'E')
-		{ estimate_beta_c();}
-	
-	if(*choice == 'S')
-		{ measure_energy(argv[10]);}
-		
-	if(*choice == 'D')
-		measure_J_distribution(argv[10]);		
-
-	if(*choice == 'J')
-		measure_effective_J(argv[10]);							
-	
+        if(*choice == 'E')
+        {
+               estimate_beta_c();
+        }
+        else 
+        if(*choice == 'S')
+        {
+                measure_energy(argv[10]);
+                
+        }
+        else if(*choice == 'D')
+        {
+                measure_J_distribution(argv[10]);		
+        }
+        else if(*choice == 'J')
+        {
+                measure_effective_J(argv[10]);							
+        }
+        
 	tend = time(0);
 	
 	printf("#// Time taken is %2.3f seconds", difftime(tend,tstart));
@@ -196,24 +207,15 @@ void build_gauge_bath()
 	/** 7, m x,x,z**/
 	U_bath[7][1] = 1; 
 	U_bath[7][3] = 1; 
-	U_bath[7][8] = 1;	
-
-/**	
-	for (int i = 0; i < U_order; i++)
-		{	cout << "U_bath \t" << i << endl;
-			for(int j = 0; j<9;j++)
-				if ((j+1)%3==0) {cout << U_bath[i][j] << endl;}
-				 else {cout << U_bath[i][j] << '\t';}
-			}
-**/	
+	U_bath[7][8] = 1;	 
 	
-	}
+}
 
 /**** initialize R, sigma, U ****/
 void uniform_initialization()
 {
 	for(int i = 0; i < L3; i++)
-		{
+        {
 		 R[i][0] = 1;
 		 R[i][4] = 1;
 		 R[i][8] = 1;
@@ -231,16 +233,15 @@ void uniform_initialization()
 		 Uz[i][0] = 1;
 		 Uz[i][4] = 1;
 		 Uz[i][8] = 1;		  	 	 
-			}
-	/****** checked ****/	
-	
-	}
+        } 
+
+}
 
 void random_initialization()
 {
 	int i, j;
 	for (i = 0; i < L3; i++)
-		{
+        {
 			build_rotation_matrix(i);
 		
 			/** build Ux **/
@@ -256,9 +257,9 @@ void random_initialization()
 			copy(U_bath[j],U_bath[j]+9,Uz[i]);
 			
 			
-			}
+        }
 		
-	}
+}
 
 	
 double site_energy(int i)
@@ -367,35 +368,36 @@ double site_energy(int i)
 	double Sfoo = 0;
 	
 	for(int j = 0; j < 6; j++)
-		{ Sfoo += J1*Rfoo[j][0] + J2*Rfoo[j][4] + J3*Rfoo[j][8];
-			}				
+        {
+                Sfoo += J1*Rfoo[j][0] + J2*Rfoo[j][4] + J3*Rfoo[j][8];
+        }				
 	return Sfoo;
-	}	
+}	
 
 /**** Change value of R[i] = SO(3) and sigma[i] = 1/-1 ****/
 void build_rotation_matrix(int i) 
 {	
-	
-	/************* Generating u1,u2,u3,u4 belons to [-1,1)
-	 * and u1^2 + u2^2 =< 1, u3^2 + u4^2 <=1 *************/
+	/*
+         * GOING TO REDO THIS WITH NEW FORMULA FROM planning.cs.uiuc.edu/node198.html 
 	
 	double u1, u2, u3, u4;
 	
 	u1 = -1 + 2 * dsfmt_genrand_close_open(&dsfmt);
 	
-	do {
+	do
+        {
 		u2 = -1 + 2 * dsfmt_genrand_close_open(&dsfmt);
-		} while (u1*u1 + u2*u2 >= 1);
+        }
+        while (u1*u1 + u2*u2 >= 1);
 		
 	u3 = -1 + 2* dsfmt_genrand_close_open(&dsfmt);
 		
-	do {
+	do
+        {
 		u4 = -1 + 2 * dsfmt_genrand_close_open(&dsfmt);
-		} while (u3*u3 + u4*u4 >= 1);	 
-	
-	/***** Checking has been done for this part!****/
-	
-	/******** calculate x1,x2,x3,x4 for a unit 4D vector*************/
+	}
+	while (u3*u3 + u4*u4 >= 1);	 
+	 
 	double x1, x2, x3, x4, x_foo;
 	
 	x_foo = sqrt((1 - u1*u1 - u2*u2)/(u3*u3 + u4*u4));
@@ -403,14 +405,20 @@ void build_rotation_matrix(int i)
 	x1 = u1;
 	x2 = u2;
 	x3 = u3*x_foo;
-	x4 = u4*x_foo;
-
-	/********Checking for coordinates and the length has been done!*******/
-	
-	
-	/****** Define the rotational matrix ******/
-	
-	
+	x4 = u4*x_foo; 
+	                   
+        */ 
+        double u1 = dsfmt_genrand_close_open(&dsfmt);
+        double u2 = dsfmt_genrand_close_open(&dsfmt);
+        double u3 = dsfmt_genrand_close_open(&dsfmt);
+        
+        
+        double x1 = sqrt(1-u1) * sin(2 * M_PI * u2);
+        double x2 = sqrt(1-u1) * cos(2 * M_PI * u2);
+        double x3 = sqrt(u1) * sin(2 * M_PI * u3);
+        double x4 = sqrt(u1) * sin(2 * M_PI * u3);
+        
+        
 	double x12, x22, x32, x1x2, x3x4, x1x3, x2x4, x2x3, x1x4;
 	
 	x12 = x1*x1; x22 = x2*x2; x32 = x3*x3;
@@ -422,12 +430,10 @@ void build_rotation_matrix(int i)
 	R[i][0] = 1 - 2*(x22+x32); R[i][1] = 2*(x1x2-x3x4); R[i][2] = 2*(x1x3+x2x4);
 	R[i][3] = 2*(x1x2+x3x4); R[i][4] = 1-2*(x12+x32); R[i][5] = 2*(x2x3-x1x4);
 	R[i][6] = 2*(x1x3-x2x4); R[i][7] = 2*(x2x3+x1x4); R[i][8] = 1-2*(x12+x22);
-				  
-	/**** Othorgonality is verified up to 10^(-16) ********/
-	
-	/**** change value of sigma[i]****/
+		
+        
 	s[i] = dsfmt_genrand_close_open(&dsfmt) > 0.5 ? 1 : -1;	
-	}
+}
 	
 	
 /**** i passed from main so not need to defined int again and again
@@ -455,15 +461,24 @@ void flip_R(int i)
 	
 	/*******decide flip and change E_total********/
 	if (E_change < 0)
-		{E_total += E_change;}
+        {
+                E_total += E_change;
+                
+        }
 	 else
-		{ if (exp(-beta * E_change) > dsfmt_genrand_close_open(&dsfmt))
-			{E_total += E_change;}
-		   else	{copy(R_save, R_save+9, R[i]); 
+        {
+                if (exp(-beta * E_change) > dsfmt_genrand_close_open(&dsfmt))
+                {
+                        E_total += E_change;
+                        
+                }
+                else
+                {
+                        copy(R_save, R_save+9, R[i]); 
 				 s[i] = s_save;
-			     } // change R[i] and s[i] back				
-			}	
-	}
+                } // change R[i] and s[i] back				
+        }	
+}
 
 void flip_Ux(int i)
 {
@@ -592,13 +607,23 @@ void flip_Uy(int i)
 	
 	/**** decide flip and change E_total ****/
 	if (E_change < 0)
-		{E_total += E_change;}
-	 else { if (exp(-beta * E_change) > dsfmt_genrand_close_open(&dsfmt))
-				{E_total += E_change;}
-			 else {copy(U_save,U_save+9,Uy[i]);}	
-			}		
+	{
+                E_total += E_change;
+                
+        }
+        else {
+                if (exp(-beta * E_change) > dsfmt_genrand_close_open(&dsfmt))
+                {
+                        E_total += E_change;
+                        
+                }
+                else {
+                        copy(U_save,U_save+9,Uy[i]);
+                        
+                }	
+        }		
 	
-	}
+}
 
 
 void flip_Uz(int i)
@@ -666,45 +691,53 @@ void flip_Uz(int i)
 			}		
 	}
 
+double thermalization_inner ( int N)
+{
+        double s1 = 1.0 ;
+        int i, j, site;
+        #pragma omp parallel for
+        for (i = 0; i <  N; i++)
+        {
+                s1 += E_total;
+                /**** one sweep ****/
+                for (j = 0; j < L3*4; j++)
+                {
+                /**** choose a site ****/
+                        site = int(L3*dsfmt_genrand_close_open(&dsfmt));
+
+                        /**** randomly flip R, Ux, Uy, Uz ****/
+                        switch(int(4 * dsfmt_genrand_close_open(&dsfmt))) 
+                        {  
+                                case 0 : flip_R(site); 
+                                break;
+                                case 1 : flip_Ux(site);
+                                break;
+                                case 2 : flip_Uy(site); 
+                                break;
+                                case 3 : flip_Uz(site); 
+                                break;                                                                          
+                        }               
+                }                                               
+        }  
+        return s1;
+}
 void thermalization()
 {
-	double afoo = 0, s1 = 1, s2;
-	int i, j, site;
+	double afoo = 0;
 
-//int steps = 0;	
+        double s1 = 0.0;
+        double s2 = thermalization_inner ( 1000);
 	
 	while (afoo < 1-accurate || afoo > 1+accurate)
-		{
-			s2 = s1; // copy old value of s1 to s2.
-			
-			/**** updata configurations and calculate new s1 ****/
-			for (i = 0; i<1000; i++)
-				{ s1 += E_total;
-				/**** one sweep ****/
-				 for (j = 0; j < L3*4; j++)
-					{
-						/**** choose a site ****/
-						site = int(L3*dsfmt_genrand_close_open(&dsfmt));
+        {
+                s2 = s1; // copy old value of s1 to s2.
 
-						/**** randomly flip R, Ux, Uy, Uz ****/
-						switch(int(4 * dsfmt_genrand_close_open(&dsfmt))) 
-							{  
-								case 0 : flip_R(site); 
-											break;
-								case 1 : flip_Ux(site);
-											break;
-								case 2 : flip_Uy(site); 
-											break;
-								case 3 : flip_Uz(site); 
-											break;										
-								}		
-						} 						
-					}		
-			afoo = s1/s2;
-//steps++;		
-			}
-//cout << beta << '\t' << steps << "\t *1000 O(3)_D2" << endl;		
-	}
+                /**** updata configurations and calculate new s1 ****/ 
+                s1 = thermalization_inner( 10 );
+                
+                afoo = s1/s2; 
+        } 	
+}
 	
 void estimate_beta_c()
 {
@@ -726,7 +759,6 @@ void estimate_beta_c()
 		s1 = 0; s2 = 0;
 		Q1_n = 0; Q2_n = 0;
 		/**** measure ****/	 
-		omp_set_num_threads(omp_get_max_threads()); //I still want to use my computer :)
 		#pragma omp parallel for
 		for (j = 0; j < sample_amount; j++)
 		{

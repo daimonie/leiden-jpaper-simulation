@@ -1,4 +1,4 @@
-g++  -O3 -pg -fno-strict-aliasing -std=c++11 -Wall -Wextra -msse2 -DHAVE_SSE2=1  -DDSFMT_MEXP=19937 -o simulate simulation.cpp ~/Documents/dSFMT*/dSFMT.c  -lgsl -lgslcblas -lm -fopenmp -lpthread
+g++  -O3 -pg -fno-strict-aliasing -std=c++11 -Wall -Wextra -msse2 -DHAVE_SSE2=1  -DDSFMT_MEXP=19937 -o simulate D2d.cpp ~/Documents/dSFMT*/dSFMT.c  -lgsl -lgslcblas -lm -fopenmp -lpthread
 
 echo "Easy Test, arbitrary parameters..."
 
