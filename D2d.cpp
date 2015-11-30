@@ -92,33 +92,36 @@ int main(int argc, char **argv)
 	
 	if (*C_or_H == 'C') // if cooling
 		{			
-			beta = beta_lower; // beta from small to big when cooling
-			beta_step_small = atof(argv[4]);
-			beta_step_big = atof(argv[5]);
+		beta = beta_lower; // beta from small to big when cooling
+		beta_step_small = atof(argv[4]);
+		beta_step_big = atof(argv[5]);
 
-			random_initialization();
-			
-			for (int i=0; i < L3; i++)
-			{E_total += site_energy(i);}
-		
-			E_total /= 2;
-			E_g = L3*3*(J1+J2+J3);				
-			}
-	
-	if (*C_or_H == 'H') // if heating
-		{			
-			beta = beta_upper;
-			beta_step_small = -atof(argv[4]); // the step is negative since beta is decreasing
-			beta_step_big = -atof(argv[5]);
-			
-			uniform_initialization();
-			
-			for (int i=0; i < L3; i++)
-			{E_total += site_energy(i);}
-		
-			E_total /= 2;
-			E_g = L3*3*(J1+J2+J3);							
-			}
+		random_initialization();
+
+		for (int i=0; i < L3; i++)
+		{
+			E_total += site_energy(i);
+		}
+
+		E_total /= 2;
+		E_g = L3*3*(J1+J2+J3);				
+	}
+	else if (*C_or_H == 'H') // if heating
+	{			
+		beta = beta_upper;
+		beta_step_small = -atof(argv[4]); // the step is negative since beta is decreasing
+		beta_step_big = -atof(argv[5]);
+
+		uniform_initialization();
+
+		for (int i=0; i < L3; i++)
+		{
+			E_total += site_energy(i);
+		}
+
+		E_total /= 2;
+		E_g = L3*3*(J1+J2+J3);							
+	}
 
 		
 	/**** initialize beta and the determine the fine region****/		
@@ -429,8 +432,7 @@ void build_rotation_matrix(int i)
 	
 /**** i passed from main so not need to defined int again and again
  * s[i] also changed in build rotation
- * ****/
-
+ * ****/ 
 
 void flip_R(int i) 
 {
