@@ -459,19 +459,17 @@ double site_energy(int i)
 void flip_R(int i) 
 {
 	double E_old;
-	E_old = site_energy(i);
-	
-	double s_save;
-	double R_save[9];
-	
+        double s_save;
+        double R_save[9];
+        double E_new;
+        
+	E_old = site_energy(i); 
+        
 	copy(begin(R[i]), end(R[i]),begin(R_save)); //save R[i] to R_save
 	s_save = s[i];
 	
 	build_rotation_matrix(i); //generate new R[i] and s[i]
-	
         
-	double E_new;
-	
 	E_new = site_energy(i);
 	
 	E_change = E_new - E_old;
@@ -557,6 +555,7 @@ void flip_Ux(int i)
 	{
                 double change_chance = exp(-beta * E_new) /  (exp(-beta * E_new) + exp(-beta * E_old) );
                 if (change_chance > dsfmt_genrand_close_open(&dsfmt))
+                {
 			E_total += E_change;
 		}
 		else
@@ -632,6 +631,7 @@ void flip_Uy(int i)
         else {
                 double change_chance = exp(-beta * E_new) /  (exp(-beta * E_new) + exp(-beta * E_old) );
                 if (change_chance > dsfmt_genrand_close_open(&dsfmt))
+                {
                         E_total += E_change;
                         
                 }
@@ -709,6 +709,7 @@ void flip_Uz(int i)
         else {
                 double change_chance = exp(-beta * E_new) /  (exp(-beta * E_new) + exp(-beta * E_old) );
                 if (change_chance > dsfmt_genrand_close_open(&dsfmt))
+                {
                         E_total += E_change;
 
                 }
