@@ -482,9 +482,10 @@ void flip_R(int i)
                 E_total += E_change;
                 
         }
-	 else
+	else
         {
-                if (exp(-beta * E_change) > dsfmt_genrand_close_open(&dsfmt))
+                double change_chance = exp(-beta * E_new) /  (exp(-beta * E_new) + exp(-beta * E_old) );
+                if (change_chance > dsfmt_genrand_close_open(&dsfmt))
                 {
                         E_total += E_change;
                         
@@ -554,8 +555,8 @@ void flip_Ux(int i)
 	}
 	else
 	{
-		if (exp(-beta * E_change) > dsfmt_genrand_close_open(&dsfmt))
-		{
+                double change_chance = exp(-beta * E_new) /  (exp(-beta * E_new) + exp(-beta * E_old) );
+                if (change_chance > dsfmt_genrand_close_open(&dsfmt))
 			E_total += E_change;
 		}
 		else
@@ -629,8 +630,8 @@ void flip_Uy(int i)
                 
         }
         else {
-                if (exp(-beta * E_change) > dsfmt_genrand_close_open(&dsfmt))
-                {
+                double change_chance = exp(-beta * E_new) /  (exp(-beta * E_new) + exp(-beta * E_old) );
+                if (change_chance > dsfmt_genrand_close_open(&dsfmt))
                         E_total += E_change;
                         
                 }
@@ -706,8 +707,8 @@ void flip_Uz(int i)
                 
         }
         else {
-                if (exp(-beta * E_change) > dsfmt_genrand_close_open(&dsfmt))
-                {
+                double change_chance = exp(-beta * E_new) /  (exp(-beta * E_new) + exp(-beta * E_old) );
+                if (change_chance > dsfmt_genrand_close_open(&dsfmt))
                         E_total += E_change;
 
                 }
