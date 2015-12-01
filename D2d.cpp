@@ -41,6 +41,7 @@ void measure_energy(char *output);
 double orderparameter_n();
 void measure_J_distribution(char *output);
 void measure_effective_J (char *output);
+void generate_rotation_matrices();
 
 /*************  Constants     ***************/
 const int L = SIZE;
@@ -69,16 +70,22 @@ double beta, beta_lower, beta_upper, beta_step_small, beta_step_big, beta_1, bet
 double accurate;
 int tau = 100;
 int sample_amount;
+/**** rotation matrices cache ****/
+const int rmc_number = 10; // Note: it generates rmc_number^3 matrices.
+const int rmc_number_total = rmc_number*rmc_number*rmc_number;
+double rmc_matrices[rmc_number_total][9] = {{0}};
+
+/**** time to start the program ****/
 
 int main(int argc, char **argv)
 {
 	time_t tstart, tend;
 	tstart = time(0);
-	dsfmt_init_gen_rand(&dsfmt, time(0)); //seed dsfmt
-	
-       
+	dsfmt_init_gen_rand(&dsfmt, time(0)); //seed dsfmt 
         
         omp_set_num_threads(4); //I still want to use my computer :)
+        generate_rotation_matrices();
+        
         
 	build_gauge_bath();
 	
@@ -164,7 +171,78 @@ int main(int argc, char **argv)
 	return 0;
 }
 
+/**** generates rotation matrices ****/
+void generate_rotation_matrices ()
+{
+        //printf("Generating %d rotation matrices.. \n", rmc_number);
 
+        int ii, jj, kk;
+        
+        int rmc_index = 0;
+        
+        double x12, x22, x32, x1x2, x3x4, x1x3, x2x4, x2x3, x1x4, u1, u2, u3, x1, x2, x3, x4;
+        #pragma omp parallel for
+        for (ii = 0; ii < rmc_number; ii++)
+        {
+                for (jj = 0; jj < rmc_number; jj++)
+                {
+                        for (kk = 0; kk < rmc_number; kk++)
+                        {
+                                // arbitrary quaternions require 4 parameters; but our length is fixed. 
+                                u1 = 1.0 / rmc_number * ii;
+                                u2 = 1.0 / rmc_number * jj;
+                                u3 = 1.0 / rmc_number * kk;
+
+
+                                x1 = sqrt(1-u1) * sin(2 * M_PI * u2);
+                                x2 = sqrt(1-u1) * cos(2 * M_PI * u2);
+                                x3 = sqrt(u1) * sin(2 * M_PI * u3);
+                                x4 = sqrt(u1) * sin(2 * M_PI * u3);
+
+
+                                //This part of the code was taken from Ke; I only changed the quaternion generation
+                                
+
+                                x12 = x1*x1; x22 = x2*x2; x32 = x3*x3;
+                                x1x2 = x1*x2; x3x4 = x3*x4;
+                                x1x3 = x1*x3; x2x4 = x2*x4;
+                                x2x3 = x2*x3; x1x4 = x1*x4;
+
+                                rmc_matrices[rmc_index][0] = 1 - 2*(x22+x32);
+                                rmc_matrices[rmc_index][1] = 2*(x1x2-x3x4);
+                                rmc_matrices[rmc_index][2] = 2*(x1x3+x2x4);
+                                rmc_matrices[rmc_index][3] = 2*(x1x2+x3x4);
+                                rmc_matrices[rmc_index][4] = 1-2*(x12+x32);
+                                rmc_matrices[rmc_index][5] = 2*(x2x3-x1x4);
+                                rmc_matrices[rmc_index][6] = 2*(x1x3-x2x4);
+                                rmc_matrices[rmc_index][7] = 2*(x2x3+x1x4);
+                                rmc_matrices[rmc_index][8] = 1-2*(x12+x22);
+                                
+                               /* printf("%d\t%2.3f\t%2.3f\t%2.3f\t%2.3f\t%2.3f\t%2.3f\t%2.3f\t%2.3f\t%2.3f\n",rmc_index, rmc_matrices[rmc_index][0],
+                                       rmc_matrices[rmc_index][1], rmc_matrices[rmc_index][2], rmc_matrices[rmc_index][3],
+                                       rmc_matrices[rmc_index][4], rmc_matrices[rmc_index][5], rmc_matrices[rmc_index][6],
+                                       rmc_matrices[rmc_index][7], rmc_matrices[rmc_index][8], rmc_matrices[rmc_index][9]); */
+                                rmc_index++;
+                        }
+                }
+        }
+        printf("Generated %d rotation matrices.\n", rmc_index);
+}
+
+/**** Change value of R[i] = SO(3) and sigma[i] = 1/-1 ****/
+void build_rotation_matrix(int i) 
+{         
+        
+        int build_random = (int) (rmc_number_total * dsfmt_genrand_close_open(&dsfmt));
+        
+        for(int ii = 0; ii < 9; ii++)
+        {
+         
+                R[i][ii] = rmc_matrices[build_random][ii]       ;
+        }
+        s[i] = dsfmt_genrand_close_open(&dsfmt) > 0.5 ? 1 : -1; 
+}
+        
 /**** build gauge bath ****/
 void build_gauge_bath()
 {
@@ -373,68 +451,6 @@ double site_energy(int i)
         }				
 	return Sfoo;
 }	
-
-/**** Change value of R[i] = SO(3) and sigma[i] = 1/-1 ****/
-void build_rotation_matrix(int i) 
-{	
-	/*
-         * GOING TO REDO THIS WITH NEW FORMULA FROM planning.cs.uiuc.edu/node198.html 
-	
-	double u1, u2, u3, u4;
-	
-	u1 = -1 + 2 * dsfmt_genrand_close_open(&dsfmt);
-	
-	do
-        {
-		u2 = -1 + 2 * dsfmt_genrand_close_open(&dsfmt);
-        }
-        while (u1*u1 + u2*u2 >= 1);
-		
-	u3 = -1 + 2* dsfmt_genrand_close_open(&dsfmt);
-		
-	do
-        {
-		u4 = -1 + 2 * dsfmt_genrand_close_open(&dsfmt);
-	}
-	while (u3*u3 + u4*u4 >= 1);	 
-	 
-	double x1, x2, x3, x4, x_foo;
-	
-	x_foo = sqrt((1 - u1*u1 - u2*u2)/(u3*u3 + u4*u4));
-	
-	x1 = u1;
-	x2 = u2;
-	x3 = u3*x_foo;
-	x4 = u4*x_foo; 
-	                   
-        */ 
-        double u1 = dsfmt_genrand_close_open(&dsfmt);
-        double u2 = dsfmt_genrand_close_open(&dsfmt);
-        double u3 = dsfmt_genrand_close_open(&dsfmt);
-        
-        
-        double x1 = sqrt(1-u1) * sin(2 * M_PI * u2);
-        double x2 = sqrt(1-u1) * cos(2 * M_PI * u2);
-        double x3 = sqrt(u1) * sin(2 * M_PI * u3);
-        double x4 = sqrt(u1) * sin(2 * M_PI * u3);
-        
-        
-	double x12, x22, x32, x1x2, x3x4, x1x3, x2x4, x2x3, x1x4;
-	
-	x12 = x1*x1; x22 = x2*x2; x32 = x3*x3;
-	x1x2 = x1*x2; x3x4 = x3*x4;
-	x1x3 = x1*x3; x2x4 = x2*x4;
-	x2x3 = x2*x3; x1x4 = x1*x4;
-	
-	
-	R[i][0] = 1 - 2*(x22+x32); R[i][1] = 2*(x1x2-x3x4); R[i][2] = 2*(x1x3+x2x4);
-	R[i][3] = 2*(x1x2+x3x4); R[i][4] = 1-2*(x12+x32); R[i][5] = 2*(x2x3-x1x4);
-	R[i][6] = 2*(x1x3-x2x4); R[i][7] = 2*(x2x3+x1x4); R[i][8] = 1-2*(x12+x22);
-		
-        
-	s[i] = dsfmt_genrand_close_open(&dsfmt) > 0.5 ? 1 : -1;	
-}
-	
 	
 /**** i passed from main so not need to defined int again and again
  * s[i] also changed in build rotation
