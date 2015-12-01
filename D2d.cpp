@@ -143,7 +143,7 @@ int main(int argc, char **argv)
 	
 	char *choice = argv[9];
 
-	printf("#//Calculate from %2.3f to %2.3f, using {%2.3f, %2.3f, %2.3f} and %d samples \n", beta_lower, beta_upper, J1, J2, J3, sample_amount);
+	printf("#//Calculate from %2.3f to %2.3f, using {%2.3f, %2.3f, %2.3f}, accuracy %2.3f and %d samples \n", beta_lower, beta_upper, J1, J2, J3, accurate, sample_amount);
 	printf("#//Maximum cores %d \n", omp_get_max_threads());
         if(*choice == 'E')
         {
@@ -180,8 +180,7 @@ void generate_rotation_matrices ()
         
         int rmc_index = 0;
         
-        double x12, x22, x32, x1x2, x3x4, x1x3, x2x4, x2x3, x1x4, u1, u2, u3, x1, x2, x3, x4;
-        #pragma omp parallel for
+        double x12, x22, x32, x1x2, x3x4, x1x3, x2x4, x2x3, x1x4, u1, u2, u3, x1, x2, x3, x4;  
         for (ii = 0; ii < rmc_number; ii++)
         {
                 for (jj = 0; jj < rmc_number; jj++)
@@ -200,9 +199,12 @@ void generate_rotation_matrices ()
                                 x1 = sqrt(1-u1) * sin(2 * M_PI * u2);
                                 x2 = sqrt(1-u1) * cos(2 * M_PI * u2);
                                 x3 = sqrt(u1) * sin(2 * M_PI * u3);
-                                x4 = sqrt(u1) * sin(2 * M_PI * u3);
+                                x4 = sqrt(u1) * cos(2 * M_PI * u3);
 
 
+                                //check unit length
+                                //double length = x1*x1 + x2*x2 + x3*x3 + x4*x4;
+                                //printf("The %d-th quaternion its length %2.3f constructed from (%2.3f, %2.3f, %2.3f) \n ", rmc_index, length, u1, u2, u3);
                                 //This part of the code was taken from Ke; I only changed the quaternion generation
                                 
 
@@ -225,6 +227,8 @@ void generate_rotation_matrices ()
                                        rmc_matrices[rmc_index][1], rmc_matrices[rmc_index][2], rmc_matrices[rmc_index][3],
                                        rmc_matrices[rmc_index][4], rmc_matrices[rmc_index][5], rmc_matrices[rmc_index][6],
                                        rmc_matrices[rmc_index][7], rmc_matrices[rmc_index][8], rmc_matrices[rmc_index][9]); */ 
+                               
+                                
                         }
                 }
         } 
@@ -233,14 +237,9 @@ void generate_rotation_matrices ()
 /**** Change value of R[i] = SO(3) and sigma[i] = 1/-1 ****/
 void build_rotation_matrix(int i) 
 {         
-        
         int build_random = (int) (rmc_number_total * dsfmt_genrand_close_open(&dsfmt));
         
-        for(int ii = 0; ii < 9; ii++)
-        {
-         
-                R[i][ii] = rmc_matrices[build_random][ii]       ;
-        }
+        copy( begin(rmc_matrices[build_random]), end(rmc_matrices[build_random]), begin(R[i]));
         s[i] = dsfmt_genrand_close_open(&dsfmt) > 0.5 ? 1 : -1; 
 }
         
@@ -325,15 +324,15 @@ void random_initialization()
 		
 			/** build Ux **/
 			j = int(U_order * dsfmt_genrand_close_open(&dsfmt));
-			copy(U_bath[j],U_bath[j]+9,Ux[i]);	
+			copy(begin(U_bath[j]),end(U_bath[j]),begin(Ux[i]));	
 			
 			/** build Uy **/
-			j = int(U_order * dsfmt_genrand_close_open(&dsfmt));
-			copy(U_bath[j],U_bath[j]+9,Uy[i]);	
+			j = int(U_order * dsfmt_genrand_close_open(&dsfmt)); 
+                        copy(begin(U_bath[j]),end(U_bath[j]),begin(Uy[i]));     
 			
 			/** build Uz **/
-			j = int(U_order * dsfmt_genrand_close_open(&dsfmt));
-			copy(U_bath[j],U_bath[j]+9,Uz[i]);
+			j = int(U_order * dsfmt_genrand_close_open(&dsfmt)); 
+                        copy(begin(U_bath[j]),end(U_bath[j]),begin(Uz[i]));     
 			
 			
         }
@@ -465,11 +464,12 @@ void flip_R(int i)
 	double s_save;
 	double R_save[9];
 	
-	copy(R[i], R[i]+9,R_save); //save R[i] to R_save
+	copy(begin(R[i]), end(R[i]),begin(R_save)); //save R[i] to R_save
 	s_save = s[i];
 	
 	build_rotation_matrix(i); //generate new R[i] and s[i]
 	
+        
 	double E_new;
 	
 	E_new = site_energy(i);
@@ -491,8 +491,8 @@ void flip_R(int i)
                 }
                 else
                 {
-                        copy(R_save, R_save+9, R[i]); 
-				 s[i] = s_save;
+                        copy(begin(R_save), end(R_save), begin(R[i])); 
+                        s[i] = s_save;
                 } // change R[i] and s[i] back				
         }	
 }
@@ -523,13 +523,13 @@ void flip_Ux(int i)
 	
 	/**** save Ux[i] to U_save ****/
 	double U_save[9];
-	copy(Ux[i],Ux[i]+9,U_save);
+	copy(begin(Ux[i]),end(Ux[i]),begin(U_save));
 	
 	/**** generate new Ux by choosing from U_bath ****/
 	int j;
 	j = int(U_order * dsfmt_genrand_close_open(&dsfmt));
 	
-	copy(U_bath[j],U_bath[j]+9,Ux[i]);
+	copy(begin(U_bath[j]),end(U_bath[j]),begin(Ux[i]));
 	
 	/**** compute the bond enery s[xp] s[i] Ux[i] R[i] R^T[xp] again****/
 	cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasTrans,
@@ -560,7 +560,7 @@ void flip_Ux(int i)
 		}
 		else
 		{
-			copy(U_save,U_save+9,Ux[i]);
+			copy(begin(U_save),end(U_save),begin(Ux[i]));
 		}	
 	}		
 	
@@ -598,13 +598,13 @@ void flip_Uy(int i)
 	
 	/**** save Uy[i] to U_save ****/
 	double U_save[9];
-	copy(Uy[i],Uy[i]+9,U_save);
+	copy(begin(Uy[i]),end(Uy[i]),begin(U_save));
 	
 	/**** generate choosing new Uy from U_bath****/
 	int j;
 	j = int(U_order * dsfmt_genrand_close_open(&dsfmt));
 	
-	copy(U_bath[j],U_bath[j]+9,Uy[i]);
+	copy(begin(U_bath[j]),end(U_bath[j]),begin(Uy[i]));
 	
 	/**** compute the bond enery s[yp] s[i] Uy[i] R[i] R^T[yp] again****/
 	cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasTrans,
@@ -635,7 +635,7 @@ void flip_Uy(int i)
                         
                 }
                 else {
-                        copy(U_save,U_save+9,Uy[i]);
+                        copy(begin(U_save),end(U_save),begin(Uy[i]));
                         
                 }	
         }		
@@ -675,13 +675,13 @@ void flip_Uz(int i)
 	
 	/**** save Uz[i] to U_save ****/
 	double U_save[9];
-	copy(Uz[i],Uz[i]+9,U_save);
+	copy(begin(Uz[i]),end(Uz[i]),begin(U_save));
 	
 	/**** generate new Uz by choosing new U from U_bath****/
 	int j;
 	j = int(U_order * dsfmt_genrand_close_open(&dsfmt));
 	
-	copy(U_bath[j],U_bath[j]+9,Uz[i]);
+	copy(begin(U_bath[j]),end(U_bath[j]),begin(Uz[i]));
 	
 	/**** compute the bond enery s[zp] s[i] Uz[i] R[i] R^T[zp] again****/
 	cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasTrans,
@@ -700,18 +700,28 @@ void flip_Uz(int i)
 	E_change = E_new - E_old;
 	
 	/**** decide flip and change E_total ****/
-	if (E_change < 0)
-		{E_total += E_change;}
-	 else { if (exp(-beta * E_change) > dsfmt_genrand_close_open(&dsfmt))
-				{E_total += E_change;}
-			 else {copy(U_save,U_save+9,Uz[i]);}	
-			}		
-	}
+        if (E_change < 0)
+        {
+                E_total += E_change;
+                
+        }
+        else {
+                if (exp(-beta * E_change) > dsfmt_genrand_close_open(&dsfmt))
+                {
+                        E_total += E_change;
+
+                }
+                else {
+                        copy(begin(U_save),end(U_save),begin(Uz[i]));
+
+                }	
+        }		
+}
 
 double thermalization_inner ( int N)
 {
         double s1 = 1.0 ;
-        int i, j, site;
+        int i, j, site; 
         #pragma omp parallel for
         for (i = 0; i <  N; i++)
         {
@@ -775,12 +785,13 @@ void estimate_beta_c()
 		S1 = 0; S2 = 0;
 		s1 = 0; s2 = 0;
 		Q1_n = 0; Q2_n = 0;
-		/**** measure ****/	 
-		#pragma omp parallel for
+		/**** measure ****/ 	
+                 
 		for (j = 0; j < sample_amount; j++)
 		{
 			//printf("Num threads %d \n", omp_get_num_threads());
 			//line used to check core number. 
+                         
 			for (i = 0; i < L3*4*tau ; i++)
 			{
 				/**** choose a site ****/
