@@ -188,6 +188,9 @@ void generate_rotation_matrices ()
                 {
                         for (kk = 0; kk < rmc_number; kk++)
                         {
+                                //what number am I
+                                rmc_index = rmc_number*rmc_number * ii + rmc_number * jj + kk;
+                                
                                 // arbitrary quaternions require 4 parameters; but our length is fixed. 
                                 u1 = 1.0 / rmc_number * ii;
                                 u2 = 1.0 / rmc_number * jj;
@@ -221,12 +224,10 @@ void generate_rotation_matrices ()
                                /* printf("%d\t%2.3f\t%2.3f\t%2.3f\t%2.3f\t%2.3f\t%2.3f\t%2.3f\t%2.3f\t%2.3f\n",rmc_index, rmc_matrices[rmc_index][0],
                                        rmc_matrices[rmc_index][1], rmc_matrices[rmc_index][2], rmc_matrices[rmc_index][3],
                                        rmc_matrices[rmc_index][4], rmc_matrices[rmc_index][5], rmc_matrices[rmc_index][6],
-                                       rmc_matrices[rmc_index][7], rmc_matrices[rmc_index][8], rmc_matrices[rmc_index][9]); */
-                                rmc_index++;
+                                       rmc_matrices[rmc_index][7], rmc_matrices[rmc_index][8], rmc_matrices[rmc_index][9]); */ 
                         }
                 }
-        }
-        printf("Generated %d rotation matrices.\n", rmc_index);
+        } 
 }
 
 /**** Change value of R[i] = SO(3) and sigma[i] = 1/-1 ****/
