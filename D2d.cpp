@@ -16,9 +16,10 @@
 #include <gsl/gsl_matrix.h>
 #include <gsl/gsl_cblas.h>
 #include <iomanip> 
-#include "/home/deboer/Documents/dSFMT-src-2.2.3/dSFMT.h"
+#include "dSFMT-src-2.2.3/dSFMT.h"
 #include <ctime>
 #include "omp.h"
+#include <random>
 
 #ifndef SIZE
 	#define SIZE 8
@@ -41,6 +42,9 @@ void measure_energy(char *output);
 double orderparameter_n();
 void measure_J_distribution(char *output);
 void measure_effective_J (char *output);
+void generate_rotation_matrices();
+
+void josko_diagnostics ();
 
 /*************  Constants     ***************/
 const int L = SIZE;
@@ -69,16 +73,21 @@ double beta, beta_lower, beta_upper, beta_step_small, beta_step_big, beta_1, bet
 double accurate;
 int tau = 100;
 int sample_amount;
+/**** rotation matrices cache ****/
+const int rmc_number = 10; // Note: it generates rmc_number^3 matrices.
+const int rmc_number_total = rmc_number*rmc_number*rmc_number;
+double rmc_matrices[rmc_number_total][9] = {{0}};
+
+/**** time to start the program ****/
 
 int main(int argc, char **argv)
 {
 	time_t tstart, tend;
 	tstart = time(0);
-	dsfmt_init_gen_rand(&dsfmt, time(0)); //seed dsfmt
-	
-       
+	dsfmt_init_gen_rand(&dsfmt, time(0)); //seed dsfmt 
         
         omp_set_num_threads(4); //I still want to use my computer :)
+        generate_rotation_matrices(); 
         
 	build_gauge_bath();
 	
@@ -136,14 +145,14 @@ int main(int argc, char **argv)
 	
 	char *choice = argv[9];
 
-	printf("#//Calculate from %2.3f to %2.3f, using {%2.3f, %2.3f, %2.3f} and %d samples \n", beta_lower, beta_upper, J1, J2, J3, sample_amount);
+        josko_diagnostics ();
+	printf("#//Calculate from %2.3f to %2.3f, using {%2.3f, %2.3f, %2.3f}, accuracy %2.3f and %d samples \n", beta_lower, beta_upper, J1, J2, J3, accurate, sample_amount);
 	printf("#//Maximum cores %d \n", omp_get_max_threads());
         if(*choice == 'E')
         {
                estimate_beta_c();
         }
-        else 
-        if(*choice == 'S')
+        else if(*choice == 'S')
         {
                 measure_energy(argv[10]);
                 
@@ -163,8 +172,106 @@ int main(int argc, char **argv)
 
 	return 0;
 }
+/**** Josko's Diagnostics ****/
+void josko_diagnostics()
+{
+        int ii, jj, kk;
+        int rmc_samples = rmc_number*rmc_number*rmc_number*10000;
+        int build_random = 0;
+        double rmc_matrix_average[9] = {0}; 
+        for(ii = 0; ii < rmc_samples; ii++)
+        {
+                build_random = (int) (rmc_number_total * dsfmt_genrand_close_open(&dsfmt));
+                
+                for(jj = 0; jj < 9; jj++)
+                {      
+                        rmc_matrix_average[jj] += rmc_matrices[build_random][jj]/rmc_samples;
+                }
+                
+        } 
+        
+        printf("Average of sampled matrices{ %2.3f, %2.3f, %2.3f, %2.3f, %2.3f, %2.3f, %2.3f, %2.3f, %2.3f) \n",  rmc_matrix_average[0], rmc_matrix_average[1], rmc_matrix_average[2],
+                rmc_matrix_average[3], rmc_matrix_average[4], rmc_matrix_average[5],
+                rmc_matrix_average[6], rmc_matrix_average[7], rmc_matrix_average[8]); 
+        int rnd_samples = 100000;
+        double rnd_average = 0.0;
+        double rnd_correlation = 0.0;
+        double rnd_list[rnd_samples]; 
+        for(ii = 0; ii < rnd_samples; ii++)
+        {
+                rnd_list[ii] = dsfmt_genrand_close_open(&dsfmt);
+                rnd_average += rnd_list[ii] / rnd_samples;
+        } 
+        for(jj =0; jj < rnd_samples; jj++)
+        {
+                for(kk = 0; kk < rnd_samples; kk++)
+                {   
+                        rnd_correlation += rnd_list[jj] * rnd_list[ (jj+kk)%rnd_samples ] / rnd_samples;
+                }
+                rnd_correlation -= rnd_average;
+        }
+        rnd_correlation /= rnd_samples;
+        printf("Test 4.1, average [%2.3f], found [%.3f]. \n",rnd_average, rnd_correlation);
+        
+}
+/**** generates rotation matrices ****/
+void generate_rotation_matrices ()
+{
+        //printf("Generating %d rotation matrices.. \n", rmc_number);
+
+        int ii, jj, kk;
+        
+        int rmc_index = 0;
+        
+        double w,x,y,z, u1, u2, u3;  
+        
+        for (ii = 0; ii < rmc_number; ii++)
+        {
+                for (jj = 0; jj < rmc_number; jj++)
+                {
+                        for (kk = 0; kk < rmc_number; kk++)
+                        {
+                                //what number am I
+                                rmc_index = rmc_number*rmc_number * ii + rmc_number * jj + kk;
+                                
+                                // arbitrary quaternions require 4 parameters; but our length is fixed. 
+                                u1 = 1.0 / rmc_number * ii;
+                                u2 = 1.0 / rmc_number * jj;
+                                u3 = 1.0 / rmc_number * kk;
+
+                                // http://planning.cs.uiuc.edu/node198.html 
+                                w = sqrt(1-u1) * sin(2 * M_PI * u2);
+                                x = sqrt(1-u1) * cos(2 * M_PI * u2);
+                                y = sqrt(u1) * sin(2 * M_PI * u3);
+                                z = sqrt(u1) * cos(2 * M_PI * u3);
 
 
+                                //https://en.wikipedia.org/wiki/Rotation_group_SO%283%29#Quaternions_of_unit_norm
+
+                                rmc_matrices[rmc_index][0] = 1 - 2 * (y*y+z*z);
+                                rmc_matrices[rmc_index][1] = 2 * (x*y-z*w);
+                                rmc_matrices[rmc_index][2] = 2 * (x*z+y*w);
+                                rmc_matrices[rmc_index][3] = 2 * (x*y+z*w);
+                                rmc_matrices[rmc_index][4] = 1 - 2 * (x*x+z*z);
+                                rmc_matrices[rmc_index][5] = 2 * (y*z-x*w);
+                                rmc_matrices[rmc_index][6] = 2 * (x*z-y*w);
+                                rmc_matrices[rmc_index][7] = 2 * (y*z+x*w);
+                                rmc_matrices[rmc_index][8] = 1 - 2 * (x*x+y*y); 
+                                 
+                        }
+                }
+        }   
+}
+
+/**** Change value of R[i] = SO(3) and sigma[i] = 1/-1 ****/
+void build_rotation_matrix(int i) 
+{         
+        int build_random = (int) (rmc_number_total * dsfmt_genrand_close_open(&dsfmt));
+        
+        copy( begin(rmc_matrices[build_random]), end(rmc_matrices[build_random]), begin(R[i]));
+        s[i] = dsfmt_genrand_close_open(&dsfmt) > 0.5 ? 1 : -1; 
+}
+        
 /**** build gauge bath ****/
 void build_gauge_bath()
 {
@@ -246,15 +353,15 @@ void random_initialization()
 		
 			/** build Ux **/
 			j = int(U_order * dsfmt_genrand_close_open(&dsfmt));
-			copy(U_bath[j],U_bath[j]+9,Ux[i]);	
+			copy(begin(U_bath[j]),end(U_bath[j]),begin(Ux[i]));	
 			
 			/** build Uy **/
-			j = int(U_order * dsfmt_genrand_close_open(&dsfmt));
-			copy(U_bath[j],U_bath[j]+9,Uy[i]);	
+			j = int(U_order * dsfmt_genrand_close_open(&dsfmt)); 
+                        copy(begin(U_bath[j]),end(U_bath[j]),begin(Uy[i]));     
 			
 			/** build Uz **/
-			j = int(U_order * dsfmt_genrand_close_open(&dsfmt));
-			copy(U_bath[j],U_bath[j]+9,Uz[i]);
+			j = int(U_order * dsfmt_genrand_close_open(&dsfmt)); 
+                        copy(begin(U_bath[j]),end(U_bath[j]),begin(Uz[i]));     
 			
 			
         }
@@ -363,8 +470,7 @@ double site_energy(int i)
 	Uz[zn], 3, foo,3,
 	0.0, Rfoo[5],3);		
 	
-	/******** total energy *****/
-	
+	/******** total energy *****/ 
 	double Sfoo = 0;
 	
 	for(int j = 0; j < 6; j++)
@@ -373,68 +479,6 @@ double site_energy(int i)
         }				
 	return Sfoo;
 }	
-
-/**** Change value of R[i] = SO(3) and sigma[i] = 1/-1 ****/
-void build_rotation_matrix(int i) 
-{	
-	/*
-         * GOING TO REDO THIS WITH NEW FORMULA FROM planning.cs.uiuc.edu/node198.html 
-	
-	double u1, u2, u3, u4;
-	
-	u1 = -1 + 2 * dsfmt_genrand_close_open(&dsfmt);
-	
-	do
-        {
-		u2 = -1 + 2 * dsfmt_genrand_close_open(&dsfmt);
-        }
-        while (u1*u1 + u2*u2 >= 1);
-		
-	u3 = -1 + 2* dsfmt_genrand_close_open(&dsfmt);
-		
-	do
-        {
-		u4 = -1 + 2 * dsfmt_genrand_close_open(&dsfmt);
-	}
-	while (u3*u3 + u4*u4 >= 1);	 
-	 
-	double x1, x2, x3, x4, x_foo;
-	
-	x_foo = sqrt((1 - u1*u1 - u2*u2)/(u3*u3 + u4*u4));
-	
-	x1 = u1;
-	x2 = u2;
-	x3 = u3*x_foo;
-	x4 = u4*x_foo; 
-	                   
-        */ 
-        double u1 = dsfmt_genrand_close_open(&dsfmt);
-        double u2 = dsfmt_genrand_close_open(&dsfmt);
-        double u3 = dsfmt_genrand_close_open(&dsfmt);
-        
-        
-        double x1 = sqrt(1-u1) * sin(2 * M_PI * u2);
-        double x2 = sqrt(1-u1) * cos(2 * M_PI * u2);
-        double x3 = sqrt(u1) * sin(2 * M_PI * u3);
-        double x4 = sqrt(u1) * sin(2 * M_PI * u3);
-        
-        
-	double x12, x22, x32, x1x2, x3x4, x1x3, x2x4, x2x3, x1x4;
-	
-	x12 = x1*x1; x22 = x2*x2; x32 = x3*x3;
-	x1x2 = x1*x2; x3x4 = x3*x4;
-	x1x3 = x1*x3; x2x4 = x2*x4;
-	x2x3 = x2*x3; x1x4 = x1*x4;
-	
-	
-	R[i][0] = 1 - 2*(x22+x32); R[i][1] = 2*(x1x2-x3x4); R[i][2] = 2*(x1x3+x2x4);
-	R[i][3] = 2*(x1x2+x3x4); R[i][4] = 1-2*(x12+x32); R[i][5] = 2*(x2x3-x1x4);
-	R[i][6] = 2*(x1x3-x2x4); R[i][7] = 2*(x2x3+x1x4); R[i][8] = 1-2*(x12+x22);
-		
-        
-	s[i] = dsfmt_genrand_close_open(&dsfmt) > 0.5 ? 1 : -1;	
-}
-	
 	
 /**** i passed from main so not need to defined int again and again
  * s[i] also changed in build rotation
@@ -443,18 +487,17 @@ void build_rotation_matrix(int i)
 void flip_R(int i) 
 {
 	double E_old;
-	E_old = site_energy(i);
-	
-	double s_save;
-	double R_save[9];
-	
-	copy(R[i], R[i]+9,R_save); //save R[i] to R_save
+        double s_save;
+        double R_save[9];
+        double E_new;
+        
+	E_old = site_energy(i); 
+        
+	copy(begin(R[i]), end(R[i]),begin(R_save)); //save R[i] to R_save
 	s_save = s[i];
 	
 	build_rotation_matrix(i); //generate new R[i] and s[i]
-	
-	double E_new;
-	
+        
 	E_new = site_energy(i);
 	
 	E_change = E_new - E_old;
@@ -465,17 +508,18 @@ void flip_R(int i)
                 E_total += E_change;
                 
         }
-	 else
+	else
         {
-                if (exp(-beta * E_change) > dsfmt_genrand_close_open(&dsfmt))
+                double change_chance = exp(-beta * E_new) /  (exp(-beta * E_new) + exp(-beta * E_old) );
+                if (change_chance > dsfmt_genrand_close_open(&dsfmt))
                 {
                         E_total += E_change;
                         
                 }
                 else
                 {
-                        copy(R_save, R_save+9, R[i]); 
-				 s[i] = s_save;
+                        copy(begin(R_save), end(R_save), begin(R[i])); 
+                        s[i] = s_save;
                 } // change R[i] and s[i] back				
         }	
 }
@@ -506,13 +550,13 @@ void flip_Ux(int i)
 	
 	/**** save Ux[i] to U_save ****/
 	double U_save[9];
-	copy(Ux[i],Ux[i]+9,U_save);
+	copy(begin(Ux[i]),end(Ux[i]),begin(U_save));
 	
 	/**** generate new Ux by choosing from U_bath ****/
 	int j;
 	j = int(U_order * dsfmt_genrand_close_open(&dsfmt));
 	
-	copy(U_bath[j],U_bath[j]+9,Ux[i]);
+	copy(begin(U_bath[j]),end(U_bath[j]),begin(Ux[i]));
 	
 	/**** compute the bond enery s[xp] s[i] Ux[i] R[i] R^T[xp] again****/
 	cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasTrans,
@@ -537,13 +581,14 @@ void flip_Ux(int i)
 	}
 	else
 	{
-		if (exp(-beta * E_change) > dsfmt_genrand_close_open(&dsfmt))
-		{
+                double change_chance = exp(-beta * E_new) /  (exp(-beta * E_new) + exp(-beta * E_old) );
+                if (change_chance > dsfmt_genrand_close_open(&dsfmt))
+                {
 			E_total += E_change;
 		}
 		else
 		{
-			copy(U_save,U_save+9,Ux[i]);
+			copy(begin(U_save),end(U_save),begin(Ux[i]));
 		}	
 	}		
 	
@@ -581,13 +626,13 @@ void flip_Uy(int i)
 	
 	/**** save Uy[i] to U_save ****/
 	double U_save[9];
-	copy(Uy[i],Uy[i]+9,U_save);
+	copy(begin(Uy[i]),end(Uy[i]),begin(U_save));
 	
 	/**** generate choosing new Uy from U_bath****/
 	int j;
 	j = int(U_order * dsfmt_genrand_close_open(&dsfmt));
 	
-	copy(U_bath[j],U_bath[j]+9,Uy[i]);
+	copy(begin(U_bath[j]),end(U_bath[j]),begin(Uy[i]));
 	
 	/**** compute the bond enery s[yp] s[i] Uy[i] R[i] R^T[yp] again****/
 	cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasTrans,
@@ -612,13 +657,14 @@ void flip_Uy(int i)
                 
         }
         else {
-                if (exp(-beta * E_change) > dsfmt_genrand_close_open(&dsfmt))
+                double change_chance = exp(-beta * E_new) /  (exp(-beta * E_new) + exp(-beta * E_old) );
+                if (change_chance > dsfmt_genrand_close_open(&dsfmt))
                 {
                         E_total += E_change;
                         
                 }
                 else {
-                        copy(U_save,U_save+9,Uy[i]);
+                        copy(begin(U_save),end(U_save),begin(Uy[i]));
                         
                 }	
         }		
@@ -658,13 +704,13 @@ void flip_Uz(int i)
 	
 	/**** save Uz[i] to U_save ****/
 	double U_save[9];
-	copy(Uz[i],Uz[i]+9,U_save);
+	copy(begin(Uz[i]),end(Uz[i]),begin(U_save));
 	
 	/**** generate new Uz by choosing new U from U_bath****/
 	int j;
 	j = int(U_order * dsfmt_genrand_close_open(&dsfmt));
 	
-	copy(U_bath[j],U_bath[j]+9,Uz[i]);
+	copy(begin(U_bath[j]),end(U_bath[j]),begin(Uz[i]));
 	
 	/**** compute the bond enery s[zp] s[i] Uz[i] R[i] R^T[zp] again****/
 	cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasTrans,
@@ -683,19 +729,29 @@ void flip_Uz(int i)
 	E_change = E_new - E_old;
 	
 	/**** decide flip and change E_total ****/
-	if (E_change < 0)
-		{E_total += E_change;}
-	 else { if (exp(-beta * E_change) > dsfmt_genrand_close_open(&dsfmt))
-				{E_total += E_change;}
-			 else {copy(U_save,U_save+9,Uz[i]);}	
-			}		
-	}
+        if (E_change < 0)
+        {
+                E_total += E_change;
+                
+        }
+        else {
+                double change_chance = exp(-beta * E_new) /  (exp(-beta * E_new) + exp(-beta * E_old) );
+                if (change_chance > dsfmt_genrand_close_open(&dsfmt))
+                {
+                        E_total += E_change;
+
+                }
+                else {
+                        copy(begin(U_save),end(U_save),begin(Uz[i]));
+
+                }	
+        }		
+}
 
 double thermalization_inner ( int N)
 {
         double s1 = 1.0 ;
-        int i, j, site;
-        #pragma omp parallel for
+        int i, j, site;  
         for (i = 0; i <  N; i++)
         {
                 s1 += E_total;
@@ -758,12 +814,13 @@ void estimate_beta_c()
 		S1 = 0; S2 = 0;
 		s1 = 0; s2 = 0;
 		Q1_n = 0; Q2_n = 0;
-		/**** measure ****/	 
-		#pragma omp parallel for
+		/**** measure ****/ 	
+                 
 		for (j = 0; j < sample_amount; j++)
 		{
 			//printf("Num threads %d \n", omp_get_num_threads());
 			//line used to check core number. 
+                         
 			for (i = 0; i < L3*4*tau ; i++)
 			{
 				/**** choose a site ****/
