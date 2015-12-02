@@ -16,9 +16,10 @@
 #include <gsl/gsl_matrix.h>
 #include <gsl/gsl_cblas.h>
 #include <iomanip> 
-#include "/home/deboer/Documents/dSFMT-src-2.2.3/dSFMT.h"
+#include "dSFMT-src-2.2.3/dSFMT.h"
 #include <ctime>
 #include "omp.h"
+#include <random>
 
 #ifndef SIZE
 	#define SIZE 8
@@ -42,6 +43,8 @@ double orderparameter_n();
 void measure_J_distribution(char *output);
 void measure_effective_J (char *output);
 void generate_rotation_matrices();
+
+void josko_diagnostics ();
 
 /*************  Constants     ***************/
 const int L = SIZE;
@@ -84,8 +87,7 @@ int main(int argc, char **argv)
 	dsfmt_init_gen_rand(&dsfmt, time(0)); //seed dsfmt 
         
         omp_set_num_threads(4); //I still want to use my computer :)
-        generate_rotation_matrices();
-        
+        generate_rotation_matrices(); 
         
 	build_gauge_bath();
 	
@@ -143,14 +145,14 @@ int main(int argc, char **argv)
 	
 	char *choice = argv[9];
 
+        josko_diagnostics ();
 	printf("#//Calculate from %2.3f to %2.3f, using {%2.3f, %2.3f, %2.3f}, accuracy %2.3f and %d samples \n", beta_lower, beta_upper, J1, J2, J3, accurate, sample_amount);
 	printf("#//Maximum cores %d \n", omp_get_max_threads());
         if(*choice == 'E')
         {
                estimate_beta_c();
         }
-        else 
-        if(*choice == 'S')
+        else if(*choice == 'S')
         {
                 measure_energy(argv[10]);
                 
@@ -170,7 +172,48 @@ int main(int argc, char **argv)
 
 	return 0;
 }
-
+/**** Josko's Diagnostics ****/
+void josko_diagnostics()
+{
+        int ii, jj, kk;
+        int rmc_samples = rmc_number*rmc_number*rmc_number*10000;
+        int build_random = 0;
+        double rmc_matrix_average[9] = {0}; 
+        for(ii = 0; ii < rmc_samples; ii++)
+        {
+                build_random = (int) (rmc_number_total * dsfmt_genrand_close_open(&dsfmt));
+                
+                for(jj = 0; jj < 9; jj++)
+                {      
+                        rmc_matrix_average[jj] += rmc_matrices[build_random][jj]/rmc_samples;
+                }
+                
+        } 
+        
+        printf("Average of sampled matrices{ %2.3f, %2.3f, %2.3f, %2.3f, %2.3f, %2.3f, %2.3f, %2.3f, %2.3f) \n",  rmc_matrix_average[0], rmc_matrix_average[1], rmc_matrix_average[2],
+                rmc_matrix_average[3], rmc_matrix_average[4], rmc_matrix_average[5],
+                rmc_matrix_average[6], rmc_matrix_average[7], rmc_matrix_average[8]); 
+        int rnd_samples = 100000;
+        double rnd_average = 0.0;
+        double rnd_correlation = 0.0;
+        double rnd_list[rnd_samples]; 
+        for(ii = 0; ii < rnd_samples; ii++)
+        {
+                rnd_list[ii] = dsfmt_genrand_close_open(&dsfmt);
+                rnd_average += rnd_list[ii] / rnd_samples;
+        } 
+        for(jj =0; jj < rnd_samples; jj++)
+        {
+                for(kk = 0; kk < rnd_samples; kk++)
+                {   
+                        rnd_correlation += rnd_list[jj] * rnd_list[ (jj+kk)%rnd_samples ] / rnd_samples;
+                }
+                rnd_correlation -= rnd_average;
+        }
+        rnd_correlation /= rnd_samples;
+        printf("Test 4.1, average [%2.3f], found [%.3f]. \n",rnd_average, rnd_correlation);
+        
+}
 /**** generates rotation matrices ****/
 void generate_rotation_matrices ()
 {
@@ -180,7 +223,8 @@ void generate_rotation_matrices ()
         
         int rmc_index = 0;
         
-        double x12, x22, x32, x1x2, x3x4, x1x3, x2x4, x2x3, x1x4, u1, u2, u3, x1, x2, x3, x4;  
+        double w,x,y,z, u1, u2, u3;  
+        
         for (ii = 0; ii < rmc_number; ii++)
         {
                 for (jj = 0; jj < rmc_number; jj++)
@@ -195,43 +239,28 @@ void generate_rotation_matrices ()
                                 u2 = 1.0 / rmc_number * jj;
                                 u3 = 1.0 / rmc_number * kk;
 
+                                // http://planning.cs.uiuc.edu/node198.html 
+                                w = sqrt(1-u1) * sin(2 * M_PI * u2);
+                                x = sqrt(1-u1) * cos(2 * M_PI * u2);
+                                y = sqrt(u1) * sin(2 * M_PI * u3);
+                                z = sqrt(u1) * cos(2 * M_PI * u3);
 
-                                x1 = sqrt(1-u1) * sin(2 * M_PI * u2);
-                                x2 = sqrt(1-u1) * cos(2 * M_PI * u2);
-                                x3 = sqrt(u1) * sin(2 * M_PI * u3);
-                                x4 = sqrt(u1) * cos(2 * M_PI * u3);
 
+                                //https://en.wikipedia.org/wiki/Rotation_group_SO%283%29#Quaternions_of_unit_norm
 
-                                //check unit length
-                                //double length = x1*x1 + x2*x2 + x3*x3 + x4*x4;
-                                //printf("The %d-th quaternion its length %2.3f constructed from (%2.3f, %2.3f, %2.3f) \n ", rmc_index, length, u1, u2, u3);
-                                //This part of the code was taken from Ke; I only changed the quaternion generation
-                                
-
-                                x12 = x1*x1; x22 = x2*x2; x32 = x3*x3;
-                                x1x2 = x1*x2; x3x4 = x3*x4;
-                                x1x3 = x1*x3; x2x4 = x2*x4;
-                                x2x3 = x2*x3; x1x4 = x1*x4;
-
-                                rmc_matrices[rmc_index][0] = 1 - 2*(x22+x32);
-                                rmc_matrices[rmc_index][1] = 2*(x1x2-x3x4);
-                                rmc_matrices[rmc_index][2] = 2*(x1x3+x2x4);
-                                rmc_matrices[rmc_index][3] = 2*(x1x2+x3x4);
-                                rmc_matrices[rmc_index][4] = 1-2*(x12+x32);
-                                rmc_matrices[rmc_index][5] = 2*(x2x3-x1x4);
-                                rmc_matrices[rmc_index][6] = 2*(x1x3-x2x4);
-                                rmc_matrices[rmc_index][7] = 2*(x2x3+x1x4);
-                                rmc_matrices[rmc_index][8] = 1-2*(x12+x22);
-                                
-                               /* printf("%d\t%2.3f\t%2.3f\t%2.3f\t%2.3f\t%2.3f\t%2.3f\t%2.3f\t%2.3f\t%2.3f\n",rmc_index, rmc_matrices[rmc_index][0],
-                                       rmc_matrices[rmc_index][1], rmc_matrices[rmc_index][2], rmc_matrices[rmc_index][3],
-                                       rmc_matrices[rmc_index][4], rmc_matrices[rmc_index][5], rmc_matrices[rmc_index][6],
-                                       rmc_matrices[rmc_index][7], rmc_matrices[rmc_index][8], rmc_matrices[rmc_index][9]); */ 
-                               
-                                
+                                rmc_matrices[rmc_index][0] = 1 - 2 * (y*y+z*z);
+                                rmc_matrices[rmc_index][1] = 2 * (x*y-z*w);
+                                rmc_matrices[rmc_index][2] = 2 * (x*z+y*w);
+                                rmc_matrices[rmc_index][3] = 2 * (x*y+z*w);
+                                rmc_matrices[rmc_index][4] = 1 - 2 * (x*x+z*z);
+                                rmc_matrices[rmc_index][5] = 2 * (y*z-x*w);
+                                rmc_matrices[rmc_index][6] = 2 * (x*z-y*w);
+                                rmc_matrices[rmc_index][7] = 2 * (y*z+x*w);
+                                rmc_matrices[rmc_index][8] = 1 - 2 * (x*x+y*y); 
+                                 
                         }
                 }
-        } 
+        }   
 }
 
 /**** Change value of R[i] = SO(3) and sigma[i] = 1/-1 ****/
@@ -441,8 +470,7 @@ double site_energy(int i)
 	Uz[zn], 3, foo,3,
 	0.0, Rfoo[5],3);		
 	
-	/******** total energy *****/
-	
+	/******** total energy *****/ 
 	double Sfoo = 0;
 	
 	for(int j = 0; j < 6; j++)
@@ -723,8 +751,7 @@ void flip_Uz(int i)
 double thermalization_inner ( int N)
 {
         double s1 = 1.0 ;
-        int i, j, site; 
-        #pragma omp parallel for
+        int i, j, site;  
         for (i = 0; i <  N; i++)
         {
                 s1 += E_total;
