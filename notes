@@ -5,3 +5,12 @@ explains the issues with random numbers and parallel
 
 http://stackoverflow.com/questions/30168252/c-with-openmp-thread-safe-random-numbers
 re-seeding doesn't work.
+
+compile_prof, time is 416 seconds
+
+ 36.71     27.89    27.89 413842492     0.00     0.00  site_energy(int)
+ 25.63     47.36    19.47                             estimate_beta_c()
+  9.68     54.71     7.35 206923124     0.00     0.00  flip_Uz(int, double, double)
+  9.62     62.02     7.31 206927983     0.00     0.00  flip_Uy(int, double, double)
+  9.55     69.28     7.25 206906367     0.00     0.00  flip_Ux(int, double, double)
+  5.42     73.40     4.12 206921246     0.00     0.00  flip_R(int, double, double, double)

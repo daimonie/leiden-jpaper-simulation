@@ -38,17 +38,17 @@ void uniform_initialization();
 void random_initialization();
 void build_rotation_matrix(int i);
 double site_energy(int i);  
-void flip_R(int i);
-void flip_Ux(int i);
-void flip_Uy(int i);
-void flip_Uz(int i);
+void flip_R(int, double, double);
+void flip_Ux(int, double, double);
+void flip_Uy(int, double, double);
+void flip_Uz(int, double, double);
 void thermalization();
 void estimate_beta_c(); 
 double orderparameter_n(); 
 
 
 void generate_rotation_matrices();
-void flipper(double, double, double, double);
+void flipper(double, double, double, double, double);
 bool josko_diagnostics ();
 
 /*************  Constants     ***************/
@@ -101,8 +101,10 @@ int main(int argc, char **argv)
 {
 	time_t tstart, tend;
 	tstart = time(0);
-	dsfmt_init_gen_rand(&dsfmt, time(0)); //seed dsfmt 
-        
+	if (dice_mode == 0)
+	{
+		dsfmt_init_gen_rand(&dsfmt, time(0)); //seed dsfmt 
+	}
         omp_set_num_threads(4); //I still want to use my computer :)
         generate_rotation_matrices(); 
         
@@ -310,12 +312,12 @@ void generate_rotation_matrices ()
 }
 
 /**** Change value of R[i] = SO(3) and sigma[i] = 1/-1 ****/
-void build_rotation_matrix(int i) 
+void build_rotation_matrix(int i, double jactus1, double jactus2) 
 {         
-        int build_random = (int) (rmc_number_total * dsfmt_genrand_close_open(&dsfmt));
+        int build_random = (int) (rmc_number_total * jactus1);
         
         copy( begin(rmc_matrices[build_random]), end(rmc_matrices[build_random]), begin(R[i]));
-        s[i] = dsfmt_genrand_close_open(&dsfmt) > 0.5 ? 1 : -1; 
+        s[i] = jactus2 > 0.5 ? 1 : -1; 
 }
         
 /**** build gauge bath ****/
@@ -395,7 +397,7 @@ void random_initialization()
 	int i, j;
 	for (i = 0; i < L3; i++)
         {
-			build_rotation_matrix(i);
+			build_rotation_matrix(i, dice(), dice());
 		
 			/** build Ux **/
 			j = int(U_order * dsfmt_genrand_close_open(&dsfmt));
@@ -510,7 +512,7 @@ double site_energy(int i)
  * s[i] also changed in build rotation
  * ****/ 
 
-void flip_R(int i, double jactus) 
+void flip_R(int i, double jactus1, double jactus2, double jactus3) 
 {
 	double E_old;
         double s_save;
@@ -522,7 +524,7 @@ void flip_R(int i, double jactus)
 	copy(begin(R[i]), end(R[i]),begin(R_save)); //save R[i] to R_save
 	s_save = s[i];
 	
-	build_rotation_matrix(i); //generate new R[i] and s[i]
+	build_rotation_matrix(i, jactus1, jactus2); //generate new R[i] and s[i]
         
 	E_new = site_energy(i);
 	
@@ -538,7 +540,7 @@ void flip_R(int i, double jactus)
         {
 		//this is correct, it is metropolis monte carlo!
                 double change_chance = exp(-beta * E_change);
-                if (change_chance > jactus)
+                if (change_chance > jactus3)
                 {
                         E_total += E_change;
                         
@@ -775,18 +777,14 @@ void flip_Uz(int i, double jactus1, double jactus2)
                 }	
         }		
 }
-void flipper (double jactus1, double jactus2, double jactus3, double jactus4)
-{
-	//there's a few wasted dice throws there. However, I greatly prefer
-	// this method where:
-	//	- flipping is centralised
-	//	- randoming is kept to the for loop, i.e. possibility for pragma
+void flipper (double jactus1, double jactus2, double jactus3, double jactus4, double jactus5)
+{ 
 	int site = int(L3*jactus1);
 
 	/**** randomly flip R, Ux, Uy, Uz ****/
 	switch(int(4 * jactus2)) 
 	{  
-		case 0 : flip_R(site, jactus3); 
+		case 0 : flip_R(site, jactus3, jactus4, jactus5); 
 		break;
 		case 1 : flip_Ux(site, jactus3, jactus4);
 		break;
@@ -807,7 +805,7 @@ double thermalization_inner ( int N)
                 s1 += E_total; 
                 for (j = 0; j < L3*4; j++)
                 {   
-			flipper (dice(), dice(), dice(), dice());
+			flipper (dice(), dice(), dice(), dice(), dice());
                 }                                               
         }  
         return s1;
@@ -857,7 +855,7 @@ void estimate_beta_c()
                          
 			for (i = 0; i < L3*4*tau ; i++)
 			{ 
-				flipper (dice(), dice(), dice(), dice());
+				flipper (dice(), dice(), dice(), dice(), dice());
 			}
 			S1 += E_total;	 
 			S2 += E_total * E_total;	

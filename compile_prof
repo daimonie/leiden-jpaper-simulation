@@ -3,6 +3,6 @@ g++ -pg -O3 -fno-strict-aliasing -std=c++11 -Wall -Wextra -msse2 -DHAVE_SSE2=1  
 
 echo "Easy Test, arbitrary parameters..."
 
-./simulate C 0.0 9.0 3 3 3 6 0.5 E D2d_test.dat 0.1 0.1 1.0 100
+./simulate C 0.0 9.0 3 3 3 6 0.15 E D2d_test.dat 0.1 0.1 1.0 1000
 
 gprof simulate gmon.out -Q -p
