@@ -19,7 +19,7 @@
 #include "dSFMT-src-2.2.3/dSFMT.h"
 #include <ctime>
 #include "omp.h"
-#include <random>
+#include <random> 
 
 #ifndef SIZE
 	#define SIZE 8
@@ -193,7 +193,8 @@ void josko_diagnostics()
         printf("Average of sampled matrices{ %2.3f, %2.3f, %2.3f, %2.3f, %2.3f, %2.3f, %2.3f, %2.3f, %2.3f) \n",  rmc_matrix_average[0], rmc_matrix_average[1], rmc_matrix_average[2],
                 rmc_matrix_average[3], rmc_matrix_average[4], rmc_matrix_average[5],
                 rmc_matrix_average[6], rmc_matrix_average[7], rmc_matrix_average[8]); 
-        int rnd_samples = 100000;
+	
+        int rnd_samples = 10;
         double rnd_average = 0.0;
         double rnd_correlation = 0.0;
         double rnd_list[rnd_samples]; 
@@ -208,11 +209,44 @@ void josko_diagnostics()
                 {   
                         rnd_correlation += rnd_list[jj] * rnd_list[ (jj+kk)%rnd_samples ] / rnd_samples;
                 }
-                rnd_correlation -= rnd_average;
-        }
+                rnd_correlation -= rnd_average; 
+        } 
         rnd_correlation /= rnd_samples;
-        printf("Test 4.1, average [%2.3f], found [%.3f]. \n",rnd_average, rnd_correlation);
-        
+        printf("Test 4.1, average [%2.3f], correlation [%.3f]. \n",rnd_average, rnd_correlation);
+	// Different engine
+	rnd_average = 0.0;
+	rnd_correlation = 0.0;
+	
+	printf("New random generator. \n");
+	
+	int rnd_samples2 = rnd_samples*rnd_samples;
+        double rnd_list2[rnd_samples2]; 	  
+	int j = 0;   
+	#pragma omp parallel for
+        for(ii = 0; ii < rnd_samples; ii++)
+        {
+		std::mt19937_64 engine(ii);
+		std::uniform_real_distribution<double> dice(0.0, 1.0);
+		
+		for( jj = 0; jj < rnd_samples; jj++)
+		{
+			j = ii * rnd_samples + jj;
+			
+			rnd_list2[j] = dice(engine);
+			rnd_average += rnd_list2[j] / rnd_samples2;
+		}
+        }    
+	#pragma omp parallel for
+        for(jj =0; jj < rnd_samples2; jj++)
+        {
+                for(kk = 0; kk < rnd_samples2; kk++)
+                {   
+                        rnd_correlation += rnd_list2[jj] * rnd_list2[ (jj+kk)%rnd_samples2 ] / rnd_samples2;
+                }
+                rnd_correlation -= rnd_average; 
+        } 
+        rnd_correlation /= rnd_samples2;
+        printf("New engine, average [%2.3f], correlation [%.3f]. \n",rnd_average, rnd_correlation);
 }
 /**** generates rotation matrices ****/
 void generate_rotation_matrices ()
