@@ -194,7 +194,7 @@ void josko_diagnostics()
                 rmc_matrix_average[3], rmc_matrix_average[4], rmc_matrix_average[5],
                 rmc_matrix_average[6], rmc_matrix_average[7], rmc_matrix_average[8]); 
 	
-        int rnd_samples = 10;
+        int rnd_samples = 100;
         double rnd_average = 0.0;
         double rnd_correlation = 0.0;
         double rnd_list[rnd_samples]; 
@@ -222,12 +222,16 @@ void josko_diagnostics()
 	int rnd_samples2 = rnd_samples*rnd_samples;
         double rnd_list2[rnd_samples2]; 	  
 	int j = 0;   
-	#pragma omp parallel for
+	
+	std::mt19937_64 engine(ii);
+	std::uniform_real_distribution<double> dice(0.0, 1.0);
+		
+		
+	#pragma omp parallel for private(j, engine, dice)
         for(ii = 0; ii < rnd_samples; ii++)
         {
-		std::mt19937_64 engine(ii);
-		std::uniform_real_distribution<double> dice(0.0, 1.0);
-		
+		engine = std::mt19937_64(ii);
+		dice = uniform_real_distribution<double>(0.0, 1.0);
 		for( jj = 0; jj < rnd_samples; jj++)
 		{
 			j = ii * rnd_samples + jj;
