@@ -16,11 +16,17 @@
 #include <gsl/gsl_matrix.h>
 #include <gsl/gsl_cblas.h>
 #include <iomanip> 
-#include "dSFMT-src-2.2.3/dSFMT.h"
 #include <ctime>
 #include "omp.h"
-#include <random> 
 
+//random generation libraries
+#include "dSFMT-src-2.2.3/dSFMT.h"
+#include <random> 
+#include <boost/random/mersenne_twister.hpp>
+#include <boost/random/lagged_fibonacci.hpp>
+#include <boost/random/uniform_01.hpp>
+
+//lattice constant, SIZE cubed sites
 #ifndef SIZE
 	#define SIZE 8
 #endif
@@ -37,14 +43,13 @@ void flip_Ux(int i);
 void flip_Uy(int i);
 void flip_Uz(int i);
 void thermalization();
-void estimate_beta_c();
-void measure_energy(char *output);
-double orderparameter_n();
-void measure_J_distribution(char *output);
-void measure_effective_J (char *output);
-void generate_rotation_matrices();
+void estimate_beta_c(); 
+double orderparameter_n(); 
 
-void josko_diagnostics ();
+
+void generate_rotation_matrices();
+void flipper(double, double, double, double);
+bool josko_diagnostics ();
 
 /*************  Constants     ***************/
 const int L = SIZE;
@@ -61,8 +66,6 @@ double U_bath[U_order][9]={{0}};
 
 double s[L3] = {0}; // s for Ising field
 
-dsfmt_t dsfmt; //defined a required variable
-
 /********** Measure ************/
 double E_total, E_change, E_g;
 //int Racc =0, xacc =0 , yacc = 0, zacc =0, Rrej=0, xrej=0, yrej=0, zrej=0;
@@ -73,13 +76,27 @@ double beta, beta_lower, beta_upper, beta_step_small, beta_step_big, beta_1, bet
 double accurate;
 int tau = 100;
 int sample_amount;
+
 /**** rotation matrices cache ****/
 const int rmc_number = 10; // Note: it generates rmc_number^3 matrices.
 const int rmc_number_total = rmc_number*rmc_number*rmc_number;
 double rmc_matrices[rmc_number_total][9] = {{0}};
 
-/**** time to start the program ****/
+/**** set random number generator ****/
+const int dice_mode = 2;
 
+//random generators
+dsfmt_t dsfmt;
+
+std::mt19937_64 std_engine(0);
+std::uniform_real_distribution<double> std_random_mt (0.0, 1.0);
+boost::random::mt19937 boost_rng_mt; 
+boost::random::lagged_fibonacci44497 boost_rng_fib;
+
+//boost uniform [0,1]
+boost::random::uniform_01<> boost_mt; 
+
+/**** time to start the program ****/
 int main(int argc, char **argv)
 {
 	time_t tstart, tend;
@@ -145,35 +162,50 @@ int main(int argc, char **argv)
 	
 	char *choice = argv[9];
 
-        josko_diagnostics ();
+        if(josko_diagnostics ())
+	{
+		return 0;
+	}
+	
 	printf("#//Calculate from %2.3f to %2.3f, using {%2.3f, %2.3f, %2.3f}, accuracy %2.3f and %d samples \n", beta_lower, beta_upper, J1, J2, J3, accurate, sample_amount);
 	printf("#//Maximum cores %d \n", omp_get_max_threads());
         if(*choice == 'E')
         {
-               estimate_beta_c();
-        }
-        else if(*choice == 'S')
-        {
-                measure_energy(argv[10]);
-                
-        }
-        else if(*choice == 'D')
-        {
-                measure_J_distribution(argv[10]);		
-        }
-        else if(*choice == 'J')
-        {
-                measure_effective_J(argv[10]);							
-        }
-        
+               estimate_beta_c(); 
+	}
 	tend = time(0);
 	
 	printf("#// Time taken is %2.3f seconds", difftime(tend,tstart));
 
 	return 0;
 }
+/**** General random [0,1] number ****/
+double dice()
+{
+	if( dice_mode == 0)
+	{
+		return dsfmt_genrand_close_open(&dsfmt);
+	}
+	else if( dice_mode == 1)
+	{ 
+		return std_random_mt(std_engine);
+	}
+	else if( dice_mode == 2)
+	{
+		return boost_mt(boost_rng_mt);
+	}
+	else if( dice_mode == 3)
+	{
+		return boost_mt(boost_rng_fib);
+	}
+	else
+	{
+		printf("Dice mode is not set... \n");
+		return 0.5;
+	}
+}
 /**** Josko's Diagnostics ****/
-void josko_diagnostics()
+bool josko_diagnostics()
 {
         int ii, jj, kk;
         int rmc_samples = rmc_number*rmc_number*rmc_number*10000;
@@ -181,7 +213,7 @@ void josko_diagnostics()
         double rmc_matrix_average[9] = {0}; 
         for(ii = 0; ii < rmc_samples; ii++)
         {
-                build_random = (int) (rmc_number_total * dsfmt_genrand_close_open(&dsfmt));
+                build_random = (int) (rmc_number_total * dice());
                 
                 for(jj = 0; jj < 9; jj++)
                 {      
@@ -194,15 +226,24 @@ void josko_diagnostics()
                 rmc_matrix_average[3], rmc_matrix_average[4], rmc_matrix_average[5],
                 rmc_matrix_average[6], rmc_matrix_average[7], rmc_matrix_average[8]); 
 	
-        int rnd_samples = 100;
+	time_t time_before = time(0);
+	
+        int rnd_samples = 20000; 
+	
         double rnd_average = 0.0;
         double rnd_correlation = 0.0;
         double rnd_list[rnd_samples]; 
+	#pragma omp parallel for
         for(ii = 0; ii < rnd_samples; ii++)
         {
-                rnd_list[ii] = dsfmt_genrand_close_open(&dsfmt);
+		//if you don't set this to critical, all statistical properties are bollocks
+		#pragma omp critical
+		{
+			rnd_list[ii] = dice();
+		}
                 rnd_average += rnd_list[ii] / rnd_samples;
         } 
+	#pragma omp parallel for
         for(jj =0; jj < rnd_samples; jj++)
         {
                 for(kk = 0; kk < rnd_samples; kk++)
@@ -212,45 +253,12 @@ void josko_diagnostics()
                 rnd_correlation -= rnd_average; 
         } 
         rnd_correlation /= rnd_samples;
-        printf("Test 4.1, average [%2.3f], correlation [%.3f]. \n",rnd_average, rnd_correlation);
-	// Different engine
-	rnd_average = 0.0;
-	rnd_correlation = 0.0;
+        printf("Random: omp critical, mode %d,  samples %d, average [%2.3f], correlation [%.3f]. \n", dice_mode, rnd_samples, rnd_average, rnd_correlation);
+	time_t time_after = time(0);
 	
-	printf("New random generator. \n");
+	printf("\t\t %.3f seconds. \n", difftime(time_after,time_before)); 
 	
-	int rnd_samples2 = rnd_samples*rnd_samples;
-        double rnd_list2[rnd_samples2]; 	  
-	int j = 0;   
-	
-	std::mt19937_64 engine(ii);
-	std::uniform_real_distribution<double> dice(0.0, 1.0);
-		
-		
-	#pragma omp parallel for private(j, engine, dice)
-        for(ii = 0; ii < rnd_samples; ii++)
-        {
-		engine = std::mt19937_64(ii);
-		dice = uniform_real_distribution<double>(0.0, 1.0);
-		for( jj = 0; jj < rnd_samples; jj++)
-		{
-			j = ii * rnd_samples + jj;
-			
-			rnd_list2[j] = dice(engine);
-			rnd_average += rnd_list2[j] / rnd_samples2;
-		}
-        }    
-	#pragma omp parallel for
-        for(jj =0; jj < rnd_samples2; jj++)
-        {
-                for(kk = 0; kk < rnd_samples2; kk++)
-                {   
-                        rnd_correlation += rnd_list2[jj] * rnd_list2[ (jj+kk)%rnd_samples2 ] / rnd_samples2;
-                }
-                rnd_correlation -= rnd_average; 
-        } 
-        rnd_correlation /= rnd_samples2;
-        printf("New engine, average [%2.3f], correlation [%.3f]. \n",rnd_average, rnd_correlation);
+	return false;
 }
 /**** generates rotation matrices ****/
 void generate_rotation_matrices ()
@@ -422,21 +430,12 @@ double site_energy(int i)
 	zp = i < L2 ? i - L2 + L3 : i - L2;
 	zn = i + L2 >= L3 ? i + L2 - L3 : i + L2;
 	
-	/**** matrix fields of six O(3)/H bonds, s[i]s[j] R^T_i U_ij R_j ***/
-	
-	/** Rfoo[i], i from 0 to 5 save bonds value of
-	 * -x,x, -y, y, -z, z
-	 * foo[9] an intermieda variable
-	 *  **/
 	
 	double Rfoo[6][9] = {{0}};
 	double foo[9] = {0};
 	
-	/** Rfoo[0] =  s[xp] s[i] (Ux[i] R[i] R[xp])^T) 
-	 * foo = s[i]*s[xp] R[i] R[xp]^T
-	 * Rfoo[0] = Ux[i] foo
-	 * **/
-	
+//Will have to see if this can be formulated faster.
+	//CONTINUE
 	cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasTrans,
 	3,3,3,s[i]*s[xp],
 	R[i], 3, R[xp],3,
@@ -447,9 +446,6 @@ double site_energy(int i)
 	Ux[i], 3, foo,3,
 	0.0, Rfoo[0],3);
 	
-	
-	/** Rfoo[1] = s[i] s[xn] (Ux[xn] R[xn] R[i]^T) 
-	 * **/
 	cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasTrans,
 	3,3,3,s[xn]*s[i],
 	R[xn], 3, R[i],3,
@@ -459,9 +455,7 @@ double site_energy(int i)
 	3,3,3,1,
 	Ux[xn], 3, foo,3,
 	0.0, Rfoo[1],3);
-
-	/** Rfoo[2] = s[yp] s[i] (Uy[i] R[i]R[yp]^T) 
-	 * **/
+	
 	cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasTrans,
 	3,3,3,s[i]*s[yp],
 	R[i], 3, R[yp],3,
@@ -472,8 +466,6 @@ double site_energy(int i)
 	Uy[i], 3, foo,3,
 	0.0, Rfoo[2],3);
 	
-	/** Rfoo[3] = s[i] s[yn] (Uy[yn] R[yn] R[i]^T)
-	 * **/
 	cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasTrans,
 	3,3,3,s[yn]*s[i],
 	R[yn], 3, R[i],3,
@@ -482,10 +474,8 @@ double site_energy(int i)
 	cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans,
 	3,3,3,1,
 	Uy[yn], 3, foo,3,
-	0.0, Rfoo[3],3);		
-
-	/** Rfoo[4] = s[zp] s[i] (Uz[i] R[i] R[zp]^T) 
-	 * **/
+	0.0, Rfoo[3],3);	 
+	
 	cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasTrans,
 	3,3,3,s[i]*s[zp],
 	R[i], 3, R[zp],3,
@@ -494,10 +484,8 @@ double site_energy(int i)
 	cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans,
 	3,3,3,1,
 	Uz[i], 3, foo,3,
-	0.0, Rfoo[4],3);
-		
-	/** Rfoo[5] = s[i] s[zn] (Uz[zn] R[zn] R[i]^T)
-	 * **/
+	0.0, Rfoo[4],3); 
+	
 	cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasTrans,
 	3,3,3,s[zn]*s[i],
 	R[zn], 3, R[i],3,
@@ -522,7 +510,7 @@ double site_energy(int i)
  * s[i] also changed in build rotation
  * ****/ 
 
-void flip_R(int i) 
+void flip_R(int i, double jactus) 
 {
 	double E_old;
         double s_save;
@@ -548,8 +536,9 @@ void flip_R(int i)
         }
 	else
         {
-                double change_chance = exp(-beta * E_new) /  (exp(-beta * E_new) + exp(-beta * E_old) );
-                if (change_chance > dsfmt_genrand_close_open(&dsfmt))
+		//this is correct, it is metropolis monte carlo!
+                double change_chance = exp(-beta * E_change);
+                if (change_chance > jactus)
                 {
                         E_total += E_change;
                         
@@ -562,7 +551,7 @@ void flip_R(int i)
         }	
 }
 
-void flip_Ux(int i)
+void flip_Ux(int i, double jactus1, double jactus2)
 {
 	int xp = 0; 
 
@@ -592,7 +581,7 @@ void flip_Ux(int i)
 	
 	/**** generate new Ux by choosing from U_bath ****/
 	int j;
-	j = int(U_order * dsfmt_genrand_close_open(&dsfmt));
+	j = int(U_order * jactus1);
 	
 	copy(begin(U_bath[j]),end(U_bath[j]),begin(Ux[i]));
 	
@@ -619,8 +608,9 @@ void flip_Ux(int i)
 	}
 	else
 	{
-                double change_chance = exp(-beta * E_new) /  (exp(-beta * E_new) + exp(-beta * E_old) );
-                if (change_chance > dsfmt_genrand_close_open(&dsfmt))
+		//this is correct, it is metropolis monte carlo!
+                double change_chance = exp(-beta * E_change);
+                if (change_chance > jactus2)
                 {
 			E_total += E_change;
 		}
@@ -632,7 +622,7 @@ void flip_Ux(int i)
 	
 }
 
-void flip_Uy(int i)
+void flip_Uy(int i, double jactus1, double jactus2)
 {
 	/**** find neighbour, only one****/
 	int yp;
@@ -668,7 +658,7 @@ void flip_Uy(int i)
 	
 	/**** generate choosing new Uy from U_bath****/
 	int j;
-	j = int(U_order * dsfmt_genrand_close_open(&dsfmt));
+	j = int(U_order * jactus1);
 	
 	copy(begin(U_bath[j]),end(U_bath[j]),begin(Uy[i]));
 	
@@ -695,8 +685,8 @@ void flip_Uy(int i)
                 
         }
         else {
-                double change_chance = exp(-beta * E_new) /  (exp(-beta * E_new) + exp(-beta * E_old) );
-                if (change_chance > dsfmt_genrand_close_open(&dsfmt))
+                double change_chance = exp(-beta * E_change);
+                if (change_chance > jactus2)
                 {
                         E_total += E_change;
                         
@@ -710,7 +700,7 @@ void flip_Uy(int i)
 }
 
 
-void flip_Uz(int i)
+void flip_Uz(int i, double jactus1, double jactus2)
 {
 	/**** find neighbour, only one****/
 	int zp;
@@ -746,7 +736,7 @@ void flip_Uz(int i)
 	
 	/**** generate new Uz by choosing new U from U_bath****/
 	int j;
-	j = int(U_order * dsfmt_genrand_close_open(&dsfmt));
+	j = int(U_order * jactus1);
 	
 	copy(begin(U_bath[j]),end(U_bath[j]),begin(Uz[i]));
 	
@@ -773,8 +763,8 @@ void flip_Uz(int i)
                 
         }
         else {
-                double change_chance = exp(-beta * E_new) /  (exp(-beta * E_new) + exp(-beta * E_old) );
-                if (change_chance > dsfmt_genrand_close_open(&dsfmt))
+                double change_chance = exp(-beta * E_change);
+                if (change_chance > jactus2)
                 {
                         E_total += E_change;
 
@@ -785,32 +775,39 @@ void flip_Uz(int i)
                 }	
         }		
 }
+void flipper (double jactus1, double jactus2, double jactus3, double jactus4)
+{
+	//there's a few wasted dice throws there. However, I greatly prefer
+	// this method where:
+	//	- flipping is centralised
+	//	- randoming is kept to the for loop, i.e. possibility for pragma
+	int site = int(L3*jactus1);
 
+	/**** randomly flip R, Ux, Uy, Uz ****/
+	switch(int(4 * jactus2)) 
+	{  
+		case 0 : flip_R(site, jactus3); 
+		break;
+		case 1 : flip_Ux(site, jactus3, jactus4);
+		break;
+		case 2 : flip_Uy(site, jactus3, jactus4); 
+		break;
+		case 3 : flip_Uz(site, jactus3, jactus4); 
+		break;                                                                          
+	}          
+	
+}
 double thermalization_inner ( int N)
 {
         double s1 = 1.0 ;
-        int i, j, site;  
+        int i, j;  
+	 
         for (i = 0; i <  N; i++)
         {
-                s1 += E_total;
-                /**** one sweep ****/
+                s1 += E_total; 
                 for (j = 0; j < L3*4; j++)
-                {
-                /**** choose a site ****/
-                        site = int(L3*dsfmt_genrand_close_open(&dsfmt));
-
-                        /**** randomly flip R, Ux, Uy, Uz ****/
-                        switch(int(4 * dsfmt_genrand_close_open(&dsfmt))) 
-                        {  
-                                case 0 : flip_R(site); 
-                                break;
-                                case 1 : flip_Ux(site);
-                                break;
-                                case 2 : flip_Uy(site); 
-                                break;
-                                case 3 : flip_Uz(site); 
-                                break;                                                                          
-                        }               
+                {   
+			flipper (dice(), dice(), dice(), dice());
                 }                                               
         }  
         return s1;
@@ -838,8 +835,8 @@ void estimate_beta_c()
 	double S1, S2, Cv; 
 	double foo2_n, Q1_n, Q2_n, chi_n;
 	double foo_s, s1, s2, chi_s;
-	int i, j, site;
-  
+	int i, j;
+	 
 	while ( ( (beta >= beta_lower) && (beta <= beta_upper) ))
 	{ 
 		//printf("#//Calculating for beta=%2.3f < %2.3f \n", beta, beta_upper);
@@ -852,30 +849,15 @@ void estimate_beta_c()
 		S1 = 0; S2 = 0;
 		s1 = 0; s2 = 0;
 		Q1_n = 0; Q2_n = 0;
-		/**** measure ****/ 	
-                 
+		/**** measure ****/ 	  
 		for (j = 0; j < sample_amount; j++)
 		{
 			//printf("Num threads %d \n", omp_get_num_threads());
 			//line used to check core number. 
                          
 			for (i = 0; i < L3*4*tau ; i++)
-			{
-				/**** choose a site ****/
-				site = int(L3*dsfmt_genrand_close_open(&dsfmt));
-
-				/**** randomly flip R, Ux, Uy, Uz ****/
-				switch(int(4 * dsfmt_genrand_close_open(&dsfmt))) 
-				{  
-					case 0 : flip_R(site); 
-					break;
-					case 1 : flip_Ux(site);
-					break;
-					case 2 : flip_Uy(site); 
-					break;
-					case 3 : flip_Uz(site); 
-					break;					 
-				}
+			{ 
+				flipper (dice(), dice(), dice(), dice());
 			}
 			S1 += E_total;	 
 			S2 += E_total * E_total;	
@@ -920,68 +902,6 @@ void estimate_beta_c()
 	} 
 }
 
-
-void measure_energy(char *output)
-{
-	int i, j, site;
-	
-	ofstream output_file;
-	output_file.open(output);
-	
-	while ( ( (beta >= beta_lower) && (beta <= beta_upper) ))
-		{ 
-
-/** re-initialize quantites for the acception ratio **/
-//Racc = 0; Rrej = 0; xacc = 0; xrej = 0;
-//yacc = 0; yrej = 0; zacc = 0; zrej = 0;
-
-			
-		/**** re-thermalization ****/
-		  thermalization();
-
-		  
-		 output_file << beta << '\t' << J1 << '\t' << J2 << '\t' << J3 << '\t'<<flush;
-
-		  /**** measure ****/	  
-		  for (j = 0; j < sample_amount; j++)
-		  { for (i = 0; i < L3*4*tau ; i++)
-			 {
-				/**** choose a site ****/
-				site = int(L3*dsfmt_genrand_close_open(&dsfmt));
-
-				/**** randomly flip R, Ux, Uy, Uz ****/
-				switch(int(4 * dsfmt_genrand_close_open(&dsfmt))) 
-					{  
-						case 0 : flip_R(site); 
-									break;
-						case 1 : flip_Ux(site);
-									break;
-						case 2 : flip_Uy(site); 
-									break;
-						case 3 : flip_Uz(site); 
-									break;					 
-							}
-					}
-			output_file << E_total << '\t' << flush; 
-			 }
-			output_file << endl; 	 
-			
-					
-		if ( (beta >= beta_1) && (beta <= beta_2) )
-			{beta += beta_step_small;}
-		else {beta += beta_step_big;}	
-		
-/** acception ratio**/		
-//cout << "R, Ux, Uy, Uz" << endl;
-//cout << beta << '\t' << Racc << '\t' << Rrej << '\t' << Racc*1.0/(Racc+Rrej) << endl; 
-//cout << beta << '\t' << xacc << '\t' << xrej << '\t' << xacc*1.0/(xacc+xrej) << endl;
-//cout << beta << '\t' << yacc << '\t' << yrej << '\t' << yacc*1.0/(yacc+yrej) << endl;  
-//cout << beta << '\t' << zacc << '\t' << zrej << '\t' << zacc*1.0/(zacc+zrej) << endl; 		 	
-			}
-	output_file.close();
-	}
-	
-
 double orderparameter_n()
 {
 	double Q11_n = 0, Q22_n = 0, Q33_n = 0, Q12_n = 0, Q23_n = 0, Q13_n = 0, Q2_n = 0;
@@ -1003,256 +923,4 @@ double orderparameter_n()
 				 + 2*Q12_n*Q12_n + 2*Q13_n*Q13_n + 2*Q23_n*Q23_n)/L3/L3;	
 	
 	return Q2_n;
-	}			
-	
-	
-void measure_J_distribution(char *output)
-{	
-	/**
-	 * Computing J_eff = Tr(R^T_i J U_{ij} R_j), R is defened no s.
-	 * J_eff[10][3*L3] are defined to save the value of J_eff of the 3N bonds,
-	 * beta will be couted by itself in the save outout file before J[i][0]
-	 * 10 is an abitrary choose for the number of silce
-	 * numbers of samples use the sample_amount in the header
-	 * cout -J_eff in output, since J is defined with a minus sign
-	 * **/
-	 
-	double foo[9] = {0}, xfoo[9]={0}, yfoo[9]={0}, zfoo[9]={0}; //xfoo = R^T[i] Ux[xn] R[xn]
-	int site;
-	int xn, yn, zn; 
-	
-	ofstream output_file;
-	output_file.open(output);
-	
-	while ( ( (beta >= beta_lower) && (beta <= beta_upper) ))
-		{ 
-
-		/**** re-thermalization and reset J_eff****/
-		  thermalization();
-		  
-		double J_eff[3*L3]={0}; // define J_eff at the current temperature 
-		  
-		  /**** measure ****/	  
-		  for (int k = 0; k < sample_amount; k++)
-		  { 
-			
-			 for ( int j = 0; j < L3*4*tau ; j++) // to generate a new sample without autocorrealtion 
-			 {
-				/**** choose a site ****/
-				site = int(L3*dsfmt_genrand_close_open(&dsfmt));
-
-				/**** randomly flip R, Ux, Uy, Uz ****/
-				switch(int(4 * dsfmt_genrand_close_open(&dsfmt))) 
-					{  
-						case 0 : flip_R(site); 
-									break;
-						case 1 : flip_Ux(site);
-									break;
-						case 2 : flip_Uy(site); 
-									break;
-						case 3 : flip_Uz(site); 
-									break;					 
-							}
-					}
-					
-			/** sweep the lattice **/
-			for( int i = 0; i < L3; i++)
-				{
-					/** J_eff at x direction 
-					 * foo = R_j R^T_i = R[xn]R^T[i]
-					 * xfoo = U[xn] foo
-					 * as in Rfoo[1] but no s[i] fields
-					 *  **/
-
-					xn = (i + 1) % L == 0 ? i + 1 - L : i + 1;
-					
-					cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasTrans,
-					3,3,3,1,
-					R[xn], 3, R[i],3,
-					0.0, foo,3);
-	
-					cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans,
-					3,3,3,1,
-					Ux[xn], 3, foo,3,
-					0.0, xfoo,3);
-					
-					J_eff[3*i] += J1 * xfoo[0] + J2 * xfoo[4] + J3 * xfoo[8];
-					
-					/** J_eff at y direction
-					 * foo = R_j R^T_i = R[yn]R^T[i]
-					 * yfoo = Uy[yn] foo
-					 *  **/
-					
-					yn = (i + L) % L2 < L ? i + L - L2 : i + L;
-
-					cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasTrans,
-					3,3,3,1,
-					R[yn], 3, R[i],3,
-					0.0, foo,3);
-	
-					cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans,
-					3,3,3,1,
-					Uy[yn], 3, foo,3,
-					0.0, yfoo,3);
-					
-					J_eff[3*i + 1] += J1 * yfoo[0] + J2 * yfoo[4] + J3 * yfoo[8];
-					
-					
-					/** J_eff at z direction 
-					 * foo = R_j R^T_i = R[zn]R^T[i]
-					 * zfoo = Uz[zn] foo
-					 * **/
-					
-					zn = i + L2 >= L3 ? i + L2 - L3 : i + L2;
-					
-					cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasTrans,
-					3,3,3,1,
-					R[zn], 3, R[i],3,
-					0.0, foo,3);
-	
-					cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans,
-					3,3,3,1,
-					Uz[zn], 3, foo,3,
-					0.0, zfoo,3);
-					
-					J_eff[3*i + 2] += J1 * zfoo[0] + J2 * zfoo[4] + J3 * zfoo[8];					
-					
-					}
-					
-			 }	 
-		
-		output_file << beta << '\t';	
-		for (int j = 0; j < 3*L3; j++)
-				output_file << -J_eff[j]/sample_amount << '\t';				
-
-		output_file << endl;
-		
-		if ( (beta >= beta_1) && (beta <= beta_2) )
-			{beta += beta_step_small;}
-		else {beta += beta_step_big;}
-				 		
-			}
-	output_file.close();
-	}
-
-void measure_effective_J (char *output)
-{	
-	/**
-	 * Computing J_eff = <Tr(R^T_i J U_{ij} R_j)>, R is defened no s.
-	 * cout -J_eff in output, since J is defined with a minus sign
-	 * **/
-	 
-	double foo[9] = {0}, xfoo[9]={0}, yfoo[9]={0}, zfoo[9]={0}; //xfoo = R^T[i] Ux[xn] R[xn]
-	int site;
-	int xn, yn, zn; 
-	double J_eff; //different to J_eff in measure_J_distribution, J_eff here is a number, the average 
-	
-	ofstream output_file;
-	output_file.open(output);
-	
-	while ( ( (beta >= beta_lower) && (beta <= beta_upper) ))
-		{ 
-
-		/**** re-thermalization and reset J_eff****/
-		  thermalization();
-		  
-		J_eff = 0; // re-set J_eff at the current temperature 
-		  
-		  /**** measure ****/	  
-		  for (int k = 0; k < sample_amount; k++)
-		  { 
-			
-			 for ( int j = 0; j < L3*4*tau ; j++) // to generate a new sample without autocorrealtion 
-			 {
-				/**** choose a site ****/
-				site = int(L3*dsfmt_genrand_close_open(&dsfmt));
-
-				/**** randomly flip R, Ux, Uy, Uz ****/
-				switch(int(4 * dsfmt_genrand_close_open(&dsfmt))) 
-					{  
-						case 0 : flip_R(site); 
-									break;
-						case 1 : flip_Ux(site);
-									break;
-						case 2 : flip_Uy(site); 
-									break;
-						case 3 : flip_Uz(site); 
-									break;					 
-							}
-					}
-					
-			/** sweep the lattice **/
-			for( int i = 0; i < L3; i++)
-				{
-					/** J_eff at x direction 
-					 * foo = R_j R^T_i = R[xn]R^T[i]
-					 * xfoo = U[xn] foo
-					 * as in Rfoo[1] but no s[i] fields
-					 *  **/
-
-					xn = (i + 1) % L == 0 ? i + 1 - L : i + 1;
-					
-					cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasTrans,
-					3,3,3,1,
-					R[xn], 3, R[i],3,
-					0.0, foo,3);
-	
-					cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans,
-					3,3,3,1,
-					Ux[xn], 3, foo,3,
-					0.0, xfoo,3);
-					
-					J_eff += J1 * xfoo[0] + J2 * xfoo[4] + J3 * xfoo[8];
-					
-					/** J_eff at y direction
-					 * foo = R_j R^T_i = R[yn]R^T[i]
-					 * yfoo = Uy[yn] foo
-					 *  **/
-					
-					yn = (i + L) % L2 < L ? i + L - L2 : i + L;
-
-					cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasTrans,
-					3,3,3,1,
-					R[yn], 3, R[i],3, 0.0, foo,3);
-	
-					cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans,
-					3,3,3,1,
-					Uy[yn], 3, foo,3,
-					0.0, yfoo,3);
-					
-					J_eff += J1 * yfoo[0] + J2 * yfoo[4] + J3 * yfoo[8];
-					
-					
-					/** J_eff at z direction 
-					 * foo = R_j R^T_i = R[zn]R^T[i]
-					 * zfoo = Uz[zn] foo
-					 * **/
-					
-					zn = i + L2 >= L3 ? i + L2 - L3 : i + L2;
-					
-					cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasTrans,
-					3,3,3,1,
-					R[zn], 3, R[i],3,
-					0.0, foo,3);
-	
-					cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans,
-					3,3,3,1,
-					Uz[zn], 3, foo,3,
-					0.0, zfoo,3);
-					
-					J_eff += J1 * zfoo[0] + J2 * zfoo[4] + J3 * zfoo[8];					
-					
-					}
-					
-			 }	 
-		J_eff = J_eff/sample_amount/L3/3; // the additional 3 is due to there are 3L3 bonds
-		
-		output_file << beta << '\t' << -J_eff<< endl;
-
-		if ( (beta >= beta_1) && (beta <= beta_2) )
-			{beta += beta_step_small;}
-		else {beta += beta_step_big;}
-				 		
-			}
-	output_file.close();
-	}
+	}	
