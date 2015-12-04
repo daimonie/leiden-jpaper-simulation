@@ -259,8 +259,19 @@ bool josko_diagnostics()
 	time_t time_after = time(0);
 	
 	printf("\t\t %.3f seconds. \n", difftime(time_after,time_before)); 
+	//testing a new function for site_energy
+	int se_samples = 1;
+	double se_old = 0.0;
+	double se_new = 0.0;
 	
-	return false;
+	for( jj = 0; jj <  u_samples; jj++)
+	{
+		se_old = site_energy(int jj);
+		se_new = 0.0;
+		
+		printf(" old versus new,/t %.3f %3.f", se_old, se_new );
+	}
+	return true;
 }
 /**** generates rotation matrices ****/
 void generate_rotation_matrices ()
