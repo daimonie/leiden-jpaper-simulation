@@ -42,6 +42,7 @@ double site_energy(int i);
 double site_energy_new(int i);  
 double site_energy_old(int i);  
 int fix_index(int, string, int);
+double site_energy_new_element(int, string, int);
 void flip_R(int, double, double);
 void flip_Ux(int, double, double);
 void flip_Uy(int, double, double);
@@ -269,13 +270,16 @@ bool josko_diagnostics()
 	int se_samples = L3;
 	double se_old = 0.0;
 	double se_new = 0.0;
-	
-	for( jj = 0; jj <  se_samples; jj++)
+	//set to 10k to compare function speed.
+	for( int repeat = 0; repeat < 1; repeat++)
 	{
-		se_old = site_energy_old(jj);
-		se_new = site_energy_new(jj);
-		
-		//printf(" old versus new,\t %.3f %3.f .\n", se_old, se_new );
+		for( jj = 0; jj <  se_samples; jj++)
+		{
+			se_old = site_energy_old(jj);
+			se_new = site_energy_new(jj);
+			
+			printf(" old versus new,\t %.3f %.3f .\n", se_old, se_new );
+		}
 	}
 	return true;
 }
@@ -442,19 +446,69 @@ double site_energy_new(int i)
 {
 	//Let's determine neighbours.
 	//the first neighbours are along the x-axis!
-	
-	int x_negative = fix_index( i, "x", -1);
-	int x_positive = fix_index( i, "x", +1);
-	
-	int y_negative = fix_index( i, "y", -1);
-	int y_positive = fix_index( i, "y", +1);
-	
-	int z_negative = fix_index( i, "z", -1);
-	int z_positive = fix_index( i, "z", +1);
 	 
-	return 0.33*i;
+	double x_negative = site_energy_new_element( i, "x", -1);
+	double x_positive = site_energy_new_element( i, "x", +1);
+	
+	double y_negative = site_energy_new_element( i, "y", -1);
+	double y_positive = site_energy_new_element( i, "y", +1);
+	
+	double z_negative = site_energy_new_element( i, "z", -1);
+	double z_positive = site_energy_new_element( i, "z", +1);
+	
+	return x_negative + y_negative + z_negative + x_positive + y_positive + z_positive;
 }
-
+double site_energy_new_element( int index, string mu, int change)
+{
+	int l, k, j = fix_index( index, mu, change);
+	double partial_energy = 0.0;
+	
+	#pragma omp parallel for collapse(2) reduction(+:partial_energy)
+	for( l = 0; l < 3; l++)
+	{
+		for( k = 0; k < 3; k++ )
+		{ 
+			if( mu == "x" && change == -1)
+			{
+				partial_energy += J1 * s[index] * s[j] * Ux[index][0*3+l] * R[index][3*l+k] * R[j][3*k+0];
+				partial_energy += J2 * s[index] * s[j] * Ux[index][1*3+l] * R[index][3*l+k] * R[j][3*k+1];
+				partial_energy += J3 * s[index] * s[j] * Ux[index][2*3+l] * R[index][3*l+k] * R[j][3*k+2]; 
+			}
+			else if( mu == "x" && change == 1)
+			{
+				partial_energy += J1 * s[index] * s[j] * Ux[index][0*3+l] * R[j][3*l+k] * R[index][3*k+0];
+				partial_energy += J2 * s[index] * s[j] * Ux[index][1*3+l] * R[j][3*l+k] * R[index][3*k+1];
+				partial_energy += J3 * s[index] * s[j] * Ux[index][2*3+l] * R[j][3*l+k] * R[index][3*k+2];
+			}
+			else if( mu == "y" && change == -1)
+			{
+				partial_energy += J1 * s[index] * s[j] * Uy[index][0*3+l] * R[index][3*l+k] * R[j][3*k+0];
+				partial_energy += J2 * s[index] * s[j] * Uy[index][1*3+l] * R[index][3*l+k] * R[j][3*k+1];
+				partial_energy += J3 * s[index] * s[j] * Uy[index][2*3+l] * R[index][3*l+k] * R[j][3*k+2];
+			}
+			else if( mu == "y" && change == 1)
+			{
+				partial_energy += J1 * s[index] * s[j] * Uy[index][0*3+l] * R[j][3*l+k] * R[index][3*k+0];
+				partial_energy += J2 * s[index] * s[j] * Uy[index][1*3+l] * R[j][3*l+k] * R[index][3*k+1];
+				partial_energy += J3 * s[index] * s[j] * Uy[index][2*3+l] * R[j][3*l+k] * R[index][3*k+2];
+			}
+			else if( mu == "z" && change == -1)
+			{
+				partial_energy += J1 * s[index] * s[j] * Uz[index][0*3+l] * R[index][3*l+k] * R[j][3*k+0];
+				partial_energy += J2 * s[index] * s[j] * Uz[index][1*3+l] * R[index][3*l+k] * R[j][3*k+1];
+				partial_energy += J3 * s[index] * s[j] * Uz[index][2*3+l] * R[index][3*l+k] * R[j][3*k+2];
+			}
+			else if( mu == "z" && change == 1)
+			{
+				partial_energy += J1 * s[index] * s[j] * Uz[index][0*3+l] * R[j][3*l+k] * R[index][3*k+0];
+				partial_energy += J2 * s[index] * s[j] * Uz[index][1*3+l] * R[j][3*l+k] * R[index][3*k+1];
+				partial_energy += J3 * s[index] * s[j] * Uz[index][2*3+l] * R[j][3*l+k] * R[index][3*k+2];
+			}
+		}
+	}
+	
+	return partial_energy;
+}
 int fix_index( int index, string mu, int change)
 {
 	//Let me clarify.
@@ -591,6 +645,7 @@ double site_energy_old(int i)
 	3,3,3,1,
 	Ux[i], 3, foo,3,
 	0.0, Rfoo[0],3);
+	
 	
 	cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasTrans,
 	3,3,3,s[xn]*s[i],
