@@ -1,4 +1,4 @@
 rm simulate
-g++ -O3 -fno-strict-aliasing -std=c++11 -Wall -Wextra -msse2 -DHAVE_SSE2=1  -DDSFMT_MEXP=19937 -o simulate D2d.cpp dSFMT*/dSFMT.c  -lgsl -lgslcblas -lm -fopenmp -lpthread
+g++ -fno-strict-aliasing -std=c++11 -Wall -Wextra -msse2 -DHAVE_SSE2=1  -DDSFMT_MEXP=19937 -o simulate D2d.cpp dSFMT*/dSFMT.c  -lgsl -lgslcblas -lm -fopenmp -lpthread
 ./simulate C 0.0 9.0 3 3 3 6 0.5 E D2d_test.dat 0.1 0.1 1.0 100
  

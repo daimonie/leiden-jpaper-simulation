@@ -276,14 +276,14 @@ bool josko_diagnostics()
 	//set to 10k to compare function speed.
 	for( int repeat = 0; repeat < 1; repeat++)
 	{
-		for( jj = se_samples-1; jj <  se_samples; jj++)
+		for( jj = 0; jj <  se_samples; jj++)
 		{
 			se_old = site_energy_old(jj);
 			se_new = site_energy_new(jj);
 			
 			printf(" old versus new,\t %.3f %.3f .\n", se_old, se_new );
 		}
-	} 
+	}  
 	return true;
 }
 /**** generates rotation matrices ****/
@@ -473,89 +473,134 @@ double site_energy_new_element( int index, string mu, int change)
 	int l, k, j = fix_index( index, mu, change);
 	double partial_energy = 0.0;
 	
-	double foo[9] = {0};
+// 	double foo[9] = {0};
 	int ii = 0; 
 	double result;
-	int m;
+	int m = 0;
+	int n = 0; 
 	
 	
-	for( int n = 0; n < 3; n++)
-	{ 		
-		ii = n*4;
-		m = n;
-		foo[ii] = 0;
+	#pragma omp parallel for reduction(+ : partial_energy) private(result)
+	for(n = 0; n < 3; n++)
+	{ 		 
 		for( l = 0; l < 3; l++)
 		{
 			for( k = 0; k < 3; k++ )
 			{ 
+				m = n;
+				ii = n*4; 
+// 				foo[ii] = 0;	
 				if( mu == "x" && change == -1)
-				{  			 
-					result = s[index]*s[j]*Ux[index][n*3+l] * R[index][l*3+k] * R[j][k*3+m];
+				{  		
+					result = s[index]*s[j]*Ux[index][n*3+l] * R[index][l*3+k] * R[j][k+m*3];
 					
-					foo[ii] += result;
+// 					foo[ii] += result;
 					if( ii == 0)
 					{
 						partial_energy += J1 * result;
 					}
-				} 
-				else if( mu == "x" && change == 1)
-				{  			 
-					result = s[index]*s[j]*Ux[j][n*3+l] * R[j][l*3+k] * R[index][k*3+m];
-					foo[ii] += result;
-					if( ii == 0)
+					else if( ii == 4)
 					{
-						partial_energy += J1 * result;
+						partial_energy += J2 * result;
 					}
-				} 
+					else if( ii == 8)
+					{
+						partial_energy += J3 * result;
+					} 
+				}  
 				else if( mu == "y" && change == -1)
 				{  			 
-					result = s[index]*s[j]*Uy[index][n*3+l] * R[index][l*3+k] * R[j][k*3+m];
-					foo[ii] += result;
+					result = s[index]*s[j]*Uy[index][n*3+l] * R[index][l*3+k] * R[j][k+m*3];
+					
+// 					foo[ii] += result;
 					if( ii == 0)
 					{
 						partial_energy += J1 * result;
 					}
-				} 
-				else if( mu == "y" && change == 1)
-				{  			 
-					result = s[index]*s[j]*Uy[j][n*3+l] * R[j][l*3+k] * R[index][k*3+m];
-					foo[ii] += result;
-					if( ii == 0)
+					else if( ii == 4)
 					{
-						partial_energy += J1 * result;
+						partial_energy += J2 * result;
 					}
-				} 
+					else if( ii == 8)
+					{
+						partial_energy += J3 * result;
+					} 
+				}  
 				else if( mu == "z" && change == -1)
 				{  			 
-					result = s[index]*s[j]*Uz[index][n*3+l] * R[index][l*3+k] * R[j][k*3+m];
-					foo[ii] += result;
+					result = s[index]*s[j]*Uz[index][n*3+l] * R[index][l*3+k] * R[j][k+m*3];
+					
+// 					foo[ii] += result;
 					if( ii == 0)
 					{
 						partial_energy += J1 * result;
 					}
-				} 
+					else if( ii == 4)
+					{
+						partial_energy += J2 * result;
+					}
+					else if( ii == 8)
+					{
+						partial_energy += J3 * result;
+					} 
+				}  
+				else if( mu == "x" && change == 1)
+				{  			 
+					result = s[index]*s[j]*Ux[j][n*3+l] * R[j][l*3+k] * R[index][k+m*3];
+					
+// 					foo[ii] += result;
+					if( ii == 0)
+					{
+						partial_energy += J1 * result;
+					}
+					else if( ii == 4)
+					{
+						partial_energy += J2 * result;
+					}
+					else if( ii == 8)
+					{
+						partial_energy += J3 * result;
+					} 
+				}  
+				else if( mu == "y" && change == 1)
+				{  			 
+					result = s[index]*s[j]*Uy[j][n*3+l] * R[j][l*3+k] * R[index][k+m*3];
+					
+// 					foo[ii] += result;
+					if( ii == 0)
+					{
+						partial_energy += J1 * result;
+					}
+					else if( ii == 4)
+					{
+						partial_energy += J2 * result;
+					}
+					else if( ii == 8)
+					{
+						partial_energy += J3 * result;
+					} 
+				}  
 				else if( mu == "z" && change == 1)
 				{  			 
-					result = s[index]*s[j]*Uz[j][n*3+l] * R[j][l*3+k] * R[index][k*3+m];
-					foo[ii] += result;
+					result = s[index]*s[j]*Uz[j][n*3+l] * R[j][l*3+k] * R[index][k+m*3];
+					
+// 					foo[ii] += result;
 					if( ii == 0)
 					{
 						partial_energy += J1 * result;
 					}
-				} 
+					else if( ii == 4)
+					{
+						partial_energy += J2 * result;
+					}
+					else if( ii == 8)
+					{
+						partial_energy += J3 * result;
+					} 
+				}  
 			}
-		} 
-	} 
-	partial_energy += J1 * foo[0] ;
-	partial_energy += J2 * foo[4] ;
-	partial_energy += J3 * foo[8] ;
-	string label = "new_foo ";
-	label += mu;
-	label += change>0?" plus":" min";
-	
-	print_matrix(label, foo); 
-	
-	
+		}  
+	}   
 	return partial_energy;
 }
 int fix_index( int index, string mu, int change)
@@ -678,16 +723,7 @@ double site_energy_old(int i)
 	
 	/******** total energy *****/ 
 	double Sfoo = 0;
-	
-	print_matrix("old_foo x min", Rfoo[0]);
-	print_matrix("old_foo x plus", Rfoo[1]);
-	
-	print_matrix("old_foo y min", Rfoo[2]);
-	print_matrix("old_foo y plus", Rfoo[3]);
-	
-	print_matrix("old_foo z min", Rfoo[4]);
-	print_matrix("old_foo z plus", Rfoo[5]);
-	
+	 
 	
 	for(int j = 0; j < 6; j++)
         {
