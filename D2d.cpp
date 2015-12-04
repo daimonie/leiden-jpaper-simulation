@@ -17,6 +17,7 @@
 #include <gsl/gsl_cblas.h>
 #include <iomanip> 
 #include <ctime>
+#include <string>
 #include "omp.h"
 
 //random generation libraries
@@ -38,6 +39,9 @@ void uniform_initialization();
 void random_initialization();
 void build_rotation_matrix(int i);
 double site_energy(int i);  
+double site_energy_new(int i);  
+double site_energy_old(int i);  
+int fix_index(int, string, int);
 void flip_R(int, double, double);
 void flip_Ux(int, double, double);
 void flip_Uy(int, double, double);
@@ -123,7 +127,7 @@ int main(int argc, char **argv)
 	beta_upper = atof(argv[3]);
 	
 	if (*C_or_H == 'C') // if cooling
-		{			
+	{			
 		beta = beta_lower; // beta from small to big when cooling
 		beta_step_small = atof(argv[4]);
 		beta_step_big = atof(argv[5]);
@@ -168,8 +172,10 @@ int main(int argc, char **argv)
 	{
 		return 0;
 	}
-	
-	printf("#//Calculate from %2.3f to %2.3f, using {%2.3f, %2.3f, %2.3f}, accuracy %2.3f and %d samples \n", beta_lower, beta_upper, J1, J2, J3, accurate, sample_amount);
+	//I put in  argc here because of the annoying warning from the compiler.
+	printf("#//Calculate from %2.3f to %2.3f, using {%2.3f, %2.3f, %2.3f}, accuracy %2.3f and %d samples. Argc=%d . \n", beta_lower, beta_upper, J1, J2, J3, accurate, sample_amount, argc
+		
+	);
 	printf("#//Maximum cores %d \n", omp_get_max_threads());
         if(*choice == 'E')
         {
@@ -210,7 +216,7 @@ double dice()
 bool josko_diagnostics()
 {
         int ii, jj, kk;
-        int rmc_samples = rmc_number*rmc_number*rmc_number*10000;
+        int rmc_samples = rmc_number*rmc_number*rmc_number*10;
         int build_random = 0;
         double rmc_matrix_average[9] = {0}; 
         for(ii = 0; ii < rmc_samples; ii++)
@@ -230,7 +236,7 @@ bool josko_diagnostics()
 	
 	time_t time_before = time(0);
 	
-        int rnd_samples = 20000; 
+        int rnd_samples = 10000; 
 	
         double rnd_average = 0.0;
         double rnd_correlation = 0.0;
@@ -260,16 +266,16 @@ bool josko_diagnostics()
 	
 	printf("\t\t %.3f seconds. \n", difftime(time_after,time_before)); 
 	//testing a new function for site_energy
-	int se_samples = 1;
+	int se_samples = L3;
 	double se_old = 0.0;
 	double se_new = 0.0;
 	
-	for( jj = 0; jj <  u_samples; jj++)
+	for( jj = 0; jj <  se_samples; jj++)
 	{
-		se_old = site_energy(int jj);
-		se_new = 0.0;
+		se_old = site_energy_old(jj);
+		se_new = site_energy_new(jj);
 		
-		printf(" old versus new,/t %.3f %3.f", se_old, se_new );
+		//printf(" old versus new,\t %.3f %3.f .\n", se_old, se_new );
 	}
 	return true;
 }
@@ -427,9 +433,101 @@ void random_initialization()
         }
 		
 }
-
-	
+// Site energy functions. One to switch old/new behaviour, and a new/old function.	
 double site_energy(int i)
+{
+	return site_energy_old(i);
+}
+double site_energy_new(int i)
+{
+	//Let's determine neighbours.
+	//the first neighbours are along the x-axis!
+	
+	int x_negative = fix_index( i, "x", -1);
+	int x_positive = fix_index( i, "x", +1);
+	
+	int y_negative = fix_index( i, "y", -1);
+	int y_positive = fix_index( i, "y", +1);
+	
+	int z_negative = fix_index( i, "z", -1);
+	int z_positive = fix_index( i, "z", +1);
+	 
+	return 0.33*i;
+}
+
+int fix_index( int index, string mu, int change)
+{
+	//Let me clarify.
+	/***
+	 * The indices are sorted as follows.
+	 * z = 0
+	 * 	00 01 02
+	 * 	03 04 05
+	 * 	06 07 08
+	 * z = 1
+	 * 	09 10 11
+	 * 	12 13 14
+	 * 	15 16 17
+	 * z = 2
+	 * 	18 19 20
+	 * 	21 22 23
+	 * 	24 25 26
+	 * 
+	 * Assumed here are periodic boundary conditions, as always.
+	 * the index can be constructed [x,y,z in units lattice constant]
+	 * 	index = L3 z + L2 y + 1 x
+	 * 
+	 * As always with pbc, the edges are the concern. For instance, for x=0
+	 * the positive neighbour is x=1, but the negative one is.. x = L-1! [Because L=8, so L-1 is index 7]
+	 * 
+	 * Simplistically, negative is x = 0 -1 = -1.
+	 * So, if x < 0, add L. if x > L, remove L.
+	 * 
+	 * 
+	 * 
+	 * ***/
+	//To me, this method is the most clear. It shouldn't take long in our program either; it is just a small calculation, after all.
+	// note that this way is also, by far, the most checkable. if it turns out to be slow I will adapt the notation used in site_energy_old
+	// instead.
+	
+	int x, y, z;
+	
+	z = (index - index%L2) / L2;
+	
+	index -= z * L2;
+	
+	y = (index - index%L) / L;
+	
+	index -= y * L;
+	
+	x = index;
+	if (mu == "x")
+	{
+		x += change;
+	}
+	else if (mu == "y")
+	{
+		y += change;
+	}
+	else if (mu == "z")
+	{
+		z += change;
+	} 
+	
+	x = (x < 0) ? ( x + L ): x;
+	y = (y < 0) ? ( y + L ): y;
+	z = (z < 0) ? ( z + L ): z;
+	
+	
+	x = (x >= L) ? ( x - L ): x;
+	y = (y >= L) ? ( y - L ): y;
+	z = (z >= L) ? ( z - L ): z;
+	
+	index = z * L2 + y * L + x;
+	 
+	return index;	
+}
+double site_energy_old(int i)
 {
 	/****** find neighbour, checked*****/
 	
@@ -443,7 +541,9 @@ double site_energy(int i)
 	
 	zp = i < L2 ? i - L2 + L3 : i - L2;
 	zn = i + L2 >= L3 ? i + L2 - L3 : i + L2;
+	 
 	
+	 
 	
 	double Rfoo[6][9] = {{0}};
 	double foo[9] = {0};
