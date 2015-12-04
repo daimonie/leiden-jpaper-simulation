@@ -266,7 +266,7 @@ bool josko_diagnostics()
         printf("Random: omp critical, mode %d,  samples %d, average [%2.3f], correlation [%.3f]. \n", dice_mode, rnd_samples, rnd_average, rnd_correlation);
 	time_t time_after = time(0);
 	
-	/*
+
 	printf("\t\t %.3f seconds. \n", difftime(time_after,time_before)); 
 	//testing a new function for site_energy
 	int se_samples = L3;
@@ -282,33 +282,8 @@ bool josko_diagnostics()
 			
 			printf(" old versus new,\t %.3f %.3f .\n", se_old, se_new );
 		}
-	}
-	//test is not going well. Let's try this.
-	*/
-	for(int i = 0; i < L3; i++)
-	{
-		int xp =  fix_index( i, "x", -1);
-		
-		site_energy_new_element( i, "x", -1);
-		
-		
-		double Rfoo[6][9] = {{0}};
-		double foo[9] = {0};
-		
-		cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasTrans,
-		3,3,3,s[i]*s[xp],
-		R[i], 3, R[xp],3,
-		0.0, foo,3);
-		
-		cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans,
-		3,3,3,1,
-		Ux[i], 3, foo,3,
-		0.0, Rfoo[0],3);
-		
-		printf("\tRfoo\t %.3f\t %.3f\t %.3f\n\n",
-		Rfoo[0][0], Rfoo[0][4], Rfoo[0][8]);
-	}
-	return true;
+	} 
+	return false;
 }
 /**** generates rotation matrices ****/
 void generate_rotation_matrices ()
@@ -449,15 +424,15 @@ void random_initialization()
 			build_rotation_matrix(i, dice(), dice());
 		
 			/** build Ux **/
-			j = int(U_order * dsfmt_genrand_close_open(&dsfmt));
+			j = int(U_order * dice());
 			copy(begin(U_bath[j]),end(U_bath[j]),begin(Ux[i]));	
 			
 			/** build Uy **/
-			j = int(U_order * dsfmt_genrand_close_open(&dsfmt)); 
+			j = int(U_order * dice()); 
                         copy(begin(U_bath[j]),end(U_bath[j]),begin(Uy[i]));     
 			
 			/** build Uz **/
-			j = int(U_order * dsfmt_genrand_close_open(&dsfmt)); 
+			j = int(U_order * dice()); 
                         copy(begin(U_bath[j]),end(U_bath[j]),begin(Uz[i]));     
 			
 			
@@ -467,7 +442,7 @@ void random_initialization()
 // Site energy functions. One to switch old/new behaviour, and a new/old function.	
 double site_energy(int i)
 {
-	return site_energy_old(i);
+	return site_energy_new(i);
 }
 double site_energy_new(int i)
 {
@@ -490,56 +465,82 @@ double site_energy_new_element( int index, string mu, int change)
 	int l, k, j = fix_index( index, mu, change);
 	double partial_energy = 0.0;
 	
-	double foo1 = 0; 
-	double foo2 = 0; 
-	double foo3 = 0; 
-	for( l = 0; l < 3; l++)
-	{
-		for( k = 0; k < 3; k++ )
-		{ 
-			if( mu == "x" && change == -1)
-			{  				
-				foo1 += s[index] * s[j] * Ux[index][0*3+l] * R[index][3*l+k] * R[j][3*k+0];
-				foo2 += s[index] * s[j] * Ux[index][1*3+l] * R[index][3*l+k] * R[j][3*k+1];
-				foo3 += s[index] * s[j] * Ux[index][2*3+l] * R[index][3*l+k] * R[j][3*k+2];
-				
-				partial_energy += J1 * s[index] * s[j] * Ux[index][0*3+l] * R[index][3*l+k] * R[j][3*k+0];
-				partial_energy += J2 * s[index] * s[j] * Ux[index][1*3+l] * R[index][3*l+k] * R[j][3*k+1];
-				partial_energy += J3 * s[index] * s[j] * Ux[index][2*3+l] * R[index][3*l+k] * R[j][3*k+2]; 
+	double foo[9] = {0};
+	int ii = 0; 
+	double result;
+	int m;
+	
+	
+	#pragma omp parallel for reduction(+:partial_energy)
+	for( int n = 0; n < 3; n++)
+	{ 		
+		ii = n*4;
+		m = n;
+		foo[ii] = 0;
+		for( l = 0; l < 3; l++)
+		{
+			for( k = 0; k < 3; k++ )
+			{ 
+				if( mu == "x" && change == -1)
+				{  			 
+					result = Ux[index][n*3+l] * R[index][l*3+k] * R[j][k*3+m];
+					foo[ii] += result;
+					if( ii == 0)
+					{
+						partial_energy += J1 * result;
+					}
+				} 
+				else if( mu == "x" && change == 1)
+				{  			 
+					result = Ux[index][n*3+l] * R[j][l*3+k] * R[j][k*3+m];
+					foo[ii] += result;
+					if( ii == 0)
+					{
+						partial_energy += J1 * result;
+					}
+				} 
+				else if( mu == "y" && change == -1)
+				{  			 
+					result = Uy[index][n*3+l] * R[index][l*3+k] * R[j][k*3+m];
+					foo[ii] += result;
+					if( ii == 0)
+					{
+						partial_energy += J1 * result;
+					}
+				} 
+				else if( mu == "y" && change == 1)
+				{  			 
+					result = Uy[index][n*3+l] * R[j][l*3+k] * R[j][k*3+m];
+					foo[ii] += result;
+					if( ii == 0)
+					{
+						partial_energy += J1 * result;
+					}
+				} 
+				else if( mu == "z" && change == -1)
+				{  			 
+					result = Uz[index][n*3+l] * R[index][l*3+k] * R[j][k*3+m];
+					foo[ii] += result;
+					if( ii == 0)
+					{
+						partial_energy += J1 * result;
+					}
+				} 
+				else if( mu == "z" && change == 1)
+				{  			 
+					result = Uz[index][n*3+l] * R[j][l*3+k] * R[j][k*3+m];
+					foo[ii] += result;
+					if( ii == 0)
+					{
+						partial_energy += J1 * result;
+					}
+				} 
 			}
-			else if( mu == "x" && change == 1)
-			{
-				partial_energy += J1 * s[index] * s[j] * Ux[index][0*3+l] * R[j][3*l+k] * R[index][3*k+0];
-				partial_energy += J2 * s[index] * s[j] * Ux[index][1*3+l] * R[j][3*l+k] * R[index][3*k+1];
-				partial_energy += J3 * s[index] * s[j] * Ux[index][2*3+l] * R[j][3*l+k] * R[index][3*k+2];
-			}
-			else if( mu == "y" && change == -1)
-			{
-				partial_energy += J1 * s[index] * s[j] * Uy[index][0*3+l] * R[index][3*l+k] * R[j][3*k+0];
-				partial_energy += J2 * s[index] * s[j] * Uy[index][1*3+l] * R[index][3*l+k] * R[j][3*k+1];
-				partial_energy += J3 * s[index] * s[j] * Uy[index][2*3+l] * R[index][3*l+k] * R[j][3*k+2];
-			}
-			else if( mu == "y" && change == 1)
-			{
-				partial_energy += J1 * s[index] * s[j] * Uy[index][0*3+l] * R[j][3*l+k] * R[index][3*k+0];
-				partial_energy += J2 * s[index] * s[j] * Uy[index][1*3+l] * R[j][3*l+k] * R[index][3*k+1];
-				partial_energy += J3 * s[index] * s[j] * Uy[index][2*3+l] * R[j][3*l+k] * R[index][3*k+2];
-			}
-			else if( mu == "z" && change == -1)
-			{
-				partial_energy += J1 * s[index] * s[j] * Uz[index][0*3+l] * R[index][3*l+k] * R[j][3*k+0];
-				partial_energy += J2 * s[index] * s[j] * Uz[index][1*3+l] * R[index][3*l+k] * R[j][3*k+1];
-				partial_energy += J3 * s[index] * s[j] * Uz[index][2*3+l] * R[index][3*l+k] * R[j][3*k+2];
-			}
-			else if( mu == "z" && change == 1)
-			{
-				partial_energy += J1 * s[index] * s[j] * Uz[index][0*3+l] * R[j][3*l+k] * R[index][3*k+0];
-				partial_energy += J2 * s[index] * s[j] * Uz[index][1*3+l] * R[j][3*l+k] * R[index][3*k+1];
-				partial_energy += J3 * s[index] * s[j] * Uz[index][2*3+l] * R[j][3*l+k] * R[index][3*k+2];
-			}
-		}
-	}
-	printf("\t diag\t%.3f\t%.3f\t%.3f\n", foo1, foo2, foo3);
+		} 
+	} 
+	partial_energy += J1 * foo[0] ;
+	partial_energy += J2 * foo[4] ;
+	partial_energy += J3 * foo[8] ;
 	return partial_energy;
 }
 int fix_index( int index, string mu, int change)
