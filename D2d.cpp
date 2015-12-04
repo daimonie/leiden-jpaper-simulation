@@ -50,6 +50,7 @@ void flip_Uz(int, double, double);
 void thermalization();
 void estimate_beta_c(); 
 double orderparameter_n(); 
+void print_matrix(string, double[]);
 
 
 void generate_rotation_matrices();
@@ -275,7 +276,7 @@ bool josko_diagnostics()
 	//set to 10k to compare function speed.
 	for( int repeat = 0; repeat < 1; repeat++)
 	{
-		for( jj = 0; jj <  se_samples; jj++)
+		for( jj = se_samples-1; jj <  se_samples; jj++)
 		{
 			se_old = site_energy_old(jj);
 			se_new = site_energy_new(jj);
@@ -283,7 +284,7 @@ bool josko_diagnostics()
 			printf(" old versus new,\t %.3f %.3f .\n", se_old, se_new );
 		}
 	} 
-	return false;
+	return true;
 }
 /**** generates rotation matrices ****/
 void generate_rotation_matrices ()
@@ -460,6 +461,13 @@ double site_energy_new(int i)
 	  
 	return x_negative + y_negative + z_negative + x_positive + y_positive + z_positive;
 }
+void print_matrix(string name, double matrix[])
+{
+	printf("%s = np.matrix([[%.3f,%.3f,%.3f],[%.3f,%.3f,%.3f],[%.3f,%.3f,%.3f])\n",
+		name.c_str(), matrix[0], matrix[1], matrix[2],
+		matrix[3], matrix[4], matrix[5],
+		matrix[6], matrix[7], matrix[8]);
+}
 double site_energy_new_element( int index, string mu, int change)
 {
 	int l, k, j = fix_index( index, mu, change);
@@ -471,7 +479,6 @@ double site_energy_new_element( int index, string mu, int change)
 	int m;
 	
 	
-	#pragma omp parallel for reduction(+:partial_energy)
 	for( int n = 0; n < 3; n++)
 	{ 		
 		ii = n*4;
@@ -483,7 +490,8 @@ double site_energy_new_element( int index, string mu, int change)
 			{ 
 				if( mu == "x" && change == -1)
 				{  			 
-					result = Ux[index][n*3+l] * R[index][l*3+k] * R[j][k*3+m];
+					result = s[index]*s[j]*Ux[index][n*3+l] * R[index][l*3+k] * R[j][k*3+m];
+					
 					foo[ii] += result;
 					if( ii == 0)
 					{
@@ -492,7 +500,7 @@ double site_energy_new_element( int index, string mu, int change)
 				} 
 				else if( mu == "x" && change == 1)
 				{  			 
-					result = Ux[index][n*3+l] * R[j][l*3+k] * R[j][k*3+m];
+					result = s[index]*s[j]*Ux[j][n*3+l] * R[j][l*3+k] * R[index][k*3+m];
 					foo[ii] += result;
 					if( ii == 0)
 					{
@@ -501,7 +509,7 @@ double site_energy_new_element( int index, string mu, int change)
 				} 
 				else if( mu == "y" && change == -1)
 				{  			 
-					result = Uy[index][n*3+l] * R[index][l*3+k] * R[j][k*3+m];
+					result = s[index]*s[j]*Uy[index][n*3+l] * R[index][l*3+k] * R[j][k*3+m];
 					foo[ii] += result;
 					if( ii == 0)
 					{
@@ -510,7 +518,7 @@ double site_energy_new_element( int index, string mu, int change)
 				} 
 				else if( mu == "y" && change == 1)
 				{  			 
-					result = Uy[index][n*3+l] * R[j][l*3+k] * R[j][k*3+m];
+					result = s[index]*s[j]*Uy[j][n*3+l] * R[j][l*3+k] * R[index][k*3+m];
 					foo[ii] += result;
 					if( ii == 0)
 					{
@@ -519,7 +527,7 @@ double site_energy_new_element( int index, string mu, int change)
 				} 
 				else if( mu == "z" && change == -1)
 				{  			 
-					result = Uz[index][n*3+l] * R[index][l*3+k] * R[j][k*3+m];
+					result = s[index]*s[j]*Uz[index][n*3+l] * R[index][l*3+k] * R[j][k*3+m];
 					foo[ii] += result;
 					if( ii == 0)
 					{
@@ -528,7 +536,7 @@ double site_energy_new_element( int index, string mu, int change)
 				} 
 				else if( mu == "z" && change == 1)
 				{  			 
-					result = Uz[index][n*3+l] * R[j][l*3+k] * R[j][k*3+m];
+					result = s[index]*s[j]*Uz[j][n*3+l] * R[j][l*3+k] * R[index][k*3+m];
 					foo[ii] += result;
 					if( ii == 0)
 					{
@@ -541,6 +549,13 @@ double site_energy_new_element( int index, string mu, int change)
 	partial_energy += J1 * foo[0] ;
 	partial_energy += J2 * foo[4] ;
 	partial_energy += J3 * foo[8] ;
+	string label = "new_foo ";
+	label += mu;
+	label += change>0?" plus":" min";
+	
+	print_matrix(label, foo); 
+	
+	
 	return partial_energy;
 }
 int fix_index( int index, string mu, int change)
@@ -663,6 +678,16 @@ double site_energy_old(int i)
 	
 	/******** total energy *****/ 
 	double Sfoo = 0;
+	
+	print_matrix("old_foo x min", Rfoo[0]);
+	print_matrix("old_foo x plus", Rfoo[1]);
+	
+	print_matrix("old_foo y min", Rfoo[2]);
+	print_matrix("old_foo y plus", Rfoo[3]);
+	
+	print_matrix("old_foo z min", Rfoo[4]);
+	print_matrix("old_foo z plus", Rfoo[5]);
+	
 	
 	for(int j = 0; j < 6; j++)
         {
