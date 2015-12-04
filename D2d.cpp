@@ -369,6 +369,7 @@ void build_gauge_bath()
 /**** initialize R, sigma, U ****/
 void uniform_initialization()
 {
+	#pragma omp parallel for
 	for(int i = 0; i < L3; i++)
         {
 		 R[i][0] = 1;
@@ -438,6 +439,38 @@ double site_energy(int i)
 	
 //Will have to see if this can be formulated faster.
 	//CONTINUE
+	/****
+	 Most probably, this function will be faster if we manually do the matrix multiplication
+	 and then parallise it. In particular because the benefit of dgemm is in many-ranked matrices,
+	 instead of the rather small ones we have. 
+	 
+	 https://software.intel.com/en-us/node/429920
+	 describes the cblas algorithm. I'm pretty sure we can do this manually ;-)
+		
+	 What we have here is that "beta" is set to zero for all cases. 
+	 So we just want C = a. AB where a a scalar, A B matrices.
+	
+	 However, if you look closely ad this code, then you find that this is really a long
+	 product of a number of matrices; which, in turn, means that it is a large amount of nested
+	 for loops. The great thing is that you can easily parallise this. 
+		 
+	 I'm not fully sure if this:
+	 for x0 for x1 for x2 for x3 for x4 for x5 for x6 for x7 ... for xn
+		 C[x0,x1] += ...................................
+	
+	would allow a full collapse. But I think it does. Indeed, it seems this is perfectly doable
+	if you use reduction. Reduction would mean it caches these additions and then adds them together at the end.
+		
+	So if C = C0 + C1 + C2 + C3, where these are partial sums from each thread, then it can be written in the familiar
+	pragma
+	for i
+		for j
+			C += ... j
+	
+	way if you use reduction.
+		
+		
+	****/
 	cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasTrans,
 	3,3,3,s[i]*s[xp],
 	R[i], 3, R[xp],3,
@@ -561,7 +594,10 @@ void flip_Ux(int i, double jactus1, double jactus2)
 	
 	double Bond[9] = {0};
 	double foo[9] = {0};
-
+	
+	//	CONTINUE
+	// 	I am guessing that here the same applies as for site energy,
+	//		i.e. that manual calculation with omp is faster.
 	 
 	cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasTrans,
 	3,3,3,s[i]*s[xp],
