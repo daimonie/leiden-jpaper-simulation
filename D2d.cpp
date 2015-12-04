@@ -231,7 +231,8 @@ bool josko_diagnostics()
                 
         } 
         
-        printf("Average of sampled matrices{ %2.3f, %2.3f, %2.3f, %2.3f, %2.3f, %2.3f, %2.3f, %2.3f, %2.3f) \n",  rmc_matrix_average[0], rmc_matrix_average[1], rmc_matrix_average[2],
+        printf("Average of sampled matrices{ %2.3f, %2.3f, %2.3f, %2.3f, %2.3f, %2.3f, %2.3f, %2.3f, %2.3f) \n",
+	        rmc_matrix_average[0], rmc_matrix_average[1], rmc_matrix_average[2],
                 rmc_matrix_average[3], rmc_matrix_average[4], rmc_matrix_average[5],
                 rmc_matrix_average[6], rmc_matrix_average[7], rmc_matrix_average[8]); 
 	
@@ -265,6 +266,7 @@ bool josko_diagnostics()
         printf("Random: omp critical, mode %d,  samples %d, average [%2.3f], correlation [%.3f]. \n", dice_mode, rnd_samples, rnd_average, rnd_correlation);
 	time_t time_after = time(0);
 	
+	/*
 	printf("\t\t %.3f seconds. \n", difftime(time_after,time_before)); 
 	//testing a new function for site_energy
 	int se_samples = L3;
@@ -280,6 +282,31 @@ bool josko_diagnostics()
 			
 			printf(" old versus new,\t %.3f %.3f .\n", se_old, se_new );
 		}
+	}
+	//test is not going well. Let's try this.
+	*/
+	for(int i = 0; i < L3; i++)
+	{
+		int xp =  fix_index( i, "x", -1);
+		
+		site_energy_new_element( i, "x", -1);
+		
+		
+		double Rfoo[6][9] = {{0}};
+		double foo[9] = {0};
+		
+		cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasTrans,
+		3,3,3,s[i]*s[xp],
+		R[i], 3, R[xp],3,
+		0.0, foo,3);
+		
+		cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans,
+		3,3,3,1,
+		Ux[i], 3, foo,3,
+		0.0, Rfoo[0],3);
+		
+		printf("\tRfoo\t %.3f\t %.3f\t %.3f\n\n",
+		Rfoo[0][0], Rfoo[0][4], Rfoo[0][8]);
 	}
 	return true;
 }
@@ -455,7 +482,7 @@ double site_energy_new(int i)
 	
 	double z_negative = site_energy_new_element( i, "z", -1);
 	double z_positive = site_energy_new_element( i, "z", +1);
-	
+	  
 	return x_negative + y_negative + z_negative + x_positive + y_positive + z_positive;
 }
 double site_energy_new_element( int index, string mu, int change)
@@ -463,13 +490,19 @@ double site_energy_new_element( int index, string mu, int change)
 	int l, k, j = fix_index( index, mu, change);
 	double partial_energy = 0.0;
 	
-	#pragma omp parallel for collapse(2) reduction(+:partial_energy)
+	double foo1 = 0; 
+	double foo2 = 0; 
+	double foo3 = 0; 
 	for( l = 0; l < 3; l++)
 	{
 		for( k = 0; k < 3; k++ )
 		{ 
 			if( mu == "x" && change == -1)
-			{
+			{  				
+				foo1 += s[index] * s[j] * Ux[index][0*3+l] * R[index][3*l+k] * R[j][3*k+0];
+				foo2 += s[index] * s[j] * Ux[index][1*3+l] * R[index][3*l+k] * R[j][3*k+1];
+				foo3 += s[index] * s[j] * Ux[index][2*3+l] * R[index][3*l+k] * R[j][3*k+2];
+				
 				partial_energy += J1 * s[index] * s[j] * Ux[index][0*3+l] * R[index][3*l+k] * R[j][3*k+0];
 				partial_energy += J2 * s[index] * s[j] * Ux[index][1*3+l] * R[index][3*l+k] * R[j][3*k+1];
 				partial_energy += J3 * s[index] * s[j] * Ux[index][2*3+l] * R[index][3*l+k] * R[j][3*k+2]; 
@@ -506,44 +539,11 @@ double site_energy_new_element( int index, string mu, int change)
 			}
 		}
 	}
-	
+	printf("\t diag\t%.3f\t%.3f\t%.3f\n", foo1, foo2, foo3);
 	return partial_energy;
 }
 int fix_index( int index, string mu, int change)
-{
-	//Let me clarify.
-	/***
-	 * The indices are sorted as follows.
-	 * z = 0
-	 * 	00 01 02
-	 * 	03 04 05
-	 * 	06 07 08
-	 * z = 1
-	 * 	09 10 11
-	 * 	12 13 14
-	 * 	15 16 17
-	 * z = 2
-	 * 	18 19 20
-	 * 	21 22 23
-	 * 	24 25 26
-	 * 
-	 * Assumed here are periodic boundary conditions, as always.
-	 * the index can be constructed [x,y,z in units lattice constant]
-	 * 	index = L3 z + L2 y + 1 x
-	 * 
-	 * As always with pbc, the edges are the concern. For instance, for x=0
-	 * the positive neighbour is x=1, but the negative one is.. x = L-1! [Because L=8, so L-1 is index 7]
-	 * 
-	 * Simplistically, negative is x = 0 -1 = -1.
-	 * So, if x < 0, add L. if x > L, remove L.
-	 * 
-	 * 
-	 * 
-	 * ***/
-	//To me, this method is the most clear. It shouldn't take long in our program either; it is just a small calculation, after all.
-	// note that this way is also, by far, the most checkable. if it turns out to be slow I will adapt the notation used in site_energy_old
-	// instead.
-	
+{  
 	int x, y, z;
 	
 	z = (index - index%L2) / L2;
@@ -594,48 +594,11 @@ double site_energy_old(int i)
 	yn = (i + L) % L2 < L ? i + L - L2 : i + L;
 	
 	zp = i < L2 ? i - L2 + L3 : i - L2;
-	zn = i + L2 >= L3 ? i + L2 - L3 : i + L2;
-	 
-	
-	 
+	zn = i + L2 >= L3 ? i + L2 - L3 : i + L2; 
 	
 	double Rfoo[6][9] = {{0}};
 	double foo[9] = {0};
-	
-//Will have to see if this can be formulated faster.
-	//CONTINUE
-	/****
-	 Most probably, this function will be faster if we manually do the matrix multiplication
-	 and then parallise it. In particular because the benefit of dgemm is in many-ranked matrices,
-	 instead of the rather small ones we have. 
 	 
-	 https://software.intel.com/en-us/node/429920
-	 describes the cblas algorithm. I'm pretty sure we can do this manually ;-)
-		
-	 What we have here is that "beta" is set to zero for all cases. 
-	 So we just want C = a. AB where a a scalar, A B matrices.
-	
-	 However, if you look closely ad this code, then you find that this is really a long
-	 product of a number of matrices; which, in turn, means that it is a large amount of nested
-	 for loops. The great thing is that you can easily parallise this. 
-		 
-	 I'm not fully sure if this:
-	 for x0 for x1 for x2 for x3 for x4 for x5 for x6 for x7 ... for xn
-		 C[x0,x1] += ...................................
-	
-	would allow a full collapse. But I think it does. Indeed, it seems this is perfectly doable
-	if you use reduction. Reduction would mean it caches these additions and then adds them together at the end.
-		
-	So if C = C0 + C1 + C2 + C3, where these are partial sums from each thread, then it can be written in the familiar
-	pragma
-	for i
-		for j
-			C += ... j
-	
-	way if you use reduction.
-		
-		
-	****/
 	cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasTrans,
 	3,3,3,s[i]*s[xp],
 	R[i], 3, R[xp],3,
@@ -707,8 +670,8 @@ double site_energy_old(int i)
 	return Sfoo;
 }	
 	
-/**** i passed from main so not need to defined int again and again
- * s[i] also changed in build rotation
+/**** 
+ * New flip_R function, but uses the previously constructed matrices instead.
  * ****/ 
 
 void flip_R(int i, double jactus1, double jactus2, double jactus3) 
