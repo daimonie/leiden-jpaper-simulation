@@ -11,7 +11,7 @@
 #include <stdlib.h> 
 #include <stdio.h>
 #include <math.h>
-#include <time.h> 
+#include <chrono> 
 #include <gsl/gsl_math.h>
 #include <gsl/gsl_matrix.h>
 #include <gsl/gsl_cblas.h>
@@ -68,8 +68,7 @@ double R[L3][9] = {{0}};
 double Ux[L3][9] = {{0}};
 double Uy[L3][9] = {{0}};
 double Uz[L3][9] = {{0}};
-double U_bath[U_order][9]={{0}};
-double j_matrix[9] = {0};
+double U_bath[U_order][9]={{0}}; 
 
 double s[L3] = {0}; // s for Ising field
 
@@ -78,7 +77,10 @@ double E_total, E_change, E_g;
 //int Racc =0, xacc =0 , yacc = 0, zacc =0, Rrej=0, xrej=0, yrej=0, zrej=0;
 
 /**** parameters ****/
-double J1 = 1, J2 = 1, J3 = 1;
+double J1 = 0.1;
+double J2 = 0.1;
+double J3 = 1;
+
 double beta, beta_lower, beta_upper, beta_step_small, beta_step_big, beta_1, beta_2;
 double accurate;
 int tau = 100;
@@ -106,8 +108,8 @@ boost::random::uniform_01<> boost_mt;
 /**** time to start the program ****/
 int main(int argc, char **argv)
 {
-	time_t tstart, tend;
-	tstart = time(0);
+	auto time_start = std::chrono::high_resolution_clock::now();
+         
 	if (dice_mode == 0)
 	{
 		dsfmt_init_gen_rand(&dsfmt, time(0)); //seed dsfmt 
@@ -117,13 +119,10 @@ int main(int argc, char **argv)
         
 	build_gauge_bath();
 	
-	J1 = -atof(argv[11]);
-	J2 = -atof(argv[12]);
-	J3 = -atof(argv[13]);
-		
-        j_matrix[0] = J1;
-        j_matrix[4] = J2;
-        j_matrix[8] = J3;
+ 	J1 = -atof(argv[11]);
+ 	J2 = -atof(argv[12]);
+ 	J3 = -atof(argv[13]);
+		 
 
 	sample_amount = atof(argv[14]);
 
@@ -187,9 +186,11 @@ int main(int argc, char **argv)
         {
                estimate_beta_c(); 
 	}
-	tend = time(0);
 	
-	printf("#// Time taken is %2.3f seconds", difftime(tend,tstart));
+        auto time_end = std::chrono::high_resolution_clock::now();
+        
+        auto microseconds = std::chrono::duration_cast<std::chrono::microseconds>( time_end - time_start).count();
+	printf("#// Time taken is %ld microseconds", microseconds);
 
 	return 0;
 }
