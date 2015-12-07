@@ -41,8 +41,8 @@ void build_rotation_matrix(int i);
 double site_energy(int i);  
 double site_energy_new(int i);  
 double site_energy_old(int i);  
-int fix_index(int, string, int);
-double site_energy_new_element(int, string, int);
+int fix_index(int, int, int);
+double site_energy_new_element(int, int, int);
 void flip_R(int, double, double);
 void flip_Ux(int, double, double);
 void flip_Uy(int, double, double);
@@ -69,6 +69,7 @@ double Ux[L3][9] = {{0}};
 double Uy[L3][9] = {{0}};
 double Uz[L3][9] = {{0}};
 double U_bath[U_order][9]={{0}};
+double j_matrix[9] = {0};
 
 double s[L3] = {0}; // s for Ising field
 
@@ -120,6 +121,9 @@ int main(int argc, char **argv)
 	J2 = -atof(argv[12]);
 	J3 = -atof(argv[13]);
 		
+        j_matrix[0] = J1;
+        j_matrix[4] = J2;
+        j_matrix[8] = J3;
 
 	sample_amount = atof(argv[14]);
 
@@ -217,7 +221,8 @@ double dice()
 /**** Josko's Diagnostics ****/
 bool josko_diagnostics()
 {
-// 	return false;
+        printf("Josko his Diagnostics:\n");
+ 	return false;
         int ii, jj, kk;
         int rmc_samples = rmc_number*rmc_number*rmc_number*10;
         int build_random = 0;
@@ -450,17 +455,16 @@ double site_energy_new(int i)
 {
 	//Let's determine neighbours.
 	//the first neighbours are along the x-axis!
-	 
-	double x_negative = site_energy_new_element( i, "x", -1);
-	double x_positive = site_energy_new_element( i, "x", +1);
+	double energy = site_energy_new_element( i, 0, -1);
+	energy += site_energy_new_element( i, 0, 1);
 	
-	double y_negative = site_energy_new_element( i, "y", -1);
-	double y_positive = site_energy_new_element( i, "y", +1);
+	energy += site_energy_new_element( i, 1, -1);
+	energy += site_energy_new_element( i, 1, 1);
 	
-	double z_negative = site_energy_new_element( i, "z", -1);
-	double z_positive = site_energy_new_element( i, "z", +1);
+	energy += site_energy_new_element( i, 2, -1);
+	energy += site_energy_new_element( i, 2, 1);
 	  
-	return x_negative + y_negative + z_negative + x_positive + y_positive + z_positive;
+	return energy;
 }
 void print_matrix(string name, double matrix[])
 {
@@ -469,22 +473,43 @@ void print_matrix(string name, double matrix[])
 		matrix[3], matrix[4], matrix[5],
 		matrix[6], matrix[7], matrix[8]);
 }
-double site_energy_new_element( int index, string mu, int change)
+double site_energy_new_element( int index, int mu, int change)
 {
         int j = fix_index( index, mu, change);
         double partial_energy = 0.0;
         
         double C[9] = {0};
-        double D[9] = {0};
-        
-        string label = "Rnew";
-        
-        if(change == -1)
+        double D[9] = {0}; 
+        if(change < 0)
         {
                 cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasTrans,
                 3,3,3,1,
                 R[index], 3, R[j],3,
                 0.0, C,3);
+        
+                if (mu == 0)
+                { 
+                        cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans,
+                        3,3,3,s[index]*s[j],
+                        Ux[index], 3, C,3,
+                        0.0, D,3);  
+                }
+                else if (mu == 1)
+                { 
+                        cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans,
+                        3,3,3,s[index]*s[j],
+                        Uy[index], 3, C,3,
+                        0.0, D,3);  
+                }
+                else if (mu == 2)
+                {
+                         
+        j_matrix[0] = J1;
+                        cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans,
+                        3,3,3,s[index]*s[j],
+                        Uz[index], 3, C,3,
+                        0.0, D,3); 
+                } 
         }
         else
         {
@@ -492,74 +517,39 @@ double site_energy_new_element( int index, string mu, int change)
                 3,3,3,1,
                 R[j], 3, R[index],3,
                 0.0, C,3);
-        }
         
-        if (mu == "x")
-        {
-                if(change == -1)
-                { 
-                        cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans,
-                        3,3,3,s[index]*s[j],
-                        Ux[index], 3, C,3,
-                        0.0, D,3);
-                        label += "0";
-                }
-                else
-                { 
+                if (mu == 0)
+                {
+                         
                         cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans,
                         3,3,3,s[index]*s[j],
                         Ux[j], 3, C,3,
-                        0.0, D,3);
-                        label += "1";
+                        0.0, D,3);  
                 }
-        }
-        else if (mu == "y")
-        {
-                if(change == -1)
-                { 
-                        cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans,
-                        3,3,3,s[index]*s[j],
-                        Uy[index], 3, C,3,
-                        0.0, D,3);
-                        label += "2";
-                }
-                else
-                { 
+                else if (mu == 1)
+                {
+                        
                         cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans,
                         3,3,3,s[index]*s[j],
                         Uy[j], 3, C,3,
-                        0.0, D,3);
-                        label += "3";
+                        0.0, D,3);  
                 }
-        }
-        else if (mu == "z")
-        {
-                if(change == -1)
-                { 
-                        cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans,
-                        3,3,3,s[index]*s[j],
-                        Uz[index], 3, C,3,
-                        0.0, D,3);
-                        label += "4";
-                }
-                else
-                { 
+                else if (mu == 2)
+                {
+                       
                         cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans,
                         3,3,3,s[index]*s[j],
                         Uz[j], 3, C,3,
-                        0.0, D,3);
-                        label += "5";
-                }
+                        0.0, D,3);  
+                } 
         }
-        print_matrix(label, D);
-        
         partial_energy += J1 * D[0];
         partial_energy += J2 * D[4];
-        partial_energy += J3 * D[8];
-         
+        partial_energy += J3 * D[8]; 
+        
 	return partial_energy;
 }
-int fix_index( int index, string mu, int change)
+inline int fix_index( int index, int mu, int change)
 {  
         /*** Slow
 	int x, y, z;
@@ -597,39 +587,38 @@ int fix_index( int index, string mu, int change)
 	
 	index = z * L2 + y * L + x;
 	***/
-        if (mu == "x")
+        if(change == -1)
         {
-                if(change == -1)
+                if (mu == 0)
                 {
-                        index = index % L == 0 ? index - 1 + L : index - 1;
+                        index = index % L == 0 ? index - 1 + L : index - 1; 
                 }
-                else
-                {
-                        index = (index + 1) % L == 0 ? index + 1 - L : index + 1;
-                }
-        }
-        else if (mu == "y")
-        {
-                if(change == -1)
+                else if (mu == 1)
                 {
                         index = index % L2 < L ? index - L + L2 : index - L;
                 }
-                else
-                {
-                        index = (index + L) % L2 < L ? index + L - L2 : index + L;
-                }
-        }
-        else if (mu == "z")
-        {
-                if(change == -1)
+                else if (mu == 2)
                 {
                         index = index < L2 ? index - L2 + L3 : index - L2;
                 }
-                else
+        }
+        else
+        {
+                if (mu == 0)
                 {
-                        index = index + L2 >= L3 ? index + L2 - L3 : index + L2; 
+                        index = (index + 1) % L == 0 ? index + 1 - L : index + 1;
+                }
+                else if (mu == 1)
+                {
+                        index = (index + L) % L2 < L ? index + L - L2 : index + L;
+                }
+                else if (mu == 2)
+                { 
+                        index = index + L2 >= L3 ? index + L2 - L3 : index + L2;       
                 }
         }
+                
+        
 	return index;	
 }
 double site_energy_old(int i)
@@ -717,11 +706,7 @@ double site_energy_old(int i)
 	 
 	
 	for(int j = 0; j < 6; j++)
-        {
-                string label = "Rfoo ";
-                label += to_string(j); 
-                
-                print_matrix(label, Rfoo[j]);
+        { 
                 Sfoo += J1*Rfoo[j][0] + J2*Rfoo[j][4] + J3*Rfoo[j][8];
         }				
 	return Sfoo;
