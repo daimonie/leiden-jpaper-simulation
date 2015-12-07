@@ -444,7 +444,7 @@ void random_initialization()
 // Site energy functions. One to switch old/new behaviour, and a new/old function.	
 double site_energy(int i)
 {
-	return site_energy_old(i);
+	return site_energy_new(i);
 }
 double site_energy_new(int i)
 {
@@ -471,8 +471,86 @@ void print_matrix(string name, double matrix[])
 }
 double site_energy_new_element( int index, string mu, int change)
 {
-	int l, k, j = fix_index( index, mu, change);
-	double partial_energy = 0.0;
+        int j = fix_index( index, mu, change);
+        double partial_energy = 0.0;
+        
+        double C[9] = {0};
+        double D[9] = {0};
+        
+        if(change == -1)
+        {
+                cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasTrans,
+                3,3,3,s[index]*s[j],
+                R[index], 3, R[j],3,
+                0.0, C,3);
+        }
+        else
+        {
+                cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasTrans,
+                3,3,3,s[index]*s[j],
+                R[j], 3, R[index],3,
+                0.0, C,3);
+        }
+        
+        if (mu == "x")
+        {
+                if(change == -1)
+                { 
+                        cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans,
+                        3,3,3,s[index]*s[j],
+                        Ux[index], 3, C,3,
+                        0.0, D,3);
+                }
+                else
+                { 
+                        cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans,
+                        3,3,3,s[index]*s[j],
+                        Ux[j], 3, C,3,
+                        0.0, D,3);
+                }
+        }
+        else if (mu == "y")
+        {
+                if(change == -1)
+                { 
+                        cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans,
+                        3,3,3,s[index]*s[j],
+                        Uy[index], 3, C,3,
+                        0.0, D,3);
+                }
+                else
+                { 
+                        cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans,
+                        3,3,3,s[index]*s[j],
+                        Uy[j], 3, C,3,
+                        0.0, D,3);
+                }
+        }
+        else if (mu == "z")
+        {
+                if(change == -1)
+                { 
+                        cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans,
+                        3,3,3,s[index]*s[j],
+                        Uz[index], 3, C,3,
+                        0.0, D,3);
+                }
+                else
+                { 
+                        cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans,
+                        3,3,3,s[index]*s[j],
+                        Uz[j], 3, C,3,
+                        0.0, D,3);
+                }
+        }
+        
+        partial_energy += J1 * D[0];
+        partial_energy += J2 * D[4];
+        partial_energy += J3 * D[8];
+        
+        /*** 
+        
+	int l, k;
 	
 // 	double foo[9] = {0};
 	int ii = 0; 
@@ -602,6 +680,7 @@ double site_energy_new_element( int index, string mu, int change)
 			}
 		}  
 	}   
+	***/
 	return partial_energy;
 }
 int fix_index( int index, string mu, int change)

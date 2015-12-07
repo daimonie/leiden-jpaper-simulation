@@ -5,4 +5,4 @@ echo "Easy Test, arbitrary parameters..."
 
 ./simulate C 0.0 9.0 3 3 3 6 0.5 E D2d_test.dat 0.1 0.1 1.0 100
 
-gprof simulate gmon.out -Q -p
+gprof simulate gmon.out -Q -p -b
