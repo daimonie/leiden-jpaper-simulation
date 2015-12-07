@@ -444,7 +444,7 @@ void random_initialization()
 // Site energy functions. One to switch old/new behaviour, and a new/old function.	
 double site_energy(int i)
 {
-	return site_energy_new(i);
+	return site_energy_old(i);
 }
 double site_energy_new(int i)
 {
@@ -481,7 +481,7 @@ double site_energy_new_element( int index, string mu, int change)
 	int n = 0; 
 	
 	
-	#pragma omp parallel for reduction(+ : partial_energy) private(result)
+// 	pragma omp parallel for reduction(+ : partial_energy) private(result)
 	for(n = 0; n < 3; n++)
 	{ 		 
 		for( l = 0; l < 3; l++)
