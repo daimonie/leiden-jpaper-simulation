@@ -14,3 +14,32 @@ compile_prof, time is 416 seconds
   9.62     62.02     7.31 206927983     0.00     0.00  flip_Uy(int, double, double)
   9.55     69.28     7.25 206906367     0.00     0.00  flip_Ux(int, double, double)
   5.42     73.40     4.12 206921246     0.00     0.00  flip_R(int, double, double, double)
+---
+old versus new, no pragma (else disagree).
+
+old, profiled; size 4, t=5
+ 31.63      0.37     0.37  5642980     0.00     0.00  site_energy_old(int)
+ 23.94      0.65     0.28                             estimate_beta_c()
+ 17.10      0.85     0.20  2822077     0.00     0.00  flip_Uz(int, double, double)
+ 10.26      0.97     0.12  2823531     0.00     0.00  flip_Ux(int, double, double)
+  8.55      1.07     0.10  2821490     0.00     0.00  flip_R(int, double, double, double)
+  5.98      1.14     0.07  2817382     0.00     0.00  flip_Uy(int, double, double)
+  2.56      1.17     0.03        4     7.50    27.42  thermalization()
+  0.00      1.17     0.00      400     0.00     0.00  orderparameter_n()
+  0.00      1.17     0.00        1     0.00     0.00  _GLOBAL__sub_I_R
+
+  
+new, profiled, size 4, t=35
+ 90.09     11.25    11.25 33858264     0.00     0.00  site_energy_new_element(int, std::string, int)
+  2.48     11.56     0.31                             estimate_beta_c()
+  2.24     11.84     0.28  5642980     0.00     0.00  site_energy_new(int)
+  2.20     12.12     0.28 33858264     0.00     0.00  fix_index(int, std::string, int)
+  0.96     12.24     0.12  2822077     0.00     0.00  flip_Uz(int, double, double)
+  0.80     12.34     0.10  2817382     0.00     0.00  flip_Uy(int, double, double)
+  0.64     12.42     0.08  2823531     0.00     0.00  flip_Ux(int, double, double)
+  0.56     12.49     0.07  2821490     0.00     0.00  flip_R(int, double, double, double)
+  0.04     12.49     0.01                             print_matrix(std::string, double*)
+  0.00     12.49     0.00      400     0.00     0.00  orderparameter_n()
+  0.00     12.49     0.00        4     0.00   282.25  thermalization()
+  0.00     12.49     0.00        1     0.00     0.00  _GLOBAL__sub_I_R
+ 

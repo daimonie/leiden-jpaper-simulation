@@ -29,7 +29,7 @@
 
 //lattice constant, SIZE cubed sites
 #ifndef SIZE
-	#define SIZE 8
+	#define SIZE 4
 #endif
 
 using namespace std; 
@@ -217,6 +217,7 @@ double dice()
 /**** Josko's Diagnostics ****/
 bool josko_diagnostics()
 {
+	return false;
         int ii, jj, kk;
         int rmc_samples = rmc_number*rmc_number*rmc_number*10;
         int build_random = 0;
@@ -284,7 +285,7 @@ bool josko_diagnostics()
 			printf(" old versus new,\t %.3f %.3f .\n", se_old, se_new );
 		}
 	}  
-	return true;
+// 	return true;
 }
 /**** generates rotation matrices ****/
 void generate_rotation_matrices ()
