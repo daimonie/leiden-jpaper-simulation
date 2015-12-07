@@ -217,7 +217,7 @@ double dice()
 /**** Josko's Diagnostics ****/
 bool josko_diagnostics()
 {
-	return false;
+// 	return false;
         int ii, jj, kk;
         int rmc_samples = rmc_number*rmc_number*rmc_number*10;
         int build_random = 0;
@@ -477,17 +477,19 @@ double site_energy_new_element( int index, string mu, int change)
         double C[9] = {0};
         double D[9] = {0};
         
+        string label = "Rnew";
+        
         if(change == -1)
         {
                 cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasTrans,
-                3,3,3,s[index]*s[j],
+                3,3,3,1,
                 R[index], 3, R[j],3,
                 0.0, C,3);
         }
         else
         {
                 cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasTrans,
-                3,3,3,s[index]*s[j],
+                3,3,3,1,
                 R[j], 3, R[index],3,
                 0.0, C,3);
         }
@@ -500,6 +502,7 @@ double site_energy_new_element( int index, string mu, int change)
                         3,3,3,s[index]*s[j],
                         Ux[index], 3, C,3,
                         0.0, D,3);
+                        label += "0";
                 }
                 else
                 { 
@@ -507,6 +510,7 @@ double site_energy_new_element( int index, string mu, int change)
                         3,3,3,s[index]*s[j],
                         Ux[j], 3, C,3,
                         0.0, D,3);
+                        label += "1";
                 }
         }
         else if (mu == "y")
@@ -517,6 +521,7 @@ double site_energy_new_element( int index, string mu, int change)
                         3,3,3,s[index]*s[j],
                         Uy[index], 3, C,3,
                         0.0, D,3);
+                        label += "2";
                 }
                 else
                 { 
@@ -524,6 +529,7 @@ double site_energy_new_element( int index, string mu, int change)
                         3,3,3,s[index]*s[j],
                         Uy[j], 3, C,3,
                         0.0, D,3);
+                        label += "3";
                 }
         }
         else if (mu == "z")
@@ -534,6 +540,7 @@ double site_energy_new_element( int index, string mu, int change)
                         3,3,3,s[index]*s[j],
                         Uz[index], 3, C,3,
                         0.0, D,3);
+                        label += "4";
                 }
                 else
                 { 
@@ -541,150 +548,20 @@ double site_energy_new_element( int index, string mu, int change)
                         3,3,3,s[index]*s[j],
                         Uz[j], 3, C,3,
                         0.0, D,3);
+                        label += "5";
                 }
         }
+        print_matrix(label, D);
         
         partial_energy += J1 * D[0];
         partial_energy += J2 * D[4];
         partial_energy += J3 * D[8];
-        
-        /*** 
-        
-	int l, k;
-	
-// 	double foo[9] = {0};
-	int ii = 0; 
-	double result;
-	int m = 0;
-	int n = 0; 
-	
-	
-// 	pragma omp parallel for reduction(+ : partial_energy) private(result)
-	for(n = 0; n < 3; n++)
-	{ 		 
-		for( l = 0; l < 3; l++)
-		{
-			for( k = 0; k < 3; k++ )
-			{ 
-				m = n;
-				ii = n*4; 
-// 				foo[ii] = 0;	
-				if( mu == "x" && change == -1)
-				{  		
-					result = s[index]*s[j]*Ux[index][n*3+l] * R[index][l*3+k] * R[j][k+m*3];
-					
-// 					foo[ii] += result;
-					if( ii == 0)
-					{
-						partial_energy += J1 * result;
-					}
-					else if( ii == 4)
-					{
-						partial_energy += J2 * result;
-					}
-					else if( ii == 8)
-					{
-						partial_energy += J3 * result;
-					} 
-				}  
-				else if( mu == "y" && change == -1)
-				{  			 
-					result = s[index]*s[j]*Uy[index][n*3+l] * R[index][l*3+k] * R[j][k+m*3];
-					
-// 					foo[ii] += result;
-					if( ii == 0)
-					{
-						partial_energy += J1 * result;
-					}
-					else if( ii == 4)
-					{
-						partial_energy += J2 * result;
-					}
-					else if( ii == 8)
-					{
-						partial_energy += J3 * result;
-					} 
-				}  
-				else if( mu == "z" && change == -1)
-				{  			 
-					result = s[index]*s[j]*Uz[index][n*3+l] * R[index][l*3+k] * R[j][k+m*3];
-					
-// 					foo[ii] += result;
-					if( ii == 0)
-					{
-						partial_energy += J1 * result;
-					}
-					else if( ii == 4)
-					{
-						partial_energy += J2 * result;
-					}
-					else if( ii == 8)
-					{
-						partial_energy += J3 * result;
-					} 
-				}  
-				else if( mu == "x" && change == 1)
-				{  			 
-					result = s[index]*s[j]*Ux[j][n*3+l] * R[j][l*3+k] * R[index][k+m*3];
-					
-// 					foo[ii] += result;
-					if( ii == 0)
-					{
-						partial_energy += J1 * result;
-					}
-					else if( ii == 4)
-					{
-						partial_energy += J2 * result;
-					}
-					else if( ii == 8)
-					{
-						partial_energy += J3 * result;
-					} 
-				}  
-				else if( mu == "y" && change == 1)
-				{  			 
-					result = s[index]*s[j]*Uy[j][n*3+l] * R[j][l*3+k] * R[index][k+m*3];
-					
-// 					foo[ii] += result;
-					if( ii == 0)
-					{
-						partial_energy += J1 * result;
-					}
-					else if( ii == 4)
-					{
-						partial_energy += J2 * result;
-					}
-					else if( ii == 8)
-					{
-						partial_energy += J3 * result;
-					} 
-				}  
-				else if( mu == "z" && change == 1)
-				{  			 
-					result = s[index]*s[j]*Uz[j][n*3+l] * R[j][l*3+k] * R[index][k+m*3];
-					
-// 					foo[ii] += result;
-					if( ii == 0)
-					{
-						partial_energy += J1 * result;
-					}
-					else if( ii == 4)
-					{
-						partial_energy += J2 * result;
-					}
-					else if( ii == 8)
-					{
-						partial_energy += J3 * result;
-					} 
-				}  
-			}
-		}  
-	}   
-	***/
+         
 	return partial_energy;
 }
 int fix_index( int index, string mu, int change)
 {  
+        /*** Slow
 	int x, y, z;
 	
 	z = (index - index%L2) / L2;
@@ -703,7 +580,7 @@ int fix_index( int index, string mu, int change)
 	else if (mu == "y")
 	{
 		y += change;
-	}
+	}Rfoo
 	else if (mu == "z")
 	{
 		z += change;
@@ -719,7 +596,40 @@ int fix_index( int index, string mu, int change)
 	z = (z >= L) ? ( z - L ): z;
 	
 	index = z * L2 + y * L + x;
-	 
+	***/
+        if (mu == "x")
+        {
+                if(change == -1)
+                {
+                        index = index % L == 0 ? index - 1 + L : index - 1;
+                }
+                else
+                {
+                        index = (index + 1) % L == 0 ? index + 1 - L : index + 1;
+                }
+        }
+        else if (mu == "y")
+        {
+                if(change == -1)
+                {
+                        index = index % L2 < L ? index - L + L2 : index - L;
+                }
+                else
+                {
+                        index = (index + L) % L2 < L ? index + L - L2 : index + L;
+                }
+        }
+        else if (mu == "z")
+        {
+                if(change == -1)
+                {
+                        index = index < L2 ? index - L2 + L3 : index - L2;
+                }
+                else
+                {
+                        index = index + L2 >= L3 ? index + L2 - L3 : index + L2; 
+                }
+        }
 	return index;	
 }
 double site_energy_old(int i)
@@ -727,7 +637,8 @@ double site_energy_old(int i)
 	/****** find neighbour, checked*****/
 	
 	int xp, xn, yp, yn, zp, zn; 
-	
+	//x next
+        //x previous
 	xp = i % L == 0 ? i - 1 + L : i - 1;
 	xn = (i + 1) % L == 0 ? i + 1 - L : i + 1;
 	
@@ -807,6 +718,10 @@ double site_energy_old(int i)
 	
 	for(int j = 0; j < 6; j++)
         {
+                string label = "Rfoo ";
+                label += to_string(j); 
+                
+                print_matrix(label, Rfoo[j]);
                 Sfoo += J1*Rfoo[j][0] + J2*Rfoo[j][4] + J3*Rfoo[j][8];
         }				
 	return Sfoo;
