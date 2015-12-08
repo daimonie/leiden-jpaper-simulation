@@ -197,27 +197,26 @@ int main(int argc, char **argv)
 /**** General random [0,1] number ****/
 double dice()
 {
-	if( dice_mode == 0)
-	{
-		return dsfmt_genrand_close_open(&dsfmt);
-	}
-	else if( dice_mode == 1)
-	{ 
-		return std_random_mt(std_engine);
-	}
-	else if( dice_mode == 2)
-	{
-		return boost_mt(boost_rng_mt);
-	}
-	else if( dice_mode == 3)
-	{
-		return boost_mt(boost_rng_fib);
-	}
-	else
-	{
-		printf("Dice mode is not set... \n");
-		return 0.5;
-	}
+        switch(dice_mode)
+        {
+                case 0:
+                        return dsfmt_genrand_close_open(&dsfmt);
+                break;
+                case 1:
+                        return std_random_mt(std_engine);
+                break;
+                case 2:
+                        return boost_mt(boost_rng_fib);
+                break;
+                case 3:
+                        return boost_mt(boost_rng_mt);
+                break;
+                default:
+                        printf("Dice mode is not set... \n");
+                        return 0.5;
+                break;
+                        
+        }
 }
 /**** Josko's Diagnostics ****/
 bool josko_diagnostics()
@@ -622,8 +621,7 @@ void flip_Ux(int i, double jactus1, double jactus2)
 	copy(begin(Ux[i]),end(Ux[i]),begin(U_save));
 	
 	/**** generate new Ux by choosing from U_bath ****/
-	int j;
-	j = int(U_order * jactus1);
+	int j = int(U_order * jactus1);
 	
 	copy(begin(U_bath[j]),end(U_bath[j]),begin(Ux[i]));
 	
@@ -638,8 +636,7 @@ void flip_Ux(int i, double jactus1, double jactus2)
 	Ux[i], 3, foo,3,
 	0.0, Bond,3);
 	
-	double E_new;
-	E_new = J1*Bond[0] + J2*Bond[4] + J3*Bond[8];
+	double E_new = J1*Bond[0] + J2*Bond[4] + J3*Bond[8];
 	
 	E_change = E_new - E_old;
 	
@@ -811,7 +808,8 @@ void flip_Uz(int i, double jactus1, double jactus2)
                         E_total += E_change;
 
                 }
-                else {
+                else
+                {
                         copy(begin(U_save),end(U_save),begin(Uz[i]));
 
                 }	
@@ -944,21 +942,38 @@ double orderparameter_n()
 {
 	double Q11_n = 0, Q22_n = 0, Q33_n = 0, Q12_n = 0, Q23_n = 0, Q13_n = 0, Q2_n = 0;
 	
-			for(int i = 0; i < L3; i++) 
-				{Q11_n += 1.5*R[i][6] * R[i][6] - 0.5;}						
-			for(int i = 0; i < L3; i++) 
-				{Q22_n += 1.5*R[i][7] * R[i][7] - 0.5;}							
-			for(int i = 0; i < L3; i++) 
-				{Q33_n += 1.5*R[i][8] * R[i][8] - 0.5;}	
-			for(int i = 0; i < L3; i++) 
-				{Q12_n += 1.5*R[i][6] * R[i][7];}
-			for(int i = 0; i < L3; i++) 
-				{Q13_n += 1.5*R[i][6] * R[i][8];}
-			for(int i = 0; i < L3; i++) 
-				{Q23_n += 1.5*R[i][7] * R[i][8];}				
+        for(int i = 0; i < L3; i++) 
+        {
+                Q11_n += 1.5*R[i][6] * R[i][6] - 0.5;
+                
+        }						
+        for(int i = 0; i < L3; i++) 
+        {
+                Q22_n += 1.5*R[i][7] * R[i][7] - 0.5;
+                
+        }							
+        for(int i = 0; i < L3; i++) 
+        {
+                Q33_n += 1.5*R[i][8] * R[i][8] - 0.5;
+                
+        }	
+        for(int i = 0; i < L3; i++) 
+        {
+                Q12_n += 1.5*R[i][6] * R[i][7];
+                
+        }
+        for(int i = 0; i < L3; i++) 
+        {
+                Q13_n += 1.5*R[i][6] * R[i][8];
+                
+        }
+        for(int i = 0; i < L3; i++) 
+        {
+                Q23_n += 1.5*R[i][7] * R[i][8];
+                
+        }				
 						
-	Q2_n = (Q11_n*Q11_n + Q22_n*Q22_n + Q33_n *Q33_n
-				 + 2*Q12_n*Q12_n + 2*Q13_n*Q13_n + 2*Q23_n*Q23_n)/L3/L3;	
+	Q2_n = (Q11_n*Q11_n + Q22_n*Q22_n + Q33_n *Q33_n + 2*Q12_n*Q12_n + 2*Q13_n*Q13_n + 2*Q23_n*Q23_n)/L3/L3;	
 	
 	return Q2_n;
-	}	
+}	

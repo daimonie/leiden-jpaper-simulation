@@ -1,37 +1,24 @@
---old code, baseline
-
-^Cmaes [573] $ ./compile_prof 
-D2d.cpp: In function ‘bool josko_diagnostics()’:
-D2d.cpp:289:1: warning: control reaches end of non-void function [-Wreturn-type]
- }
- ^
+^Cmaes [596] $ ./compile_prof
 Easy Test, arbitrary parameters...
-#//Calculate from 0.000 to 9.000, using {-0.100, -0.100, -1.000}, accuracy 0.500 and 100 samples. Argc=15 . 
+Josko his Diagnostics:
+#//Calculate from 0.000 to 9.000, using {-0.100, -0.100, -1.000}, accuracy 0.100 and 1000 samples. Argc=15 . 
 #//Maximum cores 4 
-0.000   0.005   0.000   0.004   0.000   0.145   0.000
-3.000   0.756   2.604   0.013   2.705   0.995   0.305
-6.000   0.858   1.387   -0.025  6.095   1.169   0.042
-9.000   0.894   2.640   -0.002  7.175   1.190   0.019
-#// Time taken is 48.000 secondsFlat profile:
+0.000   -0.002  0.000   -0.002  0.000   0.147   0.000
+3.000   0.758   2.245   0.000   2.903   1.003   0.269
+6.000   0.850   1.959   0.084   5.171   1.147   0.087
+9.000   0.887   2.916   0.191   7.273   1.180   0.048
+#// Time taken is 108339425 microsecondsFlat profile:
 
 Each sample counts as 0.01 seconds.
   %   cumulative   self              self     total           
- time   seconds   seconds    calls   s/call   s/call  name    
- 18.09      1.25     1.25  5643044     0.00     0.00  site_energy_old(int)
-  4.20      4.20     0.29  2817382     0.00     0.00  flip_Uy(int, double, double)
-  3.62      4.73     0.25 56422720     0.00     0.00  dice()
-  3.47      4.97     0.24  2822077     0.00     0.00  flip_Uz(int, double, double)
-  2.32      5.70     0.16  2823531     0.00     0.00  flip_Ux(int, double, double)
-  1.88      6.10     0.13        1     0.13     6.69  estimate_beta_c()
-  1.59      6.21     0.11  2821490     0.00     0.00  flip_R(int, double, double, double)
-  1.30      6.61     0.09 11284480     0.00     0.00  flipper(double, double, double, double, double)
-  1.16      6.69     0.08                             main
-  0.43      6.84     0.03  5643044     0.00     0.00  site_energy(int)
-  0.43      6.87     0.03  2821554     0.00     0.00  build_rotation_matrix(int, double, double)
-  0.14      6.91     0.01        1     0.01     0.01  random_initialization()
-  0.00      6.91     0.00      400     0.00     0.00  orderparameter_n()
-  0.00      6.91     0.00       12     0.00     0.05  thermalization_inner(int)
-  0.00      6.91     0.00        4     0.00     0.15  thermalization()
-  0.00      6.91     0.00        1     0.00     0.00  build_gauge_bath()
-  0.00      6.91     0.00        1     0.00     0.00  josko_diagnostics()
-  0.00      6.91     0.00        1     0.00     0.00  generate_rotation_matrices()
+ time   seconds   seconds    calls  ms/call  ms/call  name    
+ 35.47      5.62     5.62                             estimate_beta_c()
+ 32.40     10.76     5.14 51740364     0.00     0.00  site_energy(int)
+  9.66     12.29     1.53 25860599     0.00     0.00  flip_Uy(int, double, double)
+  8.65     13.66     1.37 25859028     0.00     0.00  flip_Uz(int, double, double)
+  8.14     14.95     1.29 25864911     0.00     0.00  flip_Ux(int, double, double)
+  5.17     15.77     0.82 25870182     0.00     0.00  flip_R(int, double, double, double)
+  0.32     15.82     0.05        4    12.50    38.34  thermalization()
+  0.09     15.83     0.02                             print_matrix(std::string, double*)
+  0.06     15.84     0.01     4000     0.00     0.00  orderparameter_n()
+  0.00     15.84     0.00        1     0.00     0.00  _GLOBAL__sub_I_R
