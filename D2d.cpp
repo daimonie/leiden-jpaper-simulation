@@ -40,9 +40,7 @@ void random_initialization();
 void build_rotation_matrix(int i);
 double site_energy(int i);  
 double site_energy_new(int i);  
-double site_energy_old(int i);  
-int fix_index(int, int, int);
-double site_energy_new_element(int, int, int);
+double site_energy_old(int i);   
 void flip_R(int, double, double);
 void flip_Ux(int, double, double);
 void flip_Uy(int, double, double);
@@ -51,7 +49,7 @@ void thermalization();
 void estimate_beta_c(); 
 double orderparameter_n(); 
 void print_matrix(string, double[]);
-
+void mpc_initialisation();
 
 void generate_rotation_matrices();
 void flipper(double, double, double, double, double);
@@ -167,6 +165,7 @@ int main(int argc, char **argv)
 		E_total /= 2;
 		E_g = L3*3*(J1+J2+J3);							
 	}
+        mpc_initialisation();
 
 		
 	/**** initialize beta and the determine the fine region****/		
@@ -226,7 +225,7 @@ double dice()
 bool josko_diagnostics()
 {
         printf("Josko his Diagnostics:\n");
-//  	return false;
+  	return false;
         int ii, jj, kk;
         int rmc_samples = rmc_number*rmc_number*rmc_number*10;
         int build_random = 0;
@@ -447,19 +446,44 @@ void random_initialization()
                         copy(begin(U_bath[j]),end(U_bath[j]),begin(Uz[i]));     
 			
 			
-        }
-		
+        } 
 } 
+void mpc_initialisation()
+{
+        for(int i = 0; i < L3; i++)
+        {
+                cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans,
+                3,3,3,s[i],
+                Ux[i], 3, R[i],3,
+                0.0, mpc_urx[i],3);
+                cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans,
+                3,3,3,s[i],
+                Uy[i], 3, R[i],3,
+                0.0, mpc_ury[i],3);
+                cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans,
+                3,3,3,s[i],
+                Uz[i], 3, R[i],3,
+                0.0, mpc_urz[i],3);       
+        }
+        
+}
 void print_matrix(string name, double matrix[])
 {
 	printf("%s = np.matrix([[%.3f,%.3f,%.3f],[%.3f,%.3f,%.3f],[%.3f,%.3f,%.3f])\n",
 		name.c_str(), matrix[0], matrix[1], matrix[2],
 		matrix[3], matrix[4], matrix[5],
 		matrix[6], matrix[7], matrix[8]);
-}  
+}   
 double site_energy(int i)
 {
-        return site_energy_old(i);
+        double a = site_energy_old(i);
+        double b = site_energy_new(i);
+         
+        if (a != b)
+        {
+                printf("New %.3f versus %.3f old. \n", a, b); 
+        }
+        return a;
 }
 double site_energy_old(int i)
 {
@@ -540,7 +564,7 @@ double site_energy_old(int i)
         3,3,3,1,
         Uz[zn], 3, foo,3,
         0.0, Rfoo[5],3);   
-        
+         
         /******** total energy *****/ 
         double Sfoo = 0;
          
@@ -568,12 +592,13 @@ double site_energy_new(int i)
         zp = i < L2 ? i - L2 + L3 : i - L2;
         zn = i + L2 >= L3 ? i + L2 - L3 : i + L2; 
         
-        double Rfoo[6][9] = {{0}}; 
+        double Rfoo[6][9] = {{0}};  
         
         cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasTrans,
         3,3,3,s[xp],
         mpc_urx[i], 3, R[xp],3,
         0.0, Rfoo[0],3);
+        
         
         cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasTrans,
         3,3,3,s[i],
@@ -588,19 +613,19 @@ double site_energy_new(int i)
         
         cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasTrans,
         3,3,3,s[i],
-        mpc_urx[yn], 3, R[i],3,
+        mpc_ury[yn], 3, R[i],3,
         0.0, Rfoo[3],3);
         
         
         cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasTrans,
         3,3,3,s[zp],
-        mpc_ury[i], 3, R[zp],3,
+        mpc_urz[i], 3, R[zp],3,
         0.0, Rfoo[4],3);
         
         cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasTrans,
         3,3,3,s[i],
-        mpc_urx[zn], 3, R[i],3,
-        0.0, Rfoo[5],3);
+        mpc_urz[zn], 3, R[i],3,
+        0.0, Rfoo[5],3); 
         
         /******** total energy *****/ 
         double Sfoo = 0;
@@ -631,33 +656,8 @@ void flip_R(int i, double jactus1, double jactus2, double jactus3)
 	
 	build_rotation_matrix(i, jactus1, jactus2); //generate new R[i] and s[i]
         
-	E_new = site_energy(i);
-	
-	E_change = E_new - E_old;
-	
-	/*******decide flip and change E_total********/
-	if (E_change < 0)
-        {
-                E_total += E_change;
-                
-        }
-	else
-        {
-		//this is correct, it is metropolis monte carlo!
-                double change_chance = exp(-beta * E_change);
-                if (change_chance > jactus3)
-                {
-                        E_total += E_change;
-                        
-                }
-                else
-                {
-                        copy(begin(R_save), end(R_save), begin(R[i])); 
-                        s[i] = s_save;
-                } // change R[i] and s[i] back				
-        }	
-        //assign new value to matrix product cache
         
+        //assign new value to matrix product cache
         cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans,
         3,3,3,s[i],
         Ux[i], 3, R[i],3,
@@ -669,7 +669,51 @@ void flip_R(int i, double jactus1, double jactus2, double jactus3)
         cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans,
         3,3,3,s[i],
         Uz[i], 3, R[i],3,
-        0.0, mpc_urz[i],3);
+        0.0, mpc_urz[i],3); 
+        
+	E_new = site_energy(i);
+	
+	E_change = E_new - E_old;
+	
+        bool flip_accepted = false;
+	/*******decide flip and change E_total********/
+	if (E_change < 0)
+        {
+                E_total += E_change;
+                flip_accepted = true;
+                
+        }
+	else
+        {
+		//this is correct, it is metropolis monte carlo!
+                double change_chance = exp(-beta * E_change);
+                if (change_chance > jactus3)
+                {
+                        E_total += E_change;
+                        flip_accepted = true;                        
+                }
+                else
+                {
+                        copy(begin(R_save), end(R_save), begin(R[i])); 
+                        s[i] = s_save;
+                } // change R[i] and s[i] back				
+        }	
+        if(!flip_accepted)
+        {
+                //assign new value to matrix product cache
+                cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans,
+                3,3,3,s[i],
+                Ux[i], 3, R[i],3,
+                0.0, mpc_urx[i],3);
+                cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans,
+                3,3,3,s[i],
+                Uy[i], 3, R[i],3,
+                0.0, mpc_ury[i],3);
+                cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans,
+                3,3,3,s[i],
+                Uz[i], 3, R[i],3,
+                0.0, mpc_urz[i],3); 
+        }
 }
 
 void flip_Ux(int i, double jactus1, double jactus2)
@@ -723,10 +767,12 @@ void flip_Ux(int i, double jactus1, double jactus2)
 	
 	E_change = E_new - E_old;
 	
+        bool flip_accepted = false;
 	/**** decide flip and change E_total ****/
 	if (E_change < 0)
 	{
 		E_total += E_change;
+                flip_accepted = true;
 	}
 	else
 	{
@@ -735,6 +781,7 @@ void flip_Ux(int i, double jactus1, double jactus2)
                 if (change_chance > jactus2)
                 {
 			E_total += E_change;
+                        flip_accepted = true;
 		}
 		else
 		{
@@ -742,12 +789,13 @@ void flip_Ux(int i, double jactus1, double jactus2)
 		}	
 	}		
         //assign new value to matrix product cache
-        
-        cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans,
-        3,3,3,s[i],
-        Ux[i], 3, R[i],3,
-        0.0, mpc_urx[i],3); 
-	
+        if(!flip_accepted)
+        {
+                cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans,
+                3,3,3,s[i],
+                Ux[i], 3, R[i],3,
+                0.0, mpc_urx[i],3); 
+        }
 }
 
 void flip_Uy(int i, double jactus1, double jactus2)
@@ -785,8 +833,7 @@ void flip_Uy(int i, double jactus1, double jactus2)
 	copy(begin(Uy[i]),end(Uy[i]),begin(U_save));
 	
 	/**** generate choosing new Uy from U_bath****/
-	int j;
-	j = int(U_order * jactus1);
+	int j = int(U_order * jactus1);
 	
 	copy(begin(U_bath[j]),end(U_bath[j]),begin(Uy[i]));
 	
@@ -805,11 +852,12 @@ void flip_Uy(int i, double jactus1, double jactus2)
 	E_new = J1*Bond[0] + J2*Bond[4] + J3*Bond[8];
 	
 	E_change = E_new - E_old;
-	
+	bool flip_accepted = false;
 	/**** decide flip and change E_total ****/
 	if (E_change < 0)
 	{
                 E_total += E_change;
+                flip_accepted = true;
                 
         }
         else {
@@ -817,6 +865,7 @@ void flip_Uy(int i, double jactus1, double jactus2)
                 if (change_chance > jactus2)
                 {
                         E_total += E_change;
+                        flip_accepted = true;
                         
                 }
                 else {
@@ -824,13 +873,15 @@ void flip_Uy(int i, double jactus1, double jactus2)
                         
                 }	
         }		
-	
-        //assign new value to matrix product cache
-         
-        cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans,
-        3,3,3,s[i],
-        Uy[i], 3, R[i],3,
-        0.0, mpc_ury[i],3); 
+	if(flip_accepted)
+        {
+                //assign new value to matrix product cache
+                
+                cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans,
+                3,3,3,s[i],
+                Uy[i], 3, R[i],3,
+                0.0, mpc_ury[i],3); 
+        }
 }
 
 
@@ -889,11 +940,12 @@ void flip_Uz(int i, double jactus1, double jactus2)
 	E_new = J1*Bond[0] + J2*Bond[4] + J3*Bond[8];
 	
 	E_change = E_new - E_old;
-	
+	bool flip_accepted = false;
 	/**** decide flip and change E_total ****/
         if (E_change < 0)
         {
                 E_total += E_change;
+                flip_accepted = true;
                 
         }
         else {
@@ -901,6 +953,7 @@ void flip_Uz(int i, double jactus1, double jactus2)
                 if (change_chance > jactus2)
                 {
                         E_total += E_change;
+                        flip_accepted = true;
 
                 }
                 else
@@ -908,13 +961,16 @@ void flip_Uz(int i, double jactus1, double jactus2)
                         copy(begin(U_save),end(U_save),begin(Uz[i]));
 
                 }	
-        }	
-        //assign new value to matrix product cache
-         
-        cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans,
-        3,3,3,s[i],
-        Uz[i], 3, R[i],3,
-        0.0, mpc_urz[i],3);	
+        }
+        if(flip_accepted)
+        {
+                //assign new value to matrix product cache
+                
+                cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans,
+                3,3,3,s[i],
+                Uz[i], 3, R[i],3,
+                0.0, mpc_urz[i],3);	
+        }
 }
 void flipper (double jactus1, double jactus2, double jactus3, double jactus4, double jactus5)
 { 
@@ -925,11 +981,11 @@ void flipper (double jactus1, double jactus2, double jactus3, double jactus4, do
 	{  
 		case 0 : flip_R(site, jactus3, jactus4, jactus5); 
 		break;
-		case 1 : flip_Ux(site, jactus3, jactus4);
+//  		case 1 : flip_Ux(site, jactus3, jactus4);
 		break;
-		case 2 : flip_Uy(site, jactus3, jactus4); 
+//  		case 2 : flip_Uy(site, jactus3, jactus4); 
 		break;
-		case 3 : flip_Uz(site, jactus3, jactus4); 
+//  		case 3 : flip_Uz(site, jactus3, jactus4); 
 		break;                                                                          
 	}          
 	
@@ -937,8 +993,7 @@ void flipper (double jactus1, double jactus2, double jactus3, double jactus4, do
 double thermalization_inner ( int N)
 {
         double s1 = 1.0 ;
-        int i, j;  
-	 
+        int i, j;   
         for (i = 0; i <  N; i++)
         {
                 s1 += E_total; 
@@ -1045,31 +1100,11 @@ double orderparameter_n()
 	
         for(int i = 0; i < L3; i++) 
         {
-                Q11_n += 1.5*R[i][6] * R[i][6] - 0.5;
-                
-        }						
-        for(int i = 0; i < L3; i++) 
-        {
-                Q22_n += 1.5*R[i][7] * R[i][7] - 0.5;
-                
-        }							
-        for(int i = 0; i < L3; i++) 
-        {
-                Q33_n += 1.5*R[i][8] * R[i][8] - 0.5;
-                
-        }	
-        for(int i = 0; i < L3; i++) 
-        {
-                Q12_n += 1.5*R[i][6] * R[i][7];
-                
-        }
-        for(int i = 0; i < L3; i++) 
-        {
-                Q13_n += 1.5*R[i][6] * R[i][8];
-                
-        }
-        for(int i = 0; i < L3; i++) 
-        {
+                Q11_n += 1.5*R[i][6] * R[i][6] - 0.5; 
+                Q22_n += 1.5*R[i][7] * R[i][7] - 0.5; 
+                Q33_n += 1.5*R[i][8] * R[i][8] - 0.5; 
+                Q12_n += 1.5*R[i][6] * R[i][7]; 
+                Q13_n += 1.5*R[i][6] * R[i][8]; 
                 Q23_n += 1.5*R[i][7] * R[i][8];
                 
         }				
