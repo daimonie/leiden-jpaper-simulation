@@ -660,7 +660,7 @@ void flip_R(int i, double jactus1, double jactus2, double jactus3)
         copy(begin(mpc_urz[i]), end(mpc_urz[i]), begin(tmp_urz));
         
         
-        build_rotation_matrix(i, jactus1, jactus2); //generate new R[i] and s[i]
+        build_rotation_matrix(i, jactus1, jactus2);
         
         //assign new value to matrix product cache
         cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans,
