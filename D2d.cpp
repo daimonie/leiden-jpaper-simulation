@@ -91,6 +91,10 @@ const int rmc_number = 10; // Note: it generates rmc_number^3 matrices.
 const int rmc_number_total = rmc_number*rmc_number*rmc_number;
 double rmc_matrices[rmc_number_total][9] = {{0}};
 
+/**** matrix product cache ****/
+double mpc_urx[L3][9] = {{0}};
+double mpc_ury[L3][9] = {{0}};
+double mpc_urz[L3][9] = {{0}};
 /**** set random number generator ****/
 const int dice_mode = 2;
 
@@ -190,7 +194,7 @@ int main(int argc, char **argv)
         auto time_end = std::chrono::high_resolution_clock::now();
         
         auto microseconds = std::chrono::duration_cast<std::chrono::microseconds>( time_end - time_start).count();
-	printf("#// Time taken is %ld microseconds", microseconds);
+	printf("#// Time taken is %ld microseconds. \n", microseconds);
 
 	return 0;
 }
@@ -222,7 +226,7 @@ double dice()
 bool josko_diagnostics()
 {
         printf("Josko his Diagnostics:\n");
- 	return false;
+//  	return false;
         int ii, jj, kk;
         int rmc_samples = rmc_number*rmc_number*rmc_number*10;
         int build_random = 0;
@@ -455,94 +459,159 @@ void print_matrix(string name, double matrix[])
 }  
 double site_energy(int i)
 {
-	/****** find neighbour, checked*****/
-	
-	int xp, xn, yp, yn, zp, zn; 
-	//x next
+        return site_energy_old(i);
+}
+double site_energy_old(int i)
+{
+        /****** find neighbour, checked*****/
+        
+        int xp, xn, yp, yn, zp, zn; 
+        //x next
         //x previous
-	xp = i % L == 0 ? i - 1 + L : i - 1;
-	xn = (i + 1) % L == 0 ? i + 1 - L : i + 1;
-	
-	yp = i % L2 < L ? i - L + L2 : i - L;
-	yn = (i + L) % L2 < L ? i + L - L2 : i + L;
-	
-	zp = i < L2 ? i - L2 + L3 : i - L2;
-	zn = i + L2 >= L3 ? i + L2 - L3 : i + L2; 
-	
-	double Rfoo[6][9] = {{0}};
-	double foo[9] = {0};
-	 
-	cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasTrans,
-	3,3,3,s[i]*s[xp],
-	R[i], 3, R[xp],3,
-	0.0, foo,3);
-	
-	cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans,
-	3,3,3,1,
-	Ux[i], 3, foo,3,
-	0.0, Rfoo[0],3);
-	
-	
-	cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasTrans,
-	3,3,3,s[xn]*s[i],
-	R[xn], 3, R[i],3,
-	0.0, foo,3);
-	
-	cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans,
-	3,3,3,1,
-	Ux[xn], 3, foo,3,
-	0.0, Rfoo[1],3);
-	
-	cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasTrans,
-	3,3,3,s[i]*s[yp],
-	R[i], 3, R[yp],3,
-	0.0, foo,3);
-	
-	cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans,
-	3,3,3,1,
-	Uy[i], 3, foo,3,
-	0.0, Rfoo[2],3);
-	
-	cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasTrans,
-	3,3,3,s[yn]*s[i],
-	R[yn], 3, R[i],3,
-	0.0, foo,3);
-	
-	cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans,
-	3,3,3,1,
-	Uy[yn], 3, foo,3,
-	0.0, Rfoo[3],3);	 
-	
-	cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasTrans,
-	3,3,3,s[i]*s[zp],
-	R[i], 3, R[zp],3,
-	0.0, foo,3);
-	
-	cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans,
-	3,3,3,1,
-	Uz[i], 3, foo,3,
-	0.0, Rfoo[4],3); 
-	
-	cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasTrans,
-	3,3,3,s[zn]*s[i],
-	R[zn], 3, R[i],3,
-	0.0, foo,3);
-	
-	cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans,
-	3,3,3,1,
-	Uz[zn], 3, foo,3,
-	0.0, Rfoo[5],3);		
-	
-	/******** total energy *****/ 
-	double Sfoo = 0;
-	 
-	
-	for(int j = 0; j < 6; j++)
+        xp = i % L == 0 ? i - 1 + L : i - 1;
+        xn = (i + 1) % L == 0 ? i + 1 - L : i + 1;
+        
+        yp = i % L2 < L ? i - L + L2 : i - L;
+        yn = (i + L) % L2 < L ? i + L - L2 : i + L;
+        
+        zp = i < L2 ? i - L2 + L3 : i - L2;
+        zn = i + L2 >= L3 ? i + L2 - L3 : i + L2; 
+        
+        double Rfoo[6][9] = {{0}}; 
+        double foo[9] = {0};
+         
+        cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasTrans,
+        3,3,3,s[i]*s[xp],
+        R[i], 3, R[xp],3,
+        0.0, foo,3);
+        
+        cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans,
+        3,3,3,1,
+        Ux[i], 3, foo,3,
+        0.0, Rfoo[0],3);
+        
+        
+        cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasTrans,
+        3,3,3,s[xn]*s[i],
+        R[xn], 3, R[i],3,
+        0.0, foo,3);
+        
+        cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans,
+        3,3,3,1,
+        Ux[xn], 3, foo,3,
+        0.0, Rfoo[1],3);
+        
+        cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasTrans,
+        3,3,3,s[i]*s[yp],
+        R[i], 3, R[yp],3,
+        0.0, foo,3);
+        
+        cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans,
+        3,3,3,1,
+        Uy[i], 3, foo,3,
+        0.0, Rfoo[2],3);
+        
+        cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasTrans,
+        3,3,3,s[yn]*s[i],
+        R[yn], 3, R[i],3,
+        0.0, foo,3);
+        
+        cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans,
+        3,3,3,1,
+        Uy[yn], 3, foo,3,
+        0.0, Rfoo[3],3);         
+        
+        cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasTrans,
+        3,3,3,s[i]*s[zp],
+        R[i], 3, R[zp],3,
+        0.0, foo,3);
+        
+        cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans,
+        3,3,3,1,
+        Uz[i], 3, foo,3,
+        0.0, Rfoo[4],3); 
+        
+        cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasTrans,
+        3,3,3,s[zn]*s[i],
+        R[zn], 3, R[i],3,
+        0.0, foo,3);
+        
+        cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans,
+        3,3,3,1,
+        Uz[zn], 3, foo,3,
+        0.0, Rfoo[5],3);   
+        
+        /******** total energy *****/ 
+        double Sfoo = 0;
+         
+        
+        for(int j = 0; j < 6; j++)
         { 
                 Sfoo += J1*Rfoo[j][0] + J2*Rfoo[j][4] + J3*Rfoo[j][8];
-        }				
-	return Sfoo;
-}	
+        }                               
+        return Sfoo;
+}       
+
+double site_energy_new(int i)
+{
+        /****** find neighbour, checked*****/
+        
+        int xp, xn, yp, yn, zp, zn; 
+        //x next
+        //x previous
+        xp = i % L == 0 ? i - 1 + L : i - 1;
+        xn = (i + 1) % L == 0 ? i + 1 - L : i + 1;
+        
+        yp = i % L2 < L ? i - L + L2 : i - L;
+        yn = (i + L) % L2 < L ? i + L - L2 : i + L;
+        
+        zp = i < L2 ? i - L2 + L3 : i - L2;
+        zn = i + L2 >= L3 ? i + L2 - L3 : i + L2; 
+        
+        double Rfoo[6][9] = {{0}}; 
+        
+        cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasTrans,
+        3,3,3,s[xp],
+        mpc_urx[i], 3, R[xp],3,
+        0.0, Rfoo[0],3);
+        
+        cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasTrans,
+        3,3,3,s[i],
+        mpc_urx[xn], 3, R[i],3,
+        0.0, Rfoo[1],3); 
+        
+        
+        cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasTrans,
+        3,3,3,s[yp],
+        mpc_ury[i], 3, R[yp],3,
+        0.0, Rfoo[2],3);
+        
+        cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasTrans,
+        3,3,3,s[i],
+        mpc_urx[yn], 3, R[i],3,
+        0.0, Rfoo[3],3);
+        
+        
+        cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasTrans,
+        3,3,3,s[zp],
+        mpc_ury[i], 3, R[zp],3,
+        0.0, Rfoo[4],3);
+        
+        cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasTrans,
+        3,3,3,s[i],
+        mpc_urx[zn], 3, R[i],3,
+        0.0, Rfoo[5],3);
+        
+        /******** total energy *****/ 
+        double Sfoo = 0;
+         
+        
+        for(int j = 0; j < 6; j++)
+        { 
+                Sfoo += J1*Rfoo[j][0] + J2*Rfoo[j][4] + J3*Rfoo[j][8];
+        }                               
+        return Sfoo;
+}       
 	
 /**** 
  * New flip_R function, but uses the previously constructed matrices instead.
@@ -587,6 +656,20 @@ void flip_R(int i, double jactus1, double jactus2, double jactus3)
                         s[i] = s_save;
                 } // change R[i] and s[i] back				
         }	
+        //assign new value to matrix product cache
+        
+        cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans,
+        3,3,3,s[i],
+        Ux[i], 3, R[i],3,
+        0.0, mpc_urx[i],3);
+        cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans,
+        3,3,3,s[i],
+        Uy[i], 3, R[i],3,
+        0.0, mpc_ury[i],3);
+        cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans,
+        3,3,3,s[i],
+        Uz[i], 3, R[i],3,
+        0.0, mpc_urz[i],3);
 }
 
 void flip_Ux(int i, double jactus1, double jactus2)
@@ -658,6 +741,12 @@ void flip_Ux(int i, double jactus1, double jactus2)
 			copy(begin(U_save),end(U_save),begin(Ux[i]));
 		}	
 	}		
+        //assign new value to matrix product cache
+        
+        cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans,
+        3,3,3,s[i],
+        Ux[i], 3, R[i],3,
+        0.0, mpc_urx[i],3); 
 	
 }
 
@@ -736,6 +825,12 @@ void flip_Uy(int i, double jactus1, double jactus2)
                 }	
         }		
 	
+        //assign new value to matrix product cache
+         
+        cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans,
+        3,3,3,s[i],
+        Uy[i], 3, R[i],3,
+        0.0, mpc_ury[i],3); 
 }
 
 
@@ -813,7 +908,13 @@ void flip_Uz(int i, double jactus1, double jactus2)
                         copy(begin(U_save),end(U_save),begin(Uz[i]));
 
                 }	
-        }		
+        }	
+        //assign new value to matrix product cache
+         
+        cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans,
+        3,3,3,s[i],
+        Uz[i], 3, R[i],3,
+        0.0, mpc_urz[i],3);	
 }
 void flipper (double jactus1, double jactus2, double jactus3, double jactus4, double jactus5)
 { 
