@@ -796,6 +796,10 @@ void estimate_beta_c()
 	double foo_s, s1, s2, chi_s;
 	int i, j, thread;
 	 
+        
+        int thread_number = omp_get_max_threads();
+        printf("Generating N=%d samples for each of the %d threads.\n", sample_amount, thread_number);
+        
 	while ( ( (beta >= beta_lower) && (beta <= beta_upper) ))
 	{ 
 		//printf("#//Calculating for beta=%2.3f < %2.3f \n", beta, beta_upper);
@@ -809,8 +813,8 @@ void estimate_beta_c()
 		s1 = 0; s2 = 0;
 		Q1_n = 0; Q2_n = 0;
 		/**** measure ****/ 	
-                #pragma omp parallel for reduction(+:S1, S2, foo2_n, Q2_n, Q1_n, s1, s2) firstprivate(s, R, Ux, Uy, Uz, mpc_urx, mpc_ury, mpc_urz)
-                for(thread = 0; thread < 4; thread++)
+                #pragma omp parallel for reduction(+:S1, S2, Q2_n, Q1_n, s1, s2) firstprivate(s, R, Ux, Uy, Uz, mpc_urx, mpc_ury, mpc_urz)
+                for(thread = 0; thread < thread_number; thread++)
                 {
                         for (j = 0; j < sample_amount; j++)
                         {  
@@ -833,7 +837,15 @@ void estimate_beta_c()
                                 s1 += foo_s;
                                 s2 += foo_s*foo_s;
                         }	 
-                }
+                } 
+                //need to normalise over threads, too
+                S1 /= thread_number;
+                S2 /= thread_number;
+                s1 /= thread_number;
+                s2 /= thread_number;
+                Q1_n /= thread_number;
+                Q2_n /= thread_number;
+                
                 
                 s1 /= foo_s;
                 s2 /= foo_s * foo_s;
@@ -844,7 +856,7 @@ void estimate_beta_c()
 		Cv = (S2 - S1 * S1) * beta * beta / L3;	 
 		S1 /= E_g;	
 
-		Q1_n/=sample_amount;
+		Q1_n /= sample_amount;
 		Q2_n /= sample_amount;
 		chi_n = (Q2_n - Q1_n*Q1_n)*beta*L3;									
 
