@@ -38,9 +38,7 @@ void build_gauge_bath();
 void uniform_initialization();
 void random_initialization();
 void build_rotation_matrix(int i, double, double);
-double site_energy(int i);  
-double site_energy_new(int i);  
-double site_energy_old(int i);   
+double site_energy(int i);   
 void flip_R(int, double, double);
 void flip_Ux(int, double, double);
 void flip_Uy(int, double, double);
@@ -227,75 +225,8 @@ double dice()
 bool josko_diagnostics()
 {
         printf("Josko his Diagnostics:\n");
-  	return false;
-        int ii, jj, kk;
-        int rmc_samples = rmc_number*rmc_number*rmc_number*10;
-        int build_random = 0;
-        double rmc_matrix_average[9] = {0}; 
-        for(ii = 0; ii < rmc_samples; ii++)
-        {
-                build_random = (int) (rmc_number_total * dice());
-                
-                for(jj = 0; jj < 9; jj++)
-                {      
-                        rmc_matrix_average[jj] += rmc_matrices[build_random][jj]/rmc_samples;
-                }
-                
-        } 
-        
-        printf("Average of sampled matrices{ %2.3f, %2.3f, %2.3f, %2.3f, %2.3f, %2.3f, %2.3f, %2.3f, %2.3f) \n",
-	        rmc_matrix_average[0], rmc_matrix_average[1], rmc_matrix_average[2],
-                rmc_matrix_average[3], rmc_matrix_average[4], rmc_matrix_average[5],
-                rmc_matrix_average[6], rmc_matrix_average[7], rmc_matrix_average[8]); 
-	
-	time_t time_before = time(0);
-	
-        int rnd_samples = 10000; 
-	
-        double rnd_average = 0.0;
-        double rnd_correlation = 0.0;
-        double rnd_list[rnd_samples]; 
-	#pragma omp parallel for
-        for(ii = 0; ii < rnd_samples; ii++)
-        {
-		//if you don't set this to critical, all statistical properties are bollocks
-		#pragma omp critical
-		{
-			rnd_list[ii] = dice();
-		}
-                rnd_average += rnd_list[ii] / rnd_samples;
-        } 
-	#pragma omp parallel for
-        for(jj =0; jj < rnd_samples; jj++)
-        {
-                for(kk = 0; kk < rnd_samples; kk++)
-                {   
-                        rnd_correlation += rnd_list[jj] * rnd_list[ (jj+kk)%rnd_samples ] / rnd_samples;
-                }
-                rnd_correlation -= rnd_average; 
-        } 
-        rnd_correlation /= rnd_samples;
-        printf("Random: omp critical, mode %d,  samples %d, average [%2.3f], correlation [%.3f]. \n", dice_mode, rnd_samples, rnd_average, rnd_correlation);
-	time_t time_after = time(0);
-	
-
-	printf("\t\t %.3f seconds. \n", difftime(time_after,time_before)); 
-	//testing a new function for site_energy
-	int se_samples = L3;
-	double se_old = 0.0;
-	double se_new = 0.0;
-	//set to 10k to compare function speed.
-	for( int repeat = 0; repeat < 1; repeat++)
-	{
-		for( jj = 0; jj <  se_samples; jj++)
-		{
-			se_old = site_energy_old(jj);
-			se_new = site_energy_new(jj);
-			
-			printf(" old versus new,\t %.3f %.3f .\n", se_old, se_new );
-		}
-	}  
-// 	return true;
+  	return false; 
+ 	return true;
 }
 /**** generates rotation matrices ****/
 void generate_rotation_matrices ()
@@ -476,101 +407,7 @@ void print_matrix(string name, double matrix[])
 		matrix[3], matrix[4], matrix[5],
 		matrix[6], matrix[7], matrix[8]);
 }    
-double site_energy(int i)
-{ 
-        return site_energy_new(i);  
-}
-double site_energy_old(int i)
-{
-        
-        int xp, xn, yp, yn, zp, zn; 
-        //x next
-        //x previous
-        xp = i % L == 0 ? i - 1 + L : i - 1;
-        xn = (i + 1) % L == 0 ? i + 1 - L : i + 1;
-        
-        yp = i % L2 < L ? i - L + L2 : i - L;
-        yn = (i + L) % L2 < L ? i + L - L2 : i + L;
-        
-        zp = i < L2 ? i - L2 + L3 : i - L2;
-        zn = i + L2 >= L3 ? i + L2 - L3 : i + L2; 
-        
-        double Rfoo[6][9] = {{0}}; 
-        double foo[9] = {0}; 
-        
-        cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasTrans,
-        3,3,3,s[i]*s[xp],
-        R[i], 3, R[xp],3,
-        0.0, foo,3);
-        
-        cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans,
-        3,3,3,1,
-        Ux[i], 3, foo,3,
-        0.0, Rfoo[0],3);
-        
-        
-        cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasTrans,
-        3,3,3,s[xn]*s[i],
-        R[xn], 3, R[i],3,
-        0.0, foo,3);
-        
-        cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans,
-        3,3,3,1,
-        Ux[xn], 3, foo,3,
-        0.0, Rfoo[1],3);
-        
-        cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasTrans,
-        3,3,3,s[i]*s[yp],
-        R[i], 3, R[yp],3,
-        0.0, foo,3);
-        
-        cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans,
-        3,3,3,1,
-        Uy[i], 3, foo,3,
-        0.0, Rfoo[2],3);
-        
-        cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasTrans,
-        3,3,3,s[yn]*s[i],
-        R[yn], 3, R[i],3,
-        0.0, foo,3);
-        
-        cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans,
-        3,3,3,1,
-        Uy[yn], 3, foo,3,
-        0.0, Rfoo[3],3);         
-        
-        cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasTrans,
-        3,3,3,s[i]*s[zp],
-        R[i], 3, R[zp],3,
-        0.0, foo,3);
-        
-        cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans,
-        3,3,3,1,
-        Uz[i], 3, foo,3, 
-        0.0, Rfoo[4],3); 
-        
-        cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasTrans,
-        3,3,3,s[zn]*s[i],
-        R[zn], 3, R[i],3,
-        0.0, foo,3);
-        
-        cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans,
-        3,3,3,1,
-        Uz[zn], 3, foo,3,
-        0.0, Rfoo[5],3);   
-         
-        /******** total energy *****/ 
-        double Sfoo = 0;
-         
-        
-        for(int j = 0; j < 6; j++)
-        {   
-                Sfoo += J1*Rfoo[j][0] + J2*Rfoo[j][4] + J3*Rfoo[j][8];
-        }                               
-        return Sfoo;
-}       
-
-double site_energy_new(int i)
+double site_energy(int i) 
 {
         /****** find neighbour, checked*****/
         
@@ -957,7 +794,7 @@ void estimate_beta_c()
 	double S1, S2, Cv; 
 	double foo2_n, Q1_n, Q2_n, chi_n;
 	double foo_s, s1, s2, chi_s;
-	int i, j;
+	int i, j, thread;
 	 
 	while ( ( (beta >= beta_lower) && (beta <= beta_upper) ))
 	{ 
@@ -971,33 +808,36 @@ void estimate_beta_c()
 		S1 = 0; S2 = 0;
 		s1 = 0; s2 = 0;
 		Q1_n = 0; Q2_n = 0;
-		/**** measure ****/ 	  
-		for (j = 0; j < sample_amount; j++)
-		{
-			//printf("Num threads %d \n", omp_get_num_threads());
-			//line used to check core number. 
-                         
-			for (i = 0; i < L3*4*tau ; i++)
-			{ 
-				flipper (dice(), dice(), dice(), dice(), dice());
-			}
-			S1 += E_total;	 
-			S2 += E_total * E_total;	
+		/**** measure ****/ 	
+                #pragma omp parallel for reduction(+:S1, S2, foo2_n, Q2_n, Q1_n, s1, s2) firstprivate(s, R, Ux, Uy, Uz, mpc_urx, mpc_ury, mpc_urz)
+                for(thread = 0; thread < 4; thread++)
+                {
+                        for (j = 0; j < sample_amount; j++)
+                        {  
+                                for (i = 0; i < L3*4*tau ; i++)
+                                { 
+                                        flipper (dice(), dice(), dice(), dice(), dice());
+                                }
+                                S1 += E_total;	 
+                                S2 += E_total * E_total;	
 
-			foo2_n = orderparameter_n(); //intensive
-			Q2_n += foo2_n;
-			Q1_n += sqrt(foo2_n);					
+                                foo2_n = orderparameter_n(); 
+                                Q2_n += foo2_n;
+                                Q1_n += sqrt(foo2_n);					
 
-			foo_s = 0;
-			for(int k = 0; k < L3; k++) 
-			{
-				foo_s += s[k];
-			} //extensive
-			foo_s /= L3; // intensive
-			s1 += foo_s;
-			s2 += foo_s*foo_s;
-		}	 
-
+                                foo_s = 0;
+                                for(int k = 0; k < L3; k++) 
+                                {
+                                        foo_s += s[k];
+                                } 
+                                s1 += foo_s;
+                                s2 += foo_s*foo_s;
+                        }	 
+                }
+                
+                s1 /= foo_s;
+                s2 /= foo_s * foo_s;
+                
 		S1 /= sample_amount;
 		S2 /= sample_amount;
 
