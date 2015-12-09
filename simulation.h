@@ -3,7 +3,8 @@
 
 class simulation
 {
-        private:  
+        //everything is public, for simplicity.
+        public:
                 /***
                  * u_order defines the number of (manually set) arrays in the baths. 
                  * It is called u_order instead of u_samples, because it is not a sampling; this has to do with
@@ -25,25 +26,7 @@ class simulation
                  *      in total, rmc_number_total elements.
                  ***/
                 const int rmc_number = 10; 
-                const int rmc_number_total = rmc_number*rmc_number*rmc_number; 
-                
-                
-                case 0:
-                        return dsfmt_genrand_close_open(&dsfmt);
-                break;
-                case 1:
-                        return std_random_mt(std_engine);
-                break;
-                case 2:
-                        return boost_mt(boost_rng_fib);
-                break;
-                case 3:
-                        return boost_mt(boost_rng_mt);
-                break;
-                default:
-                        printf("Dice mode is not set... \n");
-                        return 0.5;
-                break;
+                const int rmc_number_total = rmc_number*rmc_number*rmc_number;  
                 /***
                  * What random engine do we want to use?
                  * - 0, dsfmt
@@ -76,25 +59,22 @@ class simulation
                 /***
                  * Total energy of the simulation.
                  * Change from the previous total energy to the current one. (set in a perturbation or flip function)
-                 * Some kind of energy unit
+                 * Energy unit or equivalently ground state energy
                  ***/
                 double e_total;
                 double e_change;
-                double e_g;
+                double e_ground;
                 /***
                  * J1, J2, J3 parameters.
                  * 
                  ***/
-                double j1 = 0.1;
-                double j2 = 0.1;
-                double j3 = 1;
+                double j_one = 0.1;
+                double j_two = 0.1;
+                double j_three = 1;
                 /***
-                 * current temperature. Can be set through a setter function. (I require a setter function
-                 *      so that it can be made clear that there hasn't been a calculation yet. This is done
-                 *      through the calculated variable.)
+                 * current temperature.
                  ***/
-                double beta; 
-                bool calculated = false;
+                double beta;  
                 
                 /***
                  * When you change the temperature, the chances are (perhaps radically) altered. Therefore, you need to keep doing
@@ -108,37 +88,48 @@ class simulation
                  * Well, sample_amount, that is.
                  ***/
                 int sample_amount;
-                
+                /***
+                 * For thermalisation, we first perturb _outer times and then _inner times, check for convergence, _inner times, ... until convergence.
+                 ***/
+                int thermalization_number_outer = 1000;
+                int thermalization_number_inner = 10;
                 /***
                  * Yay, matrices. Let's go over these.
+                 * First, the r field; this is the rotation matrix R associated with a grid point.
+                 * The u fields are the bonds. Bonds are associated with their 'left' neighbour; so the bond between i=1, j=2 is called 'bond 1'.
+                 * The bath_field_u contains the possible values for the u fields.
+                 * The mpc_ matrices are simply the product of the ising field with the u field with the r field. They are something used
+                 *      in various calculations, so saving them saves up time (about twenty percent in the test).
+                 * The Random Matrix Cache contains the possible values of the r field.
                  ***/
-                double field_r[L3][9]                 = {{0}};
-                double field_u_x[L3][9]                = {{0}};
-                double field_u_y[L3][9]                = {{0}};
-                double Uz[L3][9]                = {{0}};
-                double U_bath[U_order][9]       ={{0}}; 
-                double s[L3]                    = {0};
-                double mpc_urx[L3][9]           = {{0}};
-                double mpc_ury[L3][9]           = {{0}};
-                double mpc_urz[L3][9]           = {{0}}; 
-                double rmc_matrices[rmc_number_total][9] = {{0}};
+                double field_r[length_three][9]                 = {{0}};
+                double field_u_x[length_three][9]               = {{0}};
+                double field_u_y[length_three][9]               = {{0}};
+                double field_u_z[length_three][9]               = {{0}};
+                double bath_field_u[u_order][9]                 ={{0}}; 
+                double field_s[length_three]                    = {0};
+                double mpc_urx[length_three][9]                 = {{0}};
+                double mpc_ury[length_three][9]                 = {{0}};
+                double mpc_urz[length_three][9]                 = {{0}}; 
+                double rmc_matrices[rmc_number_total][9]        = {{0}};
                 
+                //Function time. Their explanations are in the implementation file (simulation.cpp)
                 void build_gauge_bath();
                 void uniform_initialization();
                 void random_initialization();
-                void build_rotation_matrix(int i, double, double);
                 double site_energy(int i);   
-                void flip_R(int, double, double);
-                void flip_Ux(int, double, double);
-                void flip_Uy(int, double, double);
-                void flip_Uz(int, double, double);
-                void thermalization();
+                void thermalization(); 
+                double thermalization_times();
+                void mpc_initialisation(); 
+                void generate_rotation_matrices(); 
+                void build_rotation_matrix(int i, double, double);
+                void flipper(double, double, double, double, double); 
+                void flip_r(int, double, double);
+                void flip_u_x(int, double, double);
+                void flip_u_y(int, double, double);
+                void flip_u_z(int, double, double);
                 void estimate_beta_c(); 
                 double orderparameter_n(); 
-                void print_matrix(string, double[]);
-                void mpc_initialisation(); 
-                void generate_rotation_matrices();
-                void flipper(double, double, double, double, double);
-                bool josko_diagnostics ();
+                simulation();
 };
 #endif
