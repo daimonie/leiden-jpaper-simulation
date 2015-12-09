@@ -1,13 +1,39 @@
 #include "simulation.h"
+#include "data.h"
+//includes from previous implementation
+#include <iostream>
+#include <fstream> 
+#include <string> 
+#include <stdlib.h> 
+#include <stdio.h>
+#include <math.h>
+#include <chrono> 
+#include <gsl/gsl_math.h>
+#include <gsl/gsl_matrix.h>
+#include <gsl/gsl_cblas.h>
+#include <iomanip> 
+#include <ctime>
+#include <string>
+#include "omp.h"
+
+//random generation libraries
+#include "dSFMT-src-2.2.3/dSFMT.h"
+#include <random> 
+#include <boost/random/mersenne_twister.hpp>
+#include <boost/random/lagged_fibonacci.hpp>
+#include <boost/random/uniform_01.hpp>
 
 /***
  * 
  * Constructor
  *      Doesn't do anything, mostly because the parameters aren't set yet.
  ***/
-simulation::simulation ()
+simulation::simulation (int size)
 {
         printf("Welcome to simulation. This seems to work. \n");
+        length_one = size;
+        length_two = size * length_one;
+        length_three = size * length_two; 
 }
     
 /*** 
@@ -410,7 +436,7 @@ void simulation::flip_r(int i, double jactus_one, double jactus_two, double jact
  * Perturbation of the field_u-x
  ***/
 
-void flip_u_x(int i, double jactus_one, double jactus_two)
+void simulation::flip_u_x(int i, double jactus_one, double jactus_two)
 {
         int x_prev = i % L == 0 ? i - 1 + L : i - 1; 
         
@@ -477,16 +503,16 @@ void flip_u_x(int i, double jactus_one, double jactus_two)
  * Perturbation of field_u_y
  ***/
 
-void flip_Uy(int i, double jactus_one, double jactus_two)
+void simulation::flip_u_y(int i, double jactus_one, double jactus_two)
 {  
-        int y_prev = i % L2 < L ? i - L + L2 : i - L;
+        int y_prev = i % length_two < length_one ? i - length_one + length_two : i - L;
          
         
         double bond[9] = {0}; 
          
         cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasTrans,
-        3,3,3,field_s[yp],
-        mpc_ury[i], 3, field_r[yp],3,
+        3,3,3,field_s[y_prev],
+        mpc_ury[i], 3, field_r[y_prev],3,
         0.0, bond,3);
          
         double e_old = j_one*bond[0] + j_two * bond[4] + j_three*bond[8];
@@ -499,7 +525,7 @@ void flip_Uy(int i, double jactus_one, double jactus_two)
         double tmp_ury[9] = {0};
         copy(begin(mpc_ury[i]), end(mpc_ury[i]), begin(tmp_ury));
         
-        copy(begin(U_bath[j]),end(U_bath[j]),begin(Uy[i]));
+        copy(begin(bath_field_u[j]),end(bath_field_u[j]),begin(Uy[i]));
          
         
         
@@ -510,8 +536,8 @@ void flip_Uy(int i, double jactus_one, double jactus_two)
         
         
         cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasTrans,
-        3,3,3,field_s[yp],
-        mpc_ury[i], 3, field_r[yp],3,
+        3,3,3,field_s[y_prev],
+        mpc_ury[i], 3, field_r[y_prev],3,
         0.0, bond,3);
         
         double e_new = j_one*bond[0] + j_two * bond[4] + j_three*bond[8];
@@ -541,12 +567,153 @@ void flip_Uy(int i, double jactus_one, double jactus_two)
         }   
 }
 /*** 
+ * Perturbation of field_u_z
  ***/
+
+void simulation::flip_u_z(int i, double jactus_one, double jactus_two)
+{
+        /**** find neighbour, only one****/
+        int z_prev= i < length_two ? i - length_two + length_three : i - length_two;
+        
+        
+        double bond[9] = {0}; 
+          
+        cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasTrans,
+        3,3,3,field_s[z_prev],
+        mpc_urz[i], 3, field_r[z_prev],3,
+        0.0, bond,3);
+         
+        double e_old = j_one*bond[0] + j_two * bond[4] + j_three*bond[8];
+         
+        double u_save[9];
+        copy(begin(field_u_z[i]),end(field_u_z[i]),begin(u_save));
+         
+        int j = int(u_order * jactus_one);
+        
+        double tmp_urz[9] = {0};
+        copy(begin(mpc_urz[i]), end(mpc_urz[i]), begin(tmp_urz));
+        copy(begin(bath_field_u[j]),end(bath_field_u[j]),bath_field_u(field_u_z[i]));
+         
+        
+        cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans,
+        3,3,3,field_s[i],
+        field_uz[i], 3, field_r[i],3,
+        0.0, mpc_urz[i],3); 
+        
+        
+        cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasTrans,
+        3,3,3,field_s[z_prev],
+        mpc_urz[i], 3,  field_r[z_prev],3,
+        0.0, Bond,3);
+        
+        double e_new = j_one*bond[0] + j_two * bond[4] + j_three*bond[8];
+        
+        e_change = e_new - e_old;
+        
+        
+        bool flip_accepted = true; 
+        double change_chance = exp(-beta * e_change);
+        if (e_change >= 0)
+        { 
+                flip_accepted = false;
+        }     
+        if (change_chance > jactus_two) 
+        {
+                flip_accepted = true;
+        }     
+        
+        if(flip_accepted)
+        { 
+                E_total += e_change;
+        }
+        else
+        { 
+                copy(begin(U_save),end(U_save),begin(field_u_z[i]));
+                copy(begin(tmp_urz), end(tmp_urz), begin(mpc_urz[i]));
+        }
+        
+}
 /*** 
+ * Calculates order parameter
  ***/
+double orderparameter_n()
+{
+        double one_one = 0, two_two = 0, three_three = 0, one_two = 0, two_three = 0, one_three = 0;
+        #pragma omp parallel for
+        for(int i = 0; i < L3; i++) 
+        {
+                one_one += 1.5*R[i][6] * R[i][6] - 0.5; 
+                two_two += 1.5*R[i][7] * R[i][7] - 0.5; 
+                three_three += 1.5*R[i][8] * R[i][8] - 0.5; 
+                one_two += 1.5*R[i][6] * R[i][7]; 
+                one_three += 1.5*R[i][6] * R[i][8]; 
+                two_three += 1.5*R[i][7] * R[i][8];
+                
+        }                               
+                                                
+        double q = (one_one*one_one + two_two*two_two + three_three *three_three + 2*one_two*one_two + 2*one_three*one_three + 2*two_three*two_three) / length_three / length_three;        
+        
+        return q;
+}       
 /*** 
- ***/
-/*** 
- ***/
-/*** 
- ***/
+ * Calculates and reports the result for a specific beta
+ * 
+ ***/   
+data estimate_beta_c()
+{
+        double total_energy_one =0, total_energy_two = 0, heat_capacity; 
+        double order, q_one = 0, q_two = 0, chi_order;
+        double energy, energy_one = 0, energy_two = 0, chi_energy;
+        int i, j; 
+        
+        for (j = 0; j < sample_amount; j++)
+        { 
+                for (i = 0; i < length_three*4*tau ; i++)
+                { 
+                        flipper (dice(), dice(), dice(), dice(), dice());
+                }
+                total_energy_one += e_total;   
+                total_energy_two += e_total * e_total;        
+
+                order = orderparameter_n(); //intensive
+                q_two += order;
+                q_one += sqrt(order);                                   
+
+                energy = 0;
+                for(int k = 0; k < length_three; k++) 
+                {
+                        energy += s[k];
+                }
+                energy /= length_three;
+                energy_one += energy;
+                energy_two += energy*energy;
+        }        
+
+        total_energy_one /= sample_amount;
+        total_energy_two /= sample_amount;
+
+        heat_capacity = (total_energy_two - total_energy_one * total_energy_one) * beta * beta / length_three;  
+        total_energy_one /= E_g;      
+
+        q_one/=sample_amount;
+        q_two /= sample_amount;
+        chi_order = (q_two - q_one*q_one)*beta*length_three;                                                                     
+
+        energy_one /= sample_amount;
+        energy_two /= sample_amount;
+        chi_energy = (energy_two -energy_one*energy_one)*beta*length_three;
+
+//         printf("%2.3f\t%2.3f\t%2.3f\t%2.3f\t%2.3f\t%2.3f\t%2.3f\n", beta, total_energy_one, heat_capacity, energy_one, chi_energy, q_one, chi_order);  
+        data results;
+       
+        results.beta            = beta;
+        results.total_energy    = total_energy_one;
+        results.heat_capacity   = heat_capacity;
+        results.energy          = energy_one;
+        results.chi_energy      = chi_energy;
+        results.chi_order       = chi_order;
+        results.order           = q_one;
+        results.j_one           = j_one;
+        results.j_two           = j_two;
+        results.j_three         = j_three;  
+} 

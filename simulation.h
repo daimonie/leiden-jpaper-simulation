@@ -114,6 +114,7 @@ class simulation
                 double rmc_matrices[rmc_number_total][9]        = {{0}};
                 
                 //Function time. Their explanations are in the implementation file (simulation.cpp)
+                simulation(int);
                 void build_gauge_bath();
                 void uniform_initialization();
                 void random_initialization();
@@ -128,8 +129,7 @@ class simulation
                 void flip_u_x(int, double, double);
                 void flip_u_y(int, double, double);
                 void flip_u_z(int, double, double);
-                void estimate_beta_c(); 
                 double orderparameter_n(); 
-                simulation();
+                data estimate_beta_c(); 
 };
 #endif
