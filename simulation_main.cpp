@@ -4,7 +4,30 @@
 #include "omp.h"
 
 #include "data.h"
-#include "simulation.h"
+#include "simulation.h" 
+//includes from previous implementation
+#include <iostream>
+#include <fstream> 
+#include <string> 
+#include <stdlib.h> 
+#include <stdio.h>
+#include <math.h>
+#include <chrono> 
+#include <gsl/gsl_math.h>
+#include <gsl/gsl_matrix.h>
+#include <gsl/gsl_cblas.h>
+#include <iomanip> 
+#include <ctime>
+#include <string>
+#include "omp.h"
+
+//random generation libraries
+#include "dSFMT-src-2.2.3/dSFMT.h"
+#include <random> 
+#include <boost/random/mersenne_twister.hpp>
+#include <boost/random/lagged_fibonacci.hpp>
+#include <boost/random/uniform_01.hpp>
+using namespace std;
 int main(int argc, char **argv)
 {
         printf("Single object, this time. \n");
@@ -13,12 +36,12 @@ int main(int argc, char **argv)
         
         auto time_start = std::chrono::high_resolution_clock::now();
          
-        if (dice_mode == 0)
+        if (ares.dice_mode == 0)
         {
-                dsfmt_init_gen_rand(&dsfmt, time(0)); //seed dsfmt 
+                dsfmt_init_gen_rand(&ares.dsfmt, time(0)); //seed dsfmt 
         }
         omp_set_num_threads(4); //I still want to use my computer :)
-        generate_rotation_matrices(); 
+        ares.generate_rotation_matrices(); 
         
         ares.build_gauge_bath();
         
@@ -30,9 +53,9 @@ int main(int argc, char **argv)
         ares.sample_amount = atof(argv[14]);
 
         char *C_or_H = argv[1];
-        
-        beta_lower = atof(argv[2]);
-        beta_upper = atof(argv[3]);
+        double beta, beta_step_big, beta_step_small;
+        double beta_lower = atof(argv[2]);
+        double beta_upper = atof(argv[3]);
         
         if (*C_or_H == 'C') // if cooling
         {                       
@@ -43,37 +66,37 @@ int main(int argc, char **argv)
                 ares.random_initialization();
                 ares.mpc_initialisation();
                 
-                for (int i=0; i < L3; i++)
+                for (int i=0; i < ares.length_three; i++)
                 {
-                        ares.e_total += site_energy(i);
+                        ares.e_total += ares.site_energy(i);
                 }
 
                 ares.e_total /= 2;
-                ares.e_g = L3*3*(J1+J2+J3);                          
+                ares.e_ground = ares.length_three*3*(ares.j_one + ares.j_two + ares.j_three);                 
         }
-        else if (*C_or_H == 'H') // if heating
+        else// if (*C_or_H == 'H') // if heating
         {                       
                 beta = beta_upper;
                 beta_step_small = -atof(argv[4]); // the step is negative since beta is decreasing
                 beta_step_big = -atof(argv[5]);
 
-                uniform_initialization();
-                mpc_initialisation();
+                ares.uniform_initialization();
+                ares.mpc_initialisation();
 
-                for (int i=0; i < L3; i++)
+                for (int i=0; i < ares.length_three; i++)
                 {
-                        ares.e_total += site_energy(i);
+                        ares.e_total += ares.site_energy(i);
                 }
 
                 ares.e_total /= 2;
-                ares.e_g = L3*3*(J1+J2+J3);                                                  
+                ares.e_ground = ares.length_three*3*(ares.j_one + ares.j_two + ares.j_three);                                                  
         }
         
 
                 
         /**** initialize beta and the determine the fine region****/            
-        beta_1 = atof(argv[6]);
-        beta_2 = atof(argv[7]);
+        double beta_1 = atof(argv[6]);
+        double beta_2 = atof(argv[7]);
         
         ares.accuracy = atof(argv[8]);
         

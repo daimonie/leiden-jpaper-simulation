@@ -1,6 +1,14 @@
 #ifndef SIMULATION_H
-#def SIMULATION_H
+#define SIMULATION_H
 
+//random generation libraries
+#include "dSFMT-src-2.2.3/dSFMT.h"
+#include <random> 
+#include <boost/random/mersenne_twister.hpp>
+#include <boost/random/lagged_fibonacci.hpp>
+#include <boost/random/uniform_01.hpp>
+
+#include "data.h"
 class simulation
 {
         //everything is public, for simplicity.
@@ -41,11 +49,11 @@ class simulation
                  * Also, the boost-uniform distribution.
                  ***/
                 dsfmt_t dsfmt; 
-                std::mt19937_64 std_engine(0);
+                std::mt19937_64 std_engine;
                 boost::random::mt19937 boost_rng_mt; 
                 boost::random::lagged_fibonacci44497 boost_rng_fib; 
                 boost::random::uniform_01<> boost_mt;  
-                std::uniform_real_distribution<double> std_random_mt (0.0, 1.0);
+                std::uniform_real_distribution<double> std_random_mt;
                 
                 /***
                  * There are length points in each direction,
@@ -102,16 +110,16 @@ class simulation
                  *      in various calculations, so saving them saves up time (about twenty percent in the test).
                  * The Random Matrix Cache contains the possible values of the r field.
                  ***/
-                double field_r[length_three][9]                 = {{0}};
-                double field_u_x[length_three][9]               = {{0}};
-                double field_u_y[length_three][9]               = {{0}};
-                double field_u_z[length_three][9]               = {{0}};
-                double bath_field_u[u_order][9]                 ={{0}}; 
-                double field_s[length_three]                    = {0};
-                double mpc_urx[length_three][9]                 = {{0}};
-                double mpc_ury[length_three][9]                 = {{0}};
-                double mpc_urz[length_three][9]                 = {{0}}; 
-                double rmc_matrices[rmc_number_total][9]        = {{0}};
+                double field_r[][9];
+                double field_u_x[][9];
+                double field_u_y[][9];
+                double field_u_z[][9];
+                double bath_field_u[][9];
+                double mpc_urx[][9];
+                double mpc_ury[][9];
+                double mpc_urz[][9];
+                double field_s[];
+                double rmc_matrices[][9];
                 
                 //Function time. Their explanations are in the implementation file (simulation.cpp)
                 simulation(int);
@@ -120,16 +128,17 @@ class simulation
                 void random_initialization();
                 double site_energy(int i);   
                 void thermalization(); 
-                double thermalization_times();
+                double thermalization_times(int);
                 void mpc_initialisation(); 
                 void generate_rotation_matrices(); 
                 void build_rotation_matrix(int i, double, double);
                 void flipper(double, double, double, double, double); 
-                void flip_r(int, double, double);
+                void flip_r(int, double, double, double);
                 void flip_u_x(int, double, double);
                 void flip_u_y(int, double, double);
                 void flip_u_z(int, double, double);
                 double orderparameter_n(); 
                 data estimate_beta_c(); 
+                double dice ();
 };
 #endif

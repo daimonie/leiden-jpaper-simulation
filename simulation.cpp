@@ -23,6 +23,7 @@
 #include <boost/random/lagged_fibonacci.hpp>
 #include <boost/random/uniform_01.hpp>
 
+using namespace std;
 /***
  * 
  * Constructor
@@ -34,6 +35,23 @@ simulation::simulation (int size)
         length_one = size;
         length_two = size * length_one;
         length_three = size * length_two; 
+        
+        
+        
+        field_r[length_three][9]                 = {{0}};
+        field_u_x[length_three][9]               = {{0}};
+        field_u_y[length_three][9]               = {{0}};
+        field_u_z[length_three][9]               = {{0}};
+        bath_field_u[u_order][9]                 = {{0}}; 
+        mpc_urx[length_three][9]                 = {{0}};
+        mpc_ury[length_three][9]                 = {{0}};
+        mpc_urz[length_three][9]                 = {{0}}; 
+        field_s[length_three]                    = {0};
+        rmc_matrices[rmc_number_total][9]        = {{0}};
+        
+        
+        std_engine      = std::mt19937_64(0); 
+        std_random_mt   = std::uniform_real_distribution<double> (0.0, 1.0);
 }
     
 /*** 
@@ -97,7 +115,7 @@ void simulation::build_gauge_bath()
 void simulation::uniform_initialization()
 {
         #pragma omp parallel for
-        for(int i = 0; i < L3; i++)
+        for(int i = 0; i < length_three; i++)
         {
                  field_r[i][0] = 1;
                  field_r[i][4] = 1;
@@ -127,7 +145,7 @@ void simulation::uniform_initialization()
 void simulation::random_initialization()
 {
         int i, x, y, z;
-        for (i = 0; i < L3; i++)
+        for (i = 0; i < length_three; i++)
         {
                 build_rotation_matrix(i, dice(), dice());
          
@@ -151,14 +169,14 @@ double simulation::site_energy(int i)
         /****** find neighbour, checked*****/
         
         
-        x_prev = i % length_one == 0 ? i - 1 + length_one : i - 1;
-        x_next = (i + 1) % length_one == 0 ? i + 1 - length_one : i + 1;
+        int x_prev = i % length_one == 0 ? i - 1 + length_one : i - 1;
+        int x_next = (i + 1) % length_one == 0 ? i + 1 - length_one : i + 1;
         
-        y_prev = i % length_two < length_one ? i - length_one + length_two : i - length_one;
-        y_next = (i + length_one) % length_two < length_one ? i + length_one - length_two : i + length_one;
+        int y_prev = i % length_two < length_one ? i - length_one + length_two : i - length_one;
+        int y_next = (i + length_one) % length_two < length_one ? i + length_one - length_two : i + length_one;
         
-        z_prev = i < length_two ? i - length_two + length_three : i - length_two;
-        z_next = i + length_two >= length_three ? i + length_two - length_three : i + length_two; 
+        int z_prev = i < length_two ? i - length_two + length_three : i - length_two;
+        int z_next = i + length_two >= length_three ? i + length_two - length_three : i + length_two; 
         
         double result[6][9] = {{0}};   
         
@@ -217,7 +235,7 @@ double simulation::thermalization_times ( int n)
         for (i = 0; i <  n; i++)
         {
                 energy += e_total; 
-                for (j = 0; j < L3*4; j++)
+                for (j = 0; j < length_three*4; j++)
                 {   
                         flipper (dice(), dice(), dice(), dice(), dice());
                 }                                               
@@ -251,10 +269,10 @@ void simulation::thermalization()
 
 void simulation::mpc_initialisation()
 {
-        for(int i = 0; i < L3; i++)
+        for(int i = 0; i < length_three; i++)
         {
                 cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans,
-                3,3,3,s[i],
+                3,3,3,field_s[i],
                 field_u_x[i], 3, field_r[i],3,
                 0.0, mpc_urx[i],3);
                 
@@ -326,12 +344,12 @@ void simulation::generate_rotation_matrices ()
  * Note that jactus means 'a throw of the dice'. As in [alea jactus est]. 
  ***/
 
-void simulation::build_rotation_matrix(int i, double jactus) 
+void simulation::build_rotation_matrix(int i, double jactus_one, double jactus_two) 
 {         
-        int build_random = (int) (rmc_number_total * jactus);
+        int build_random = (int) (rmc_number_total * jactus_one);
         
         copy( begin(rmc_matrices[build_random]), end(rmc_matrices[build_random]), begin(field_r[i]));
-        s[i] = jactus2 > 0.5 ? 1 : -1; 
+        field_s[i] = jactus_two > 0.5 ? 1 : -1; 
 }
 /*** 
  * Flipper contains the logic for a random perturbation. Note that doing the switch manually can save some random numbers,
@@ -340,7 +358,7 @@ void simulation::build_rotation_matrix(int i, double jactus)
  ***/
 void simulation::flipper (double jactus_one, double jactus_two, double jactus_three, double jactus_four, double jactus_five)
 { 
-        int site = int(length_three*jactus_two);  
+        int site = int(length_three*jactus_one);  
         switch(int(4 * jactus_two)) 
         {  
                 case 0 : flip_r(site, jactus_three, jactus_four, jactus_five); 
@@ -438,7 +456,7 @@ void simulation::flip_r(int i, double jactus_one, double jactus_two, double jact
 
 void simulation::flip_u_x(int i, double jactus_one, double jactus_two)
 {
-        int x_prev = i % L == 0 ? i - 1 + L : i - 1; 
+        int x_prev = i % length_one == 0 ? i - 1 + length_one : i - 1; 
         
         double bond[9] = {0}; 
          
@@ -505,7 +523,7 @@ void simulation::flip_u_x(int i, double jactus_one, double jactus_two)
 
 void simulation::flip_u_y(int i, double jactus_one, double jactus_two)
 {  
-        int y_prev = i % length_two < length_one ? i - length_one + length_two : i - L;
+        int y_prev = i % length_two < length_one ? i - length_one + length_two : i - length_one;
          
         
         double bond[9] = {0}; 
@@ -518,14 +536,14 @@ void simulation::flip_u_y(int i, double jactus_one, double jactus_two)
         double e_old = j_one*bond[0] + j_two * bond[4] + j_three*bond[8];
          
         double u_save[9];
-        copy(begin(Uy[i]),end(Uy[i]),begin(U_save));
+        copy(begin(field_u_y[i]),end(field_u_y[i]),begin(u_save));
          
         int j = int(u_order * jactus_one);
         
         double tmp_ury[9] = {0};
         copy(begin(mpc_ury[i]), end(mpc_ury[i]), begin(tmp_ury));
         
-        copy(begin(bath_field_u[j]),end(bath_field_u[j]),begin(Uy[i]));
+        copy(begin(bath_field_u[j]),end(bath_field_u[j]),begin(field_u_y[i]));
          
         
         
@@ -592,19 +610,19 @@ void simulation::flip_u_z(int i, double jactus_one, double jactus_two)
         
         double tmp_urz[9] = {0};
         copy(begin(mpc_urz[i]), end(mpc_urz[i]), begin(tmp_urz));
-        copy(begin(bath_field_u[j]),end(bath_field_u[j]),bath_field_u(field_u_z[i]));
+        copy(begin(bath_field_u[j]),end(bath_field_u[j]),begin(bath_field_u[i]));
          
         
         cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans,
         3,3,3,field_s[i],
-        field_uz[i], 3, field_r[i],3,
+        field_u_z[i], 3, field_r[i],3,
         0.0, mpc_urz[i],3); 
         
         
         cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasTrans,
         3,3,3,field_s[z_prev],
         mpc_urz[i], 3,  field_r[z_prev],3,
-        0.0, Bond,3);
+        0.0, bond,3);
         
         double e_new = j_one*bond[0] + j_two * bond[4] + j_three*bond[8];
         
@@ -624,11 +642,11 @@ void simulation::flip_u_z(int i, double jactus_one, double jactus_two)
         
         if(flip_accepted)
         { 
-                E_total += e_change;
+                e_total += e_change;
         }
         else
         { 
-                copy(begin(U_save),end(U_save),begin(field_u_z[i]));
+                copy(begin(u_save),end(u_save),begin(field_u_z[i]));
                 copy(begin(tmp_urz), end(tmp_urz), begin(mpc_urz[i]));
         }
         
@@ -636,18 +654,18 @@ void simulation::flip_u_z(int i, double jactus_one, double jactus_two)
 /*** 
  * Calculates order parameter
  ***/
-double orderparameter_n()
+double simulation::orderparameter_n()
 {
         double one_one = 0, two_two = 0, three_three = 0, one_two = 0, two_three = 0, one_three = 0;
         #pragma omp parallel for
-        for(int i = 0; i < L3; i++) 
+        for(int i = 0; i < length_three; i++) 
         {
-                one_one += 1.5*R[i][6] * R[i][6] - 0.5; 
-                two_two += 1.5*R[i][7] * R[i][7] - 0.5; 
-                three_three += 1.5*R[i][8] * R[i][8] - 0.5; 
-                one_two += 1.5*R[i][6] * R[i][7]; 
-                one_three += 1.5*R[i][6] * R[i][8]; 
-                two_three += 1.5*R[i][7] * R[i][8];
+                one_one         += 1.5*field_r[i][6] * field_r[i][6] - 0.5; 
+                two_two         += 1.5*field_r[i][7] * field_r[i][7] - 0.5; 
+                three_three     += 1.5*field_r[i][8] * field_r[i][8] - 0.5; 
+                one_two         += 1.5*field_r[i][6] * field_r[i][7]; 
+                one_three       += 1.5*field_r[i][6] * field_r[i][8]; 
+                two_three       += 1.5*field_r[i][7] * field_r[i][8];
                 
         }                               
                                                 
@@ -659,7 +677,7 @@ double orderparameter_n()
  * Calculates and reports the result for a specific beta
  * 
  ***/   
-data estimate_beta_c()
+data simulation::estimate_beta_c()
 {
         double total_energy_one =0, total_energy_two = 0, heat_capacity; 
         double order, q_one = 0, q_two = 0, chi_order;
@@ -682,7 +700,7 @@ data estimate_beta_c()
                 energy = 0;
                 for(int k = 0; k < length_three; k++) 
                 {
-                        energy += s[k];
+                        energy += field_s[k];
                 }
                 energy /= length_three;
                 energy_one += energy;
@@ -693,7 +711,7 @@ data estimate_beta_c()
         total_energy_two /= sample_amount;
 
         heat_capacity = (total_energy_two - total_energy_one * total_energy_one) * beta * beta / length_three;  
-        total_energy_one /= E_g;      
+        total_energy_one /= e_ground;      
 
         q_one/=sample_amount;
         q_two /= sample_amount;
@@ -717,3 +735,30 @@ data estimate_beta_c()
         results.j_two           = j_two;
         results.j_three         = j_three;  
 } 
+/***
+ * Throws a die. The resulting value is often called jactus, or "throw of the dice".
+ ***/
+
+double simulation::dice()
+{
+        switch(dice_mode)
+        {
+                case 0:
+                        return dsfmt_genrand_close_open(&dsfmt);
+                break;
+                case 1:
+                        return std_random_mt(std_engine);
+                break;
+                case 2:
+                        return boost_mt(boost_rng_fib);
+                break;
+                case 3:
+                        return boost_mt(boost_rng_mt);
+                break;
+                default:
+                        printf("Dice mode is not set... \n");
+                        return 0.5;
+                break;
+                        
+        }
+}
