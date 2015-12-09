@@ -407,10 +407,139 @@ void simulation::flip_r(int i, double jactus_one, double jactus_two, double jact
         } 
 }
 /*** 
+ * Perturbation of the field_u-x
  ***/
 
+void flip_u_x(int i, double jactus_one, double jactus_two)
+{
+        int x_prev = i % L == 0 ? i - 1 + L : i - 1; 
+        
+        double bond[9] = {0}; 
+         
+        cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasTrans,
+        3,3,3,field_s[x_prev],
+        mpc_urx[i], 3, field_r[x_prev],3,
+        0.0, bond,3);
+         
+        double e_old = j_one*bond[0] + j_two * bond[4] + j_three*bond[8];
+         
+        double u_save[9];
+        copy(begin(field_u_x[i]),end(field_u_x[i]),begin(u_save));
+         
+        int j = int(u_order * jactus_one);
+        
+        double tmp_urx[9] = {0};
+        copy(begin(mpc_urx[i]), end(mpc_urx[i]), begin(tmp_urx));
+        
+        copy(begin(bath_field_u[j]),end(bath_field_u[j]),begin(field_u_x[i]));
+         
+        
+        
+        cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans,
+        3,3,3,field_s[i],
+        field_u_x[i], 3, field_r[i],3,
+        0.0, mpc_urx[i],3); 
+          
+        cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasTrans,
+        3,3,3,field_s[x_prev],
+        mpc_urx[i], 3, field_r[x_prev],3,
+        0.0, bond,3);
+        
+        double e_new = j_one*bond[0] + j_two * bond[4] + j_three*bond[8];
+        
+        e_change = e_new - e_old;
+          
+        bool flip_accepted = true;
+        double change_chance = exp(-beta * e_change);
+        
+        if (e_change >= 0)
+        { 
+                flip_accepted = false;
+        }     
+        if (change_chance > jactus_two) 
+        {
+                flip_accepted = true;
+        }        
+        
+        if(flip_accepted)
+        {
+                e_total += e_change; 
+                
+        }
+        else
+        { 
+                copy(begin(u_save),end(u_save),begin(field_u_x[i]));
+                copy(begin(tmp_urx), end(tmp_urx), begin(mpc_urx[i])); 
+        } 
+}
+
 /*** 
+ * Perturbation of field_u_y
  ***/
+
+void flip_Uy(int i, double jactus_one, double jactus_two)
+{  
+        int y_prev = i % L2 < L ? i - L + L2 : i - L;
+         
+        
+        double bond[9] = {0}; 
+         
+        cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasTrans,
+        3,3,3,field_s[yp],
+        mpc_ury[i], 3, field_r[yp],3,
+        0.0, bond,3);
+         
+        double e_old = j_one*bond[0] + j_two * bond[4] + j_three*bond[8];
+         
+        double u_save[9];
+        copy(begin(Uy[i]),end(Uy[i]),begin(U_save));
+         
+        int j = int(u_order * jactus_one);
+        
+        double tmp_ury[9] = {0};
+        copy(begin(mpc_ury[i]), end(mpc_ury[i]), begin(tmp_ury));
+        
+        copy(begin(U_bath[j]),end(U_bath[j]),begin(Uy[i]));
+         
+        
+        
+        cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans,
+        3,3,3,field_s[i],
+        field_u_y[i], 3, field_r[i],3,
+        0.0, mpc_ury[i],3); 
+        
+        
+        cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasTrans,
+        3,3,3,field_s[yp],
+        mpc_ury[i], 3, field_r[yp],3,
+        0.0, bond,3);
+        
+        double e_new = j_one*bond[0] + j_two * bond[4] + j_three*bond[8];
+        
+        e_change = e_new - e_old;
+          
+        bool flip_accepted = true;
+        double change_chance = exp(-beta * e_change);
+        if (e_change >= 0)
+        { 
+                flip_accepted = false;
+        }     
+        if (change_chance > jactus_two) 
+        {
+                flip_accepted = true;
+        }     
+        
+        if(flip_accepted)
+        {
+                e_total += e_change; 
+                
+        }
+        else
+        { 
+                copy(begin(u_save),end(u_save),begin(field_u_y[i]));
+                copy(begin(tmp_ury), end(tmp_ury), begin(mpc_ury[i])); 
+        }   
+}
 /*** 
  ***/
 /*** 
