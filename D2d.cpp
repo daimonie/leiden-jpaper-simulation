@@ -782,7 +782,7 @@ void thermalization()
         {
                 s2 = s1; // copy old value of s1 to s2.
 
-                /**** updata configurations and calculate new s1 ****/ 
+                /**** update configurations and calculate new s1 ****/ 
                 s1 = thermalization_inner( 10 );
                 
                 afoo = s1/s2; 
