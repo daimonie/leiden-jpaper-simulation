@@ -5,7 +5,7 @@ using namespace std;
 
 int s = 5;
 
-void addition(int diff)
+inline void addition(int diff)
 {
         s += diff;
 }
@@ -20,8 +20,7 @@ int main(int argc, char **argv)
         {
                 for(int i = 0; i < 10; i++)
                 {
-                        s+= omp_get_thread_num()+1; 
-                        printf("[%d, %d] s=%d \n",j,i, s); 
+                        s+= omp_get_thread_num()+1;  
                 }
         }
         
@@ -33,10 +32,10 @@ int main(int argc, char **argv)
         {
                 for(int i = 0; i < 10; i++)
                 {
-                        s+= omp_get_thread_num()+1; 
-                        printf("[%d, %d] s=%d \n",j,i, s); 
+                        s+= omp_get_thread_num()+1;  
                 }
         }
+        printf("s=%d \n", s);  
         
         
         s = 5;
@@ -45,8 +44,7 @@ int main(int argc, char **argv)
         {
                 for(int i = 0; i < 10; i++)
                 {
-                        addition(omp_get_thread_num()+1);
-                        printf("[%d, %d] s=%d \n",j,i, s); 
+                        addition(omp_get_thread_num()+1); 
                 }
         }
         printf("s=%d \n", s);  

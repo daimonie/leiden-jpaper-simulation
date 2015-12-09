@@ -226,7 +226,7 @@ bool josko_diagnostics()
 {
         printf("Josko his Diagnostics:\n");
   	return false; 
- 	return true;
+// 	return true;
 }
 /**** generates rotation matrices ****/
 void generate_rotation_matrices ()
@@ -794,12 +794,8 @@ void estimate_beta_c()
 	double S1, S2, Cv; 
 	double foo2_n, Q1_n, Q2_n, chi_n;
 	double foo_s, s1, s2, chi_s;
-	int i, j, thread;
+	int i, j;
 	 
-        
-        int thread_number = omp_get_max_threads();
-        printf("Generating N=%d samples for each of the %d threads.\n", sample_amount, thread_number);
-        
 	while ( ( (beta >= beta_lower) && (beta <= beta_upper) ))
 	{ 
 		//printf("#//Calculating for beta=%2.3f < %2.3f \n", beta, beta_upper);
@@ -812,51 +808,40 @@ void estimate_beta_c()
 		S1 = 0; S2 = 0;
 		s1 = 0; s2 = 0;
 		Q1_n = 0; Q2_n = 0;
-		/**** measure ****/ 	
-                #pragma omp parallel for reduction(+:S1, S2, Q2_n, Q1_n, s1, s2) firstprivate(s, R, Ux, Uy, Uz, mpc_urx, mpc_ury, mpc_urz)
-                for(thread = 0; thread < thread_number; thread++)
-                {
-                        for (j = 0; j < sample_amount; j++)
-                        {  
-                                for (i = 0; i < L3*4*tau ; i++)
-                                { 
-                                        flipper (dice(), dice(), dice(), dice(), dice());
-                                }
-                                S1 += E_total;	 
-                                S2 += E_total * E_total;	
+		/**** measure ****/ 	  
+		for (j = 0; j < sample_amount; j++)
+		{
+			//printf("Num threads %d \n", omp_get_num_threads());
+			//line used to check core number. 
+                         
+			for (i = 0; i < L3*4*tau ; i++)
+			{ 
+				flipper (dice(), dice(), dice(), dice(), dice());
+			}
+			S1 += E_total;	 
+			S2 += E_total * E_total;	
 
-                                foo2_n = orderparameter_n(); 
-                                Q2_n += foo2_n;
-                                Q1_n += sqrt(foo2_n);					
+			foo2_n = orderparameter_n(); //intensive
+			Q2_n += foo2_n;
+			Q1_n += sqrt(foo2_n);					
 
-                                foo_s = 0;
-                                for(int k = 0; k < L3; k++) 
-                                {
-                                        foo_s += s[k];
-                                } 
-                                s1 += foo_s;
-                                s2 += foo_s*foo_s;
-                        }	 
-                } 
-                //need to normalise over threads, too
-                S1 /= thread_number;
-                S2 /= thread_number;
-                s1 /= thread_number;
-                s2 /= thread_number;
-                Q1_n /= thread_number;
-                Q2_n /= thread_number;
-                
-                
-                s1 /= foo_s;
-                s2 /= foo_s * foo_s;
-                
+			foo_s = 0;
+			for(int k = 0; k < L3; k++) 
+			{
+				foo_s += s[k];
+			} //extensive
+			foo_s /= L3; // intensive
+			s1 += foo_s;
+			s2 += foo_s*foo_s;
+		}	 
+
 		S1 /= sample_amount;
 		S2 /= sample_amount;
 
 		Cv = (S2 - S1 * S1) * beta * beta / L3;	 
 		S1 /= E_g;	
 
-		Q1_n /= sample_amount;
+		Q1_n/=sample_amount;
 		Q2_n /= sample_amount;
 		chi_n = (Q2_n - Q1_n*Q1_n)*beta*L3;									
 
