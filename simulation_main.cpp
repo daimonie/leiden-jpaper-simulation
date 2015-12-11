@@ -59,7 +59,7 @@ int main(int argc, char **argv)
         
         if (*C_or_H == 'C') // if cooling
         {                       
-                beta = beta_lower; // beta from small to big when cooling
+                ares.beta = beta_lower; // beta from small to big when cooling
                 beta_step_small = atof(argv[4]);
                 beta_step_big = atof(argv[5]);
 
@@ -76,7 +76,7 @@ int main(int argc, char **argv)
         }
         else// if (*C_or_H == 'H') // if heating
         {                       
-                beta = beta_upper;
+                ares.beta = beta_upper;
                 beta_step_small = -atof(argv[4]); // the step is negative since beta is decreasing
                 beta_step_big = -atof(argv[5]);
 
@@ -109,18 +109,18 @@ int main(int argc, char **argv)
         printf("Maximum cores %d \n", omp_get_max_threads());
         if(*choice == 'E')
         {
-               while( beta <= beta_upper && beta >=beta_lower )
+               while( ares.beta <= beta_upper && ares.beta >=beta_lower )
                {
                         auto results = ares.estimate_beta_c(); 
                         results.report();
                         
-                        if ( (beta >= beta_1) && (beta <= beta_2) )
+                        if ( (ares.beta >= beta_1) && (ares.beta <= beta_2) )
                         {
-                                beta += beta_step_small;
+                                ares.beta += beta_step_small;
                         }
                         else
                         {
-                                beta += beta_step_big;
+                                ares.beta += beta_step_big;
                         } 
                       
                }

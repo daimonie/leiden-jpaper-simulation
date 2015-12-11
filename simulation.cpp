@@ -1,8 +1,7 @@
 #include "simulation.h"
 #include "data.h"
 //includes from previous implementation
-#include <iostream>
-#include <fstream> 
+#include <iostream> 
 #include <string> 
 #include <stdlib.h> 
 #include <stdio.h>
@@ -13,6 +12,7 @@
 #include <gsl/gsl_cblas.h>
 #include <iomanip> 
 #include <ctime>
+#include <vector>  
 #include <string>
 #include "omp.h"
 
@@ -29,26 +29,18 @@ using namespace std;
  * Constructor
  *      Doesn't do anything, mostly because the parameters aren't set yet.
  ***/
-simulation::simulation (int size)
+simulation::simulation (int size) 
 {
         printf("Welcome to simulation. This seems to work. \n");
         length_one = size;
         length_two = size * length_one;
         length_three = size * length_two; 
         
-        
-        
-        field_r[length_three][9]                 = {{0}};
-        field_u_x[length_three][9]               = {{0}};
-        field_u_y[length_three][9]               = {{0}};
-        field_u_z[length_three][9]               = {{0}};
-        bath_field_u[u_order][9]                 = {{0}}; 
-        mpc_urx[length_three][9]                 = {{0}};
-        mpc_ury[length_three][9]                 = {{0}};
-        mpc_urz[length_three][9]                 = {{0}}; 
-        field_s[length_three]                    = {0};
-        rmc_matrices[rmc_number_total][9]        = {{0}};
-        
+        if( length_three > 20*20*20)
+        {
+                printf("L3 [%d] >> 20*20*20, can't be done. \n", length_three);
+                throw bad_alloc();
+        }
         
         std_engine      = std::mt19937_64(0); 
         std_random_mt   = std::uniform_real_distribution<double> (0.0, 1.0);
@@ -733,7 +725,9 @@ data simulation::estimate_beta_c()
         results.order           = q_one;
         results.j_one           = j_one;
         results.j_two           = j_two;
-        results.j_three         = j_three;  
+        results.j_three         = j_three; 
+        
+        return results;
 } 
 /***
  * Throws a die. The resulting value is often called jactus, or "throw of the dice".

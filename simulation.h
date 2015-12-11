@@ -109,7 +109,6 @@ class simulation
                  * The mpc_ matrices are simply the product of the ising field with the u field with the r field. They are something used
                  *      in various calculations, so saving them saves up time (about twenty percent in the test).
                  * The Random Matrix Cache contains the possible values of the r field.
-                 ***/
                 double field_r[][9];
                 double field_u_x[][9];
                 double field_u_y[][9];
@@ -120,6 +119,19 @@ class simulation
                 double mpc_urz[][9];
                 double field_s[];
                 double rmc_matrices[][9];
+                 ***/
+                
+                
+                double field_r[20*20*20][9]             = {{0}};
+                double field_u_x[20*20*20][9]           = {{0}};
+                double field_u_y[20*20*20][9]           = {{0}};
+                double field_u_z[20*20*20][9]           = {{0}};
+                double bath_field_u[20*20*20][9]        = {{0}};
+                double mpc_urx[20*20*20][9]             = {{0}};
+                double mpc_ury[20*20*20][9]             = {{0}};
+                double mpc_urz[20*20*20][9]             = {{0}};
+                double field_s[20*20*20]                = {0};
+                double rmc_matrices[20*20*20][9]        = {{0}};
                 
                 //Function time. Their explanations are in the implementation file (simulation.cpp)
                 simulation(int);

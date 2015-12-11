@@ -17,9 +17,4 @@ class data
                 
                 void report ();
 };
-
-void data::report ()
-{
-        printf("%2.3f\t%2.3f\t%2.3f\t%2.3f\t%2.3f\n", beta, total_energy, j_one, j_two, j_three);
-}
 #endif
