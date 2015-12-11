@@ -36,7 +36,7 @@ simulation::simulation (int size)
         length_two = size * length_one;
         length_three = size * length_two; 
         
-        if( length_three > 20*20*20)
+        if( size > 20)
         {
                 printf("L3 [%d] >> 20*20*20, can't be done. \n", length_three);
                 throw bad_alloc();
@@ -105,8 +105,7 @@ void simulation::build_gauge_bath()
  *      used for a 'cooling' simulation.
  ***/
 void simulation::uniform_initialization()
-{
-        #pragma omp parallel for
+{ 
         for(int i = 0; i < length_three; i++)
         {
                  field_r[i][0] = 1;
@@ -158,8 +157,7 @@ void simulation::random_initialization()
  ***/
 double simulation::site_energy(int i) 
 {
-        /****** find neighbour, checked*****/
-        
+        /****** find neighbour, checked*****/ 
         
         int x_prev = i % length_one == 0 ? i - 1 + length_one : i - 1;
         int x_next = (i + 1) % length_one == 0 ? i + 1 - length_one : i + 1;
@@ -210,7 +208,7 @@ double simulation::site_energy(int i)
          
         for(int j = 0; j < 6; j++)
         {  
-                energy += j_one*result[j][0] + j_two*result[j][4] + j_three*result[j][8];
+                 energy += j_one*result[j][0] + j_two*result[j][4] + j_three*result[j][8]; 
         }                               
         return energy;
 }     
@@ -222,7 +220,7 @@ double simulation::site_energy(int i)
  ***/ 
 double simulation::thermalization_times ( int n)
 {
-        double energy = 1.0 ;
+        double energy = 0.0 ;
         int i, j;   
         for (i = 0; i <  n; i++)
         {
@@ -648,8 +646,7 @@ void simulation::flip_u_z(int i, double jactus_one, double jactus_two)
  ***/
 double simulation::orderparameter_n()
 {
-        double one_one = 0, two_two = 0, three_three = 0, one_two = 0, two_three = 0, one_three = 0;
-        #pragma omp parallel for
+        double one_one = 0, two_two = 0, three_three = 0, one_two = 0, two_three = 0, one_three = 0; 
         for(int i = 0; i < length_three; i++) 
         {
                 one_one         += 1.5*field_r[i][6] * field_r[i][6] - 0.5; 
@@ -725,7 +722,9 @@ data simulation::estimate_beta_c()
         results.order           = q_one;
         results.j_one           = j_one;
         results.j_two           = j_two;
-        results.j_three         = j_three; 
+        results.j_three         = j_three;
+        results.accuracy        = accuracy; 
+        results.sample_amount   = sample_amount; 
         
         return results;
 } 

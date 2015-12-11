@@ -33,6 +33,7 @@ int main(int argc, char **argv)
         printf("Single object, this time. \n");
         
         simulation ares(4); //I like greek names
+        ares.dice_mode = 2;
         
         auto time_start = std::chrono::high_resolution_clock::now();
          
@@ -53,7 +54,7 @@ int main(int argc, char **argv)
         ares.sample_amount = atof(argv[14]);
 
         char *C_or_H = argv[1];
-        double beta, beta_step_big, beta_step_small;
+        double beta_step_big, beta_step_small;
         double beta_lower = atof(argv[2]);
         double beta_upper = atof(argv[3]);
         
@@ -101,16 +102,20 @@ int main(int argc, char **argv)
         ares.accuracy = atof(argv[8]);
         
         char *choice = argv[9]; 
-        
-        //I put in  argc here because of the annoying warning from the compiler.
-        printf("Calculate from %2.3f to %2.3f, using {%2.3f, %2.3f, %2.3f}, accuracy %2.3f and %d samples. Argc=%d . \n", beta_lower, beta_upper, ares.j_one, ares.j_two, ares.j_three,
-               ares.accuracy, ares.sample_amount, argc              
-        );
+         
         printf("Maximum cores %d \n", omp_get_max_threads());
         if(*choice == 'E')
         {
-               while( ares.beta <= beta_upper && ares.beta >=beta_lower )
-               {
+                string cooling_heating = "heating";
+                if(*C_or_H == 'C')
+                {
+                        cooling_heating = "cooling";
+                }
+                printf("Calculating heap capacity, total energy for temperatures [%s from] %.3f to %.3f, J=diag(%.3f, %.3f, %.3f), accuracy %.3f, samples %d, size %d. (argc %d) \n",
+                        cooling_heating.c_str(), beta_lower, beta_upper, ares.j_one, ares.j_two, ares.j_three, ares.accuracy, ares.sample_amount, ares.length_one, argc);
+
+                while( ares.beta <= beta_upper && ares.beta >=beta_lower )
+                {
                         auto results = ares.estimate_beta_c(); 
                         results.report();
                         
@@ -122,8 +127,8 @@ int main(int argc, char **argv)
                         {
                                 ares.beta += beta_step_big;
                         } 
-                      
-               }
+                        
+                }
         }
         
         auto time_end = std::chrono::high_resolution_clock::now();

@@ -18,14 +18,14 @@ class simulation
                  * It is called u_order instead of u_samples, because it is not a sampling; this has to do with
                  *      the symmetry group we want to consider.
                  ***/ 
-                const int u_order = 8;
+                int u_order = 8;
                 /***
                  *  There are L3 grid points, and 4 perturbations.
                  *  When sampling, each fluctuation is [the number of grid points, times the number
                  *      of perturbations possible, times tau] randomed perturbations on random sites. 
                  *  I.e. each grid point can possibly experience the 4 perturbations a hundred times each. 
                  ***/
-                const int tau = 100;
+                int tau = 100;
                 /***
                  *  A random quaternion is constructed from 3 numbers between 0 and 1.
                  *  We pre-generate a list of rotation matrices, the cache.
@@ -33,8 +33,8 @@ class simulation
                  *  This generates a list; we random one element of this list. The list has,
                  *      in total, rmc_number_total elements.
                  ***/
-                const int rmc_number = 10; 
-                const int rmc_number_total = rmc_number*rmc_number*rmc_number;  
+                int rmc_number = 10; 
+                int rmc_number_total = rmc_number*rmc_number*rmc_number;  
                 /***
                  * What random engine do we want to use?
                  * - 0, dsfmt
@@ -42,7 +42,7 @@ class simulation
                  * - 2, lagged lagged_fibonacci44497
                  * - 3, boost mt 
                  ***/
-                const int dice_mode = 2;  
+                int dice_mode = 2;  
                 
                 /***
                  * The (seeded) generators for each random distribution.
@@ -60,29 +60,30 @@ class simulation
                  *      so length2 points in a plane,
                  *      so length3 points in a cube.
                  ***/
-                int length_one = 1;
-                int length_two = 1;
-                int length_three = 1;
+                int length_one          = 1;
+                int length_two          = 1;
+                int length_three        = 1;
                 
                 /***
                  * Total energy of the simulation.
                  * Change from the previous total energy to the current one. (set in a perturbation or flip function)
                  * Energy unit or equivalently ground state energy
                  ***/
-                double e_total;
-                double e_change;
-                double e_ground;
+                double e_total  = 0.0;
+                double e_change = 0.0;
+                double e_ground = 0.0;
                 /***
-                 * J1, J2, J3 parameters.
+                 * J1, J2, J3 parameters. As in, J = diag(j_one, j_two, j_three)
+                 * and E = sum_{<ij>} Tr{ R_i  J R_j^T}
                  * 
                  ***/
-                double j_one = 0.1;
-                double j_two = 0.1;
-                double j_three = 1;
+                double j_one    = 0.1;
+                double j_two    = 0.1;
+                double j_three  = 1.0;
                 /***
                  * current temperature.
                  ***/
-                double beta;  
+                double beta = 1.0;  
                 
                 /***
                  * When you change the temperature, the chances are (perhaps radically) altered. Therefore, you need to keep doing
@@ -90,12 +91,12 @@ class simulation
                  * After 10 perturbations, you compare the previous and current energies. If the difference is less than accuracy percent,
                  *      it has stabilised.
                  ***/
-                double accuracy;
+                double accuracy = 0.1;
                 /***
                  * When looking at, for instance, the heat capacity, fluctuations are used. But how many fluctuations do you want to sample?
                  * Well, sample_amount, that is.
                  ***/
-                int sample_amount;
+                int sample_amount = 100;
                 /***
                  * For thermalisation, we first perturb _outer times and then _inner times, check for convergence, _inner times, ... until convergence.
                  ***/
@@ -108,17 +109,7 @@ class simulation
                  * The bath_field_u contains the possible values for the u fields.
                  * The mpc_ matrices are simply the product of the ising field with the u field with the r field. They are something used
                  *      in various calculations, so saving them saves up time (about twenty percent in the test).
-                 * The Random Matrix Cache contains the possible values of the r field.
-                double field_r[][9];
-                double field_u_x[][9];
-                double field_u_y[][9];
-                double field_u_z[][9];
-                double bath_field_u[][9];
-                double mpc_urx[][9];
-                double mpc_ury[][9];
-                double mpc_urz[][9];
-                double field_s[];
-                double rmc_matrices[][9];
+                 * The Random Matrix Cache contains the possible values of the r field. 
                  ***/
                 
                 
