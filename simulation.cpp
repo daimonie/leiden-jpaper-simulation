@@ -239,16 +239,16 @@ double simulation::thermalization_times ( int n)
  ***/
 void simulation::thermalization()
 {
-        double energy_ratio = 0;         
-        double energy_two = 0.0;
-        double energy_one = thermalization_times (thermalization_number_outer);
+        double energy_ratio = 0;   
+        double energy_one = 0.0;
+        double energy_two = thermalization_times (thermalization_number_outer);
         
         while (energy_ratio < 1-accuracy || energy_ratio > 1+accuracy)
-        {
-                energy_two = energy_one;  
+        { 
                 energy_one = thermalization_times( thermalization_number_inner );
                 
                 energy_ratio = energy_one/energy_two; 
+                energy_two = energy_one; 
         }       
 }
 /*** 

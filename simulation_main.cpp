@@ -41,7 +41,7 @@ int main(int argc, char **argv)
         {
                 dsfmt_init_gen_rand(&ares.dsfmt, time(0)); //seed dsfmt 
         }
-        omp_set_num_threads(4); //I still want to use my computer :)
+//         omp_set_num_threads(4);
         ares.generate_rotation_matrices(); 
         
         ares.build_gauge_bath();
@@ -71,9 +71,7 @@ int main(int argc, char **argv)
                 {
                         ares.e_total += ares.site_energy(i);
                 }
-
-                ares.e_total /= 2;
-                ares.e_ground = ares.length_three*3*(ares.j_one + ares.j_two + ares.j_three);                 
+             
         }
         else// if (*C_or_H == 'H') // if heating
         {                       
@@ -88,10 +86,10 @@ int main(int argc, char **argv)
                 {
                         ares.e_total += ares.site_energy(i);
                 }
-
-                ares.e_total /= 2;
-                ares.e_ground = ares.length_three*3*(ares.j_one + ares.j_two + ares.j_three);                                                  
+                                                  
         }
+        ares.e_total /= 2;
+        ares.e_ground = ares.length_three*3*(ares.j_one + ares.j_two + ares.j_three);
         
 
                 
@@ -116,6 +114,7 @@ int main(int argc, char **argv)
 
                 while( ares.beta <= beta_upper && ares.beta >=beta_lower )
                 {
+                        ares.thermalization ();
                         auto results = ares.estimate_beta_c(); 
                         results.report();
                         
