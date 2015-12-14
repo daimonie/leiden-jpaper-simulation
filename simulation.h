@@ -141,6 +141,7 @@ class simulation
                 void flip_u_y(int, double, double);
                 void flip_u_z(int, double, double);
                 double orderparameter_n(); 
+                double orderparameter_d2d();
                 data estimate_beta_c(); 
                 double dice ();
 };

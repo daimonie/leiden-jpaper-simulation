@@ -665,6 +665,31 @@ double simulation::orderparameter_n()
         
         return q;
 }       
+/***
+ * New D_{2d} specific order parameter
+ ***/
+double simulation::orderparameter_d2d()
+{ 
+//         double Q[3][3][3] = {{{0}}};
+        int a, b, c, i; 
+        
+        double q_sum = 0.0;
+        double order = 0;
+        for(a = 0; a < 3; a++)
+        {       for(b = 0; b < 3; b++)
+                {       for(c = 0; c < 3; c++)
+                        {       
+                                q_sum = 0.0;
+                                for(i = 0; i < L3; i++)
+                                {
+                                        q_sum += s[i]*(R[i][a]*R[i][3+b] + R[i][b]*R[i][3+a])*R[i][6+c];
+                                }  
+                                order += q_sum * q_sum;
+                        }
+                }
+        } 
+        return order / length_three / length_three;                    
+}
 /*** 
  * Calculates and reports the result for a specific beta
  * 
@@ -673,6 +698,7 @@ data simulation::estimate_beta_c()
 {
         double total_energy_one =0, total_energy_two = 0, heat_capacity; 
         double order, q_one = 0, q_two = 0, chi_order;
+        double order_two, p_one, p_two, chi_order_two;
         double energy, energy_one = 0, energy_two = 0, chi_energy;
         int i, j; 
         
@@ -685,10 +711,14 @@ data simulation::estimate_beta_c()
                 total_energy_one += e_total;   
                 total_energy_two += e_total * e_total;        
 
-                order = orderparameter_n(); //intensive
+                order = orderparameter_n(); 
                 q_two += order;
                 q_one += sqrt(order);                                   
 
+                order_two = orderparameter_d2d();
+                p_one += order_two;
+                p_two += sqrt(order_two);
+                
                 energy = 0;
                 for(int k = 0; k < length_three; k++) 
                 {
@@ -705,9 +735,15 @@ data simulation::estimate_beta_c()
         heat_capacity = (total_energy_two - total_energy_one * total_energy_one) * beta * beta / length_three;  
         total_energy_one /= e_ground;      
 
-        q_one/=sample_amount;
+        q_one /=sample_amount;
         q_two /= sample_amount;
-        chi_order = (q_two - q_one*q_one)*beta*length_three;                                                                     
+        
+        p_one /=sample_amount;
+        p_two /= sample_amount;
+        
+        
+        chi_order = (q_two - q_one*q_one)*beta*length_three; 
+        chi_order_two = (p_two - p_one*p_one)*beta*length_three;                                                                     
 
         energy_one /= sample_amount;
         energy_two /= sample_amount;
@@ -723,6 +759,10 @@ data simulation::estimate_beta_c()
         results.chi_energy      = chi_energy;
         results.chi_order       = chi_order;
         results.order           = q_one;
+        
+        results.chi_order_two   = chi_order_two;
+        results.order_two       = p_one;
+        
         results.j_one           = j_one;
         results.j_two           = j_two;
         results.j_three         = j_three;
