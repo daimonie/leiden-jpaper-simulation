@@ -358,7 +358,7 @@ void simulation::flipper (double jactus_one, double jactus_two, double jactus_th
 			flip_u_x(site, jactus_three, jactus_four);
                 break;
                 case 2 :
-// 			flip_u_y(site, jactus_three, jactus_four); 
+ 			flip_u_y(site, jactus_three, jactus_four); 
                 break;
                 case 3 :
 			flip_u_z(site, jactus_three, jactus_four); 
@@ -428,8 +428,7 @@ void simulation::flip_r(int i, double jactus_one, double jactus_two, double jact
         
         if(flip_accepted)
         {
-                e_total += e_change; 
-                debug_counter++;
+                e_total += e_change;  
         }
         else
         { 
@@ -501,8 +500,7 @@ void simulation::flip_u_x(int i, double jactus_one, double jactus_two)
         
         if(flip_accepted)
         {
-                e_total += e_change; 
-                debug_counter++;
+                e_total += e_change;  
                 
         }
         else
@@ -570,8 +568,7 @@ void simulation::flip_u_y(int i, double jactus_one, double jactus_two)
         
         if(flip_accepted)
         {
-                e_total += e_change; 
-                debug_counter++;
+                e_total += e_change;  
                 
         }
         else
@@ -638,8 +635,7 @@ void simulation::flip_u_z(int i, double jactus_one, double jactus_two)
         
         if(flip_accepted)
         { 
-                e_total += e_change; 
-                debug_counter++;
+                e_total += e_change;  
         }
         else
         { 

@@ -12,9 +12,7 @@
 class simulation
 {
         //everything is public, for simplicity.
-        public:
-// 		Trying to find a bug
-		int debug_counter = 0;
+        public: 
                 /***
                  * u_order defines the number of (manually set) arrays in the baths. 
                  * It is called u_order instead of u_samples, because it is not a sampling; this has to do with
