@@ -190,8 +190,7 @@ int main(int argc, char **argv)
                estimate_beta_c(); 
 	}
 	
-        auto time_end = std::chrono::high_resolution_clock::now();
-        
+        auto time_end = std::chrono::high_resolution_clock::now(); 
         auto microseconds = std::chrono::duration_cast<std::chrono::microseconds>( time_end - time_start).count();
 	printf("#// Time taken is %ld microseconds. \n", microseconds);
 

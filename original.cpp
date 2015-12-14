@@ -16,6 +16,7 @@
 #include <gsl/gsl_matrix.h>
 #include <gsl/gsl_cblas.h>
 #include <iomanip> 
+#include <chrono> 
 #include "dSFMT-src-2.2.3/dSFMT.h"
 
 #ifndef SIZE
@@ -72,6 +73,7 @@ int sample_amount;
 
 int main(int argc, char **argv)
 {
+	auto time_start = std::chrono::high_resolution_clock::now();
 	dsfmt_init_gen_rand(&dsfmt, time(0)); //seed dsfmt
 	
 	build_gauge_bath();
@@ -141,6 +143,10 @@ int main(int argc, char **argv)
 	if(*choice == 'J')
 		measure_effective_J(argv[10]);							
 	
+        auto time_end = std::chrono::high_resolution_clock::now();
+        
+        auto microseconds = std::chrono::duration_cast<std::chrono::microseconds>( time_end - time_start).count();
+	printf("#// Time taken is %ld microseconds. \n", microseconds);
 	return 0;
 	}
 
@@ -768,7 +774,7 @@ void estimate_beta_c(char *output)
 		s2 /= sample_amount;
 		chi_s = (s2 -s1*s1)*beta*L3;
 
-		output_file << 1/beta << '\t'<< S1 << '\t' << Cv << '\t' 
+		output_file << beta << '\t'<< S1 << '\t' << Cv << '\t' 
 								<< s1<< '\t' << chi_s << '\t' 
 								<< Q1_n << '\t' << chi_n << endl;
 		
