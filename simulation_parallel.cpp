@@ -35,10 +35,12 @@ int main( int argc, char **argv)
         auto time_start = std::chrono::high_resolution_clock::now();
         vector <simulation> sweeps;
         vector <vector<data>> results;
-        results.resize(4);
+        
+        int imax = 40;
+        results.resize(imax);
         
         int j = 0;
-        for(int i = 0; i < 4; i++)
+        for(int i = 0; i < imax; i++)
         {
                 sweeps.emplace_back( simulation(4) );
                 
@@ -46,12 +48,14 @@ int main( int argc, char **argv)
         
         omp_set_num_threads(4);
         #pragma omp parallel for private(j)
-        for(int i = 0; i < 4; i++)
+        for(int i = 0; i < imax; i++)
         {
                 sweeps[i].dice_mode = 2;
                 sweeps[i].generate_rotation_matrices ();
                 sweeps[i].build_gauge_bath ();
-                sweeps[i].j_one = 0.1 + 0.5 * i;
+                
+                sweeps[i].j_one = -1 + 2.0 / imax * i;
+                
                 sweeps[i].j_two = sweeps[i].j_one;
                 sweeps[i].j_three = 1.0;
                 sweeps[i].sample_amount = 100;
@@ -74,7 +78,7 @@ int main( int argc, char **argv)
                 }
         }
         
-        for(int i = 0; i < 4; i++)
+        for(int i = 0; i < imax; i++)
         {
                 printf("Report J1/J3 = %.3f .\n", sweeps[i].j_one);
                 for( j = 0; j < 20; j++)
