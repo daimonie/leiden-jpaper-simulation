@@ -606,7 +606,7 @@ void simulation::flip_u_z(int i, double jactus_one, double jactus_two)
         
         double tmp_urz[9] = {0};
         copy(begin(mpc_urz[i]), end(mpc_urz[i]), begin(tmp_urz));
-        copy(begin(bath_field_u[j]),end(bath_field_u[j]),begin(mpc_urz[i]));
+        copy(begin(bath_field_u[j]),end(bath_field_u[j]),begin(field_u_z[i]));
          
         
         cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans,
