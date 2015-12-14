@@ -134,6 +134,6 @@ int main(int argc, char **argv)
         
         auto microseconds = std::chrono::duration_cast<std::chrono::microseconds>( time_end - time_start).count();
         printf("Time taken is %ld microseconds. \n", microseconds);
-
+	printf("Accepted %d flips. \n", ares.debug_counter);
         return 0;
 }

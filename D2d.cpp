@@ -94,6 +94,7 @@ double mpc_urz[L3][9] = {{0}};
 /**** set random number generator ****/
 const int dice_mode = 2;
 
+int debug_counter = 0;
 //random generators
 dsfmt_t dsfmt;
 
@@ -194,13 +195,12 @@ int main(int argc, char **argv)
         
         auto microseconds = std::chrono::duration_cast<std::chrono::microseconds>( time_end - time_start).count();
 	printf("#// Time taken is %ld microseconds. \n", microseconds);
-
+	printf("Accepted %d flips. \n", debug_counter);
 	return 0;
 }
 /**** General random [0,1] number ****/
 double dice()
-{
-	return 0.8;
+{ 
         switch(dice_mode)
         {
                 case 0:
@@ -528,7 +528,7 @@ void flip_R(int i, double jactus1, double jactus2, double jactus3)
         if(flip_accepted)
         {
                 E_total += E_change; 
-                
+                debug_counter++;
         }
         else
         { 
@@ -600,6 +600,7 @@ void flip_Ux(int i, double jactus1, double jactus2)
 	if(flip_accepted)
         {
                 E_total += E_change; 
+                debug_counter++;
                 
         }
         else
@@ -666,6 +667,7 @@ void flip_Uy(int i, double jactus1, double jactus2)
         if(flip_accepted)
         {
                 E_total += E_change; 
+                debug_counter++;
                 
         }
         else
@@ -733,6 +735,7 @@ void flip_Uz(int i, double jactus1, double jactus2)
         
         if(flip_accepted)
         { 
+                debug_counter++;
                 E_total += E_change;
         }
         else
@@ -747,13 +750,17 @@ void flipper (double jactus1, double jactus2, double jactus3, double jactus4, do
 	int site = int(L3*jactus1);  
 	switch(int(4 * jactus2)) 
 	{  
-  		case 0 : flip_R(site, jactus3, jactus4, jactus5); 
+  		case 0 :
+			flip_R(site, jactus3, jactus4, jactus5); 
 		break;
-      		case 1 : flip_Ux(site, jactus3, jactus4);
+      		case 1 :
+			flip_Ux(site, jactus3, jactus4);
 		break;
-     		case 2 : flip_Uy(site, jactus3, jactus4); 
+     		case 2 :
+// 			flip_Uy(site, jactus3, jactus4); 
 		break;
-     		case 3 : flip_Uz(site, jactus3, jactus4); 
+     		case 3 :
+			flip_Uz(site, jactus3, jactus4); 
 		break;                                                                          
 	}           
 	

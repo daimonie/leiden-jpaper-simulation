@@ -351,13 +351,17 @@ void simulation::flipper (double jactus_one, double jactus_two, double jactus_th
         int site = int(length_three*jactus_one);  
         switch(int(4 * jactus_two)) 
         {  
-                case 0 : flip_r(site, jactus_three, jactus_four, jactus_five); 
+                case 0 :
+			flip_r(site, jactus_three, jactus_four, jactus_five); 
                 break;
-                case 1 : flip_u_x(site, jactus_three, jactus_four);
+                case 1 :
+			flip_u_x(site, jactus_three, jactus_four);
                 break;
-                case 2 : flip_u_y(site, jactus_three, jactus_four); 
+                case 2 :
+// 			flip_u_y(site, jactus_three, jactus_four); 
                 break;
-                case 3 : flip_u_z(site, jactus_three, jactus_four); 
+                case 3 :
+			flip_u_z(site, jactus_three, jactus_four); 
                 break;                                                                          
         }           
         
@@ -425,7 +429,7 @@ void simulation::flip_r(int i, double jactus_one, double jactus_two, double jact
         if(flip_accepted)
         {
                 e_total += e_change; 
-                
+                debug_counter++;
         }
         else
         { 
@@ -498,6 +502,7 @@ void simulation::flip_u_x(int i, double jactus_one, double jactus_two)
         if(flip_accepted)
         {
                 e_total += e_change; 
+                debug_counter++;
                 
         }
         else
@@ -566,6 +571,7 @@ void simulation::flip_u_y(int i, double jactus_one, double jactus_two)
         if(flip_accepted)
         {
                 e_total += e_change; 
+                debug_counter++;
                 
         }
         else
@@ -600,7 +606,7 @@ void simulation::flip_u_z(int i, double jactus_one, double jactus_two)
         
         double tmp_urz[9] = {0};
         copy(begin(mpc_urz[i]), end(mpc_urz[i]), begin(tmp_urz));
-        copy(begin(bath_field_u[j]),end(bath_field_u[j]),begin(bath_field_u[i]));
+        copy(begin(bath_field_u[j]),end(bath_field_u[j]),begin(mpc_urz[i]));
          
         
         cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans,
@@ -632,7 +638,8 @@ void simulation::flip_u_z(int i, double jactus_one, double jactus_two)
         
         if(flip_accepted)
         { 
-                e_total += e_change;
+                e_total += e_change; 
+                debug_counter++;
         }
         else
         { 
@@ -733,8 +740,7 @@ data simulation::estimate_beta_c()
  ***/
 
 double simulation::dice()
-{
-	return 0.8;
+{ 
         switch(dice_mode)
         {
                 case 0:
