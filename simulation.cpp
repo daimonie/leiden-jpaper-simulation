@@ -30,8 +30,7 @@ using namespace std;
  *      Doesn't do anything, mostly because the parameters aren't set yet.
  ***/
 simulation::simulation (int size) 
-{
-        printf("Welcome to simulation. This seems to work. \n");
+{ 
         length_one = size;
         length_two = size * length_one;
         length_three = size * length_two; 

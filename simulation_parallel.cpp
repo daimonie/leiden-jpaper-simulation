@@ -32,122 +32,65 @@ using namespace std;
 
 int main( int argc, char **argv)
 {
+        auto time_start = std::chrono::high_resolution_clock::now();
         vector <simulation> sweeps;
+        vector <vector<data>> results;
+        results.resize(4);
+        
+        int j = 0;
         for(int i = 0; i < 4; i++)
         {
                 sweeps.emplace_back( simulation(4) );
-        }
-        
-        
-        
-}
-
-
-int mainold(int argc, char **argv)
-{
-        printf("Single object, this time. \n");
-        
-        simulation ares(4); //I like greek names
-        ares.dice_mode = 2;
-        
-        auto time_start = std::chrono::high_resolution_clock::now();
-         
-        if (ares.dice_mode == 0)
-        {
-                dsfmt_init_gen_rand(&ares.dsfmt, time(0)); //seed dsfmt 
-        }
-//         omp_set_num_threads(4);
-        ares.generate_rotation_matrices(); 
-        
-        ares.build_gauge_bath();
-        
-        ares.j_one = -atof(argv[11]);
-        ares.j_two = -atof(argv[12]);
-        ares.j_three = -atof(argv[13]);
-                 
-
-        ares.sample_amount = atof(argv[14]);
-
-        char *C_or_H = argv[1];
-        double beta_step_big, beta_step_small;
-        double beta_lower = atof(argv[2]);
-        double beta_upper = atof(argv[3]);
-        
-        if (*C_or_H == 'C') // if cooling
-        {                       
-                ares.beta = beta_lower; // beta from small to big when cooling
-                beta_step_small = atof(argv[4]);
-                beta_step_big = atof(argv[5]);
-
-                ares.random_initialization();
-                ares.mpc_initialisation();
                 
-                for (int i=0; i < ares.length_three; i++)
-                {
-                        ares.e_total += ares.site_energy(i);
-                }
-             
         }
-        else// if (*C_or_H == 'H') // if heating
-        {                       
-                ares.beta = beta_upper;
-                beta_step_small = -atof(argv[4]); // the step is negative since beta is decreasing
-                beta_step_big = -atof(argv[5]);
-
-                ares.uniform_initialization();
-                ares.mpc_initialisation();
-
-                for (int i=0; i < ares.length_three; i++)
-                {
-                        ares.e_total += ares.site_energy(i);
-                }
-                                                  
-        }
-        ares.e_total /= 2;
-        ares.e_ground = ares.length_three*3*(ares.j_one + ares.j_two + ares.j_three);
         
-
-                
-        /**** initialize beta and the determine the fine region****/            
-        double beta_1 = atof(argv[6]);
-        double beta_2 = atof(argv[7]);
-        
-        ares.accuracy = atof(argv[8]);
-        
-        char *choice = argv[9]; 
-         
-        printf("Maximum cores %d \n", omp_get_max_threads());
-        if(*choice == 'E')
+        omp_set_num_threads(4);
+        #pragma omp parallel for private(j)
+        for(int i = 0; i < 4; i++)
         {
-                string cooling_heating = "heating";
-                if(*C_or_H == 'C')
+                sweeps[i].dice_mode = 2;
+                sweeps[i].generate_rotation_matrices ();
+                sweeps[i].build_gauge_bath ();
+                sweeps[i].j_one = 0.1 + 0.5 * i;
+                sweeps[i].j_two = sweeps[i].j_one;
+                sweeps[i].j_three = 1.0;
+                sweeps[i].sample_amount = 100;
+                sweeps[i].random_initialization ();
+                sweeps[i].mpc_initialisation ();
+                for (int i = 0; i < sweeps[i].length_three; i++)
                 {
-                        cooling_heating = "cooling";
+                        sweeps[i].e_total += sweeps[i].site_energy(i);
                 }
-                printf("Calculating heap capacity, total energy for temperatures [%s from] %.3f to %.3f, J=diag(%.3f, %.3f, %.3f), accuracy %.3f, samples %d, size %d. (argc %d) \n",
-                        cooling_heating.c_str(), beta_lower, beta_upper, ares.j_one, ares.j_two, ares.j_three, ares.accuracy, ares.sample_amount, ares.length_one, argc);
-
-                while( ares.beta <= beta_upper && ares.beta >=beta_lower )
+                sweeps[i].e_total /= 2;
+                sweeps[i].e_ground = sweeps[i].length_three*3*(sweeps[i].j_one + sweeps[i].j_two + sweeps[i].j_three);
+                sweeps[i].accuracy = 0.5;
+                
+                for( j = 0; j < 20; j++)
                 {
-                        ares.thermalization ();
-                        auto results = ares.estimate_beta_c(); 
-                        results.report();
+                        sweeps[i].beta = 0.5 * j; 
+                        sweeps[i].thermalization (); 
                         
-                        if ( (ares.beta >= beta_1) && (ares.beta <= beta_2) )
-                        {
-                                ares.beta += beta_step_small;
-                        }
-                        else
-                        {
-                                ares.beta += beta_step_big;
-                        } 
-                        
+                        results[i].push_back(sweeps[i].estimate_beta_c ());
                 }
         }
+        
+        for(int i = 0; i < 4; i++)
+        {
+                printf("Report J1/J3 = %.3f .\n", sweeps[i].j_one);
+                for( j = 0; j < 20; j++)
+                {
+                        auto result = results[i][j];
+                        result.report ();
+                }
+        }
+        
+        
         
         auto time_end = std::chrono::high_resolution_clock::now();
         
         auto microseconds = std::chrono::duration_cast<std::chrono::microseconds>( time_end - time_start).count();
         printf("Time taken is %ld microseconds. \n", microseconds); 
+        
         return 0;
 }
+ 
