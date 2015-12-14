@@ -200,6 +200,7 @@ int main(int argc, char **argv)
 /**** General random [0,1] number ****/
 double dice()
 {
+	return 0.1;
         switch(dice_mode)
         {
                 case 0:
