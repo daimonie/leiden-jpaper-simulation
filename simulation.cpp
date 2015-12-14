@@ -734,7 +734,7 @@ data simulation::estimate_beta_c()
 
 double simulation::dice()
 {
-	return 0.1;
+	return 0.8;
         switch(dice_mode)
         {
                 case 0:
