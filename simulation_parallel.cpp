@@ -58,7 +58,7 @@ int main( int argc, char **argv)
                 
                 sweeps[i].j_two = sweeps[i].j_one;
                 sweeps[i].j_three = 1.0;
-                sweeps[i].sample_amount = 100;
+                sweeps[i].sample_amount = 5000;
                 sweeps[i].random_initialization ();
                 sweeps[i].mpc_initialisation ();
                 for (int i = 0; i < sweeps[i].length_three; i++)
@@ -67,7 +67,7 @@ int main( int argc, char **argv)
                 }
                 sweeps[i].e_total /= 2;
                 sweeps[i].e_ground = sweeps[i].length_three*3*(sweeps[i].j_one + sweeps[i].j_two + sweeps[i].j_three);
-                sweeps[i].accuracy = 0.5;
+                sweeps[i].accuracy = 0.05;
                 
                 for( j = 0; j < 20; j++)
                 {

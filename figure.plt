@@ -19,7 +19,10 @@ load 'parula.pal'
 
 set key outside right top
 set lmargin 6 
-plot "D2d_test.dat" u 1:2 t 'Energy' w l ls 11, \
-	"D2d_test.dat" u 1:3 t 'Heat Capacity' w l ls 12, \
-	"D2d_test.dat" u 1:5 t 'Order Parameter' w l ls 13
+plot "figure_data.dat" u 1:2 t 'Energy' w l ls 11, \
+	"figure_data.dat" u 1:3 t 'Heat Capacity' w l ls 12, \
+        "figure_data.dat" u 1:7 t 'Order Parameter 1' w l ls 13, \
+        "figure_data.dat" u 1:8 t 'Order Parameter 2' w l ls 14, \
+        "figure_data.dat" u 1:9 t 'Chi 1' w l ls 15, \
+        "figure_data.dat" u 1:10 t 'Chi 2' w l ls 16
 
