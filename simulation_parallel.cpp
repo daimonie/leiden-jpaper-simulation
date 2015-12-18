@@ -36,7 +36,9 @@ int main( int argc, char **argv)
         vector <simulation> sweeps;
         vector <vector<data>> results;
         
-        int imax = 40;
+        int max_j = 20;
+        int imax = 10;
+        
         results.resize(imax);
         
         int j = 0;
@@ -49,7 +51,7 @@ int main( int argc, char **argv)
         omp_set_num_threads(4);
         #pragma omp parallel for private(j)
         for(int i = 0; i < imax; i++)
-        {
+        { 
                 sweeps[i].dice_mode = 2;
                 sweeps[i].generate_rotation_matrices ();
                 sweeps[i].build_gauge_bath ();
@@ -58,7 +60,7 @@ int main( int argc, char **argv)
                 
                 sweeps[i].j_two = sweeps[i].j_one;
                 sweeps[i].j_three = 1.0;
-                sweeps[i].sample_amount = 5000;
+                sweeps[i].sample_amount = 150;
                 sweeps[i].random_initialization ();
                 sweeps[i].mpc_initialisation ();
                 for (int i = 0; i < sweeps[i].length_three; i++)
@@ -67,11 +69,11 @@ int main( int argc, char **argv)
                 }
                 sweeps[i].e_total /= 2;
                 sweeps[i].e_ground = sweeps[i].length_three*3*(sweeps[i].j_one + sweeps[i].j_two + sweeps[i].j_three);
-                sweeps[i].accuracy = 0.05;
+                sweeps[i].accuracy = 0.5;
                 
-                for( j = 0; j < 200; j++)
+                for( j = 0; j < max_j; j++)
                 {
-                        sweeps[i].beta = 0.05 * j; 
+                        sweeps[i].beta = 10.00 / max_j * j;  
                         sweeps[i].thermalization (); 
                         
                         results[i].push_back(sweeps[i].estimate_beta_c ());
