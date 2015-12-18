@@ -1,5 +1,5 @@
-import argparse;
-
+import argparse
+import sys
 
 #Commandline arguments instruction.
 parser  = argparse.ArgumentParser(prog="get_data.py",
@@ -23,6 +23,8 @@ for line in lines:
         
         if "Report" in line:
                 dataset += 1
+                if dataset == number:
+                        print >> sys.stderr, "Printing dataset %d" % dataset
         elif dataset == number:
                 print line
         

@@ -69,9 +69,9 @@ int main( int argc, char **argv)
                 sweeps[i].e_ground = sweeps[i].length_three*3*(sweeps[i].j_one + sweeps[i].j_two + sweeps[i].j_three);
                 sweeps[i].accuracy = 0.05;
                 
-                for( j = 0; j < 20; j++)
+                for( j = 0; j < 200; j++)
                 {
-                        sweeps[i].beta = 0.5 * j; 
+                        sweeps[i].beta = 0.05 * j; 
                         sweeps[i].thermalization (); 
                         
                         results[i].push_back(sweeps[i].estimate_beta_c ());
