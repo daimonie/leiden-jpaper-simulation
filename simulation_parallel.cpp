@@ -4,8 +4,14 @@
 #include "omp.h"
 
 #include "data.h"
-#include "simulation.h"  
+#include "simulation.h"   
+#include "symmetryctwo.h"
+#include "symmetryctwoh.h"
+#include "symmetryctwov.h"
 #include "symmetrydtwod.h"
+#include "symmetrydtwoh.h"
+#include "symmetrystwo.h"
+#include "symmetrysfour.h"
 //includes from previous implementation
 #include <iostream>
 #include <fstream> 
@@ -36,7 +42,7 @@ int main()
         vector <simulation> sweeps;
         vector <vector<data>> results;
         
-        int imax = 4;
+        int imax = 7;
 	unsigned int j = 0;
         results.resize(imax);
 	
@@ -51,13 +57,47 @@ int main()
         for(int i = 0; i < imax; i++)
         {
 		
-		symmetry_d2d gauge;
 		
                 sweeps[i].dice_mode = 2;
-                sweeps[i].generate_rotation_matrices ();
-                sweeps[i].build_gauge_bath (gauge);
+                sweeps[i].generate_rotation_matrices (); 
+		
+		if( i == 0 )
+		{
+			symmetry_c2 gauge;
+			sweeps[i].build_gauge_bath (gauge);
+		}
+		else if( i == 1 )
+		{
+			symmetry_c2h gauge;
+			sweeps[i].build_gauge_bath (gauge);
+		}
+		else if( i == 2 )
+		{
+			symmetry_c2v gauge;
+			sweeps[i].build_gauge_bath (gauge);
+		}
+		else if( i == 3 )
+		{
+			symmetry_d2d gauge;
+			sweeps[i].build_gauge_bath (gauge);
+		}
+		else if( i == 4 )
+		{
+			symmetry_d2h gauge;
+			sweeps[i].build_gauge_bath (gauge);
+		}
+		else if( i == 5 )
+		{
+			symmetry_s2 gauge;
+			sweeps[i].build_gauge_bath (gauge);
+		}
+		else if( i == 6 )
+		{
+			symmetry_s4 gauge;
+			sweeps[i].build_gauge_bath (gauge);
+		}
                 
-                sweeps[i].j_one = 1.0 / imax * i;
+                sweeps[i].j_one = 0.5;
                 
                 sweeps[i].j_two = sweeps[i].j_one;
                 sweeps[i].j_three = 1.0;
