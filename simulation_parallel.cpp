@@ -36,8 +36,10 @@ int main( int argc, char **argv)
         vector <simulation> sweeps;
         vector <vector<data>> results;
         
-        int max_j = 20;
-        int imax = 10;
+        double max_beta = 12.0;
+        int max_j = 100;
+        int imax = 20;
+        int samples = 500;
         
         results.resize(imax);
         
@@ -56,11 +58,11 @@ int main( int argc, char **argv)
                 sweeps[i].generate_rotation_matrices ();
                 sweeps[i].build_gauge_bath ();
                 
-                sweeps[i].j_one = -1 + 2.0 / imax * i;
+                sweeps[i].j_one = 1.0 / imax * i;
                 
                 sweeps[i].j_two = sweeps[i].j_one;
                 sweeps[i].j_three = 1.0;
-                sweeps[i].sample_amount = 150;
+                sweeps[i].sample_amount = samples;
                 sweeps[i].random_initialization ();
                 sweeps[i].mpc_initialisation ();
                 for (int i = 0; i < sweeps[i].length_three; i++)
@@ -69,14 +71,14 @@ int main( int argc, char **argv)
                 }
                 sweeps[i].e_total /= 2;
                 sweeps[i].e_ground = sweeps[i].length_three*3*(sweeps[i].j_one + sweeps[i].j_two + sweeps[i].j_three);
-                sweeps[i].accuracy = 0.5;
+                sweeps[i].accuracy = 0.15;
                 
                 for( j = 0; j < max_j; j++)
                 {
-                        sweeps[i].beta = 10.00 / max_j * j;  
+                        sweeps[i].beta = max_beta / max_j * j;  
                         sweeps[i].thermalization (); 
-                        
-                        results[i].push_back(sweeps[i].estimate_beta_c ());
+                      
+                        results[i].push_back(sweeps[i].estimate_beta_c ()); 
                 }
         }
         
@@ -95,7 +97,7 @@ int main( int argc, char **argv)
         auto time_end = std::chrono::high_resolution_clock::now();
         
         auto microseconds = std::chrono::duration_cast<std::chrono::microseconds>( time_end - time_start).count();
-        printf("Time taken is %ld microseconds. \n", microseconds); 
+        printf("Report time taken is %ld microseconds. \n", microseconds); 
         
         return 0;
 }
