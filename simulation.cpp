@@ -56,6 +56,8 @@ void simulation::build_gauge_bath(symmetry& symmetry_object)
 	 {
 		copy( begin(symmetry_object.bath_field[i]), end(symmetry_object.bath_field[i]), bath_field_u[i]);
 	 }
+	 
+	 u_order = symmetry_object.bath_size;
 }
 
 

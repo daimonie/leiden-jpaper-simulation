@@ -21,8 +21,7 @@
 #include <ctime>
 #include <string>
 #include "omp.h"
-#include <vector>
-
+#include <vector> 
 //random generation libraries
 #include "dSFMT-src-2.2.3/dSFMT.h"
 #include <random> 
@@ -31,16 +30,16 @@
 #include <boost/random/uniform_01.hpp>
 using namespace std;
 
-int main( int argc, char **argv)
-{
+int main()
+{ 
         auto time_start = std::chrono::high_resolution_clock::now();
         vector <simulation> sweeps;
         vector <vector<data>> results;
         
         int imax = 4;
+	unsigned int j = 0;
         results.resize(imax);
-        
-        int j = 0;
+	
         for(int i = 0; i < imax; i++)
         {
                 sweeps.emplace_back( simulation(4) );
@@ -58,11 +57,11 @@ int main( int argc, char **argv)
                 sweeps[i].generate_rotation_matrices ();
                 sweeps[i].build_gauge_bath (gauge);
                 
-                sweeps[i].j_one = -1 + 2.0 / imax * i;
+                sweeps[i].j_one = 1.0 / imax * i;
                 
                 sweeps[i].j_two = sweeps[i].j_one;
                 sweeps[i].j_three = 1.0;
-                sweeps[i].sample_amount = 500;
+                sweeps[i].sample_amount = 10;
                 sweeps[i].random_initialization ();
                 sweeps[i].mpc_initialisation ();
                 for (int ii = 0; ii < sweeps[i].length_three; ii++)
@@ -73,9 +72,9 @@ int main( int argc, char **argv)
                 sweeps[i].e_ground = sweeps[i].length_three*3*(sweeps[i].j_one + sweeps[i].j_two + sweeps[i].j_three);
                 sweeps[i].accuracy = 0.5;
                 
-                for( j = 0; j < 100; j++)
+                for(j = 0; j < 20; j++)
                 {
-                        sweeps[i].beta = 5.0/100 * j; 
+                        sweeps[i].beta = 5.0/20 * j; 
                         sweeps[i].thermalization (); 
                         
                         results[i].push_back(sweeps[i].calculate ());
@@ -85,7 +84,7 @@ int main( int argc, char **argv)
         for(int i = 0; i < imax; i++)
         {
                 printf("Report J1/J3 = %.3f .\n", sweeps[i].j_one);
-                for( j = 0; j < 20; j++)
+                for(j = 0; j < results[i].size(); j++)
                 {
                         auto result = results[i][j];
                         result.report ();
