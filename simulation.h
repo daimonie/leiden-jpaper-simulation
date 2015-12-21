@@ -9,6 +9,7 @@
 #include <boost/random/uniform_01.hpp>
 
 #include "data.h"
+#include "symmetry.h"
 class simulation
 {
         //everything is public, for simplicity.
@@ -117,7 +118,7 @@ class simulation
                 double field_u_x[20*20*20][9]           = {{0}};
                 double field_u_y[20*20*20][9]           = {{0}};
                 double field_u_z[20*20*20][9]           = {{0}};
-                double bath_field_u[20*20*20][9]        = {{0}};
+                double bath_field_u[100][9]        	= {{0}}; //if this one changes, also change the base type in symmetry.h
                 double mpc_urx[20*20*20][9]             = {{0}};
                 double mpc_ury[20*20*20][9]             = {{0}};
                 double mpc_urz[20*20*20][9]             = {{0}};
@@ -126,7 +127,7 @@ class simulation
                 
                 //Function time. Their explanations are in the implementation file (simulation.cpp)
                 simulation(int);
-                void build_gauge_bath();
+                void build_gauge_bath(symmetry&);
                 void uniform_initialization();
                 void random_initialization();
                 double site_energy(int i);   
@@ -142,7 +143,7 @@ class simulation
                 void flip_u_z(int, double, double);
                 double orderparameter_n(); 
                 double orderparameter_d2d();
-                data estimate_beta_c(); 
+                data calculate(); 
                 double dice ();
 };
 #endif

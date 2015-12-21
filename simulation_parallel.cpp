@@ -4,7 +4,8 @@
 #include "omp.h"
 
 #include "data.h"
-#include "simulation.h" 
+#include "simulation.h"  
+#include "symmetrydtwod.h"
 //includes from previous implementation
 #include <iostream>
 #include <fstream> 
@@ -36,7 +37,7 @@ int main( int argc, char **argv)
         vector <simulation> sweeps;
         vector <vector<data>> results;
         
-        int imax = 40;
+        int imax = 4;
         results.resize(imax);
         
         int j = 0;
@@ -50,31 +51,34 @@ int main( int argc, char **argv)
         #pragma omp parallel for private(j)
         for(int i = 0; i < imax; i++)
         {
+		
+		symmetry_d2d gauge;
+		
                 sweeps[i].dice_mode = 2;
                 sweeps[i].generate_rotation_matrices ();
-                sweeps[i].build_gauge_bath ();
+                sweeps[i].build_gauge_bath (gauge);
                 
                 sweeps[i].j_one = -1 + 2.0 / imax * i;
                 
                 sweeps[i].j_two = sweeps[i].j_one;
                 sweeps[i].j_three = 1.0;
-                sweeps[i].sample_amount = 5000;
+                sweeps[i].sample_amount = 500;
                 sweeps[i].random_initialization ();
                 sweeps[i].mpc_initialisation ();
-                for (int i = 0; i < sweeps[i].length_three; i++)
+                for (int ii = 0; ii < sweeps[i].length_three; ii++)
                 {
-                        sweeps[i].e_total += sweeps[i].site_energy(i);
+                        sweeps[i].e_total += sweeps[i].site_energy(ii);
                 }
                 sweeps[i].e_total /= 2;
                 sweeps[i].e_ground = sweeps[i].length_three*3*(sweeps[i].j_one + sweeps[i].j_two + sweeps[i].j_three);
-                sweeps[i].accuracy = 0.05;
+                sweeps[i].accuracy = 0.5;
                 
-                for( j = 0; j < 20; j++)
+                for( j = 0; j < 100; j++)
                 {
-                        sweeps[i].beta = 0.5 * j; 
+                        sweeps[i].beta = 5.0/100 * j; 
                         sweeps[i].thermalization (); 
                         
-                        results[i].push_back(sweeps[i].estimate_beta_c ());
+                        results[i].push_back(sweeps[i].calculate ());
                 }
         }
         

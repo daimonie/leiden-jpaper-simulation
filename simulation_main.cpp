@@ -4,7 +4,9 @@
 #include "omp.h"
 
 #include "data.h"
-#include "simulation.h" 
+#include "simulation.h"  
+#include "symmetry.h"
+#include "symmetrydtwod.h"
 //includes from previous implementation
 #include <iostream>
 #include <fstream> 
@@ -44,7 +46,8 @@ int main(int argc, char **argv)
 //         omp_set_num_threads(4);
         ares.generate_rotation_matrices(); 
         
-        ares.build_gauge_bath();
+	symmetry_d2d gauge; 
+        ares.build_gauge_bath(gauge);
         
         ares.j_one = -atof(argv[11]);
         ares.j_two = -atof(argv[12]);
@@ -115,7 +118,7 @@ int main(int argc, char **argv)
                 while( ares.beta <= beta_upper && ares.beta >=beta_lower )
                 {
                         ares.thermalization ();
-                        auto results = ares.estimate_beta_c(); 
+                        auto results = ares.calculate(); 
                         results.report();
                         
                         if ( (ares.beta >= beta_1) && (ares.beta <= beta_2) )

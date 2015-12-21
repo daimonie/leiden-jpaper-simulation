@@ -49,53 +49,13 @@ simulation::simulation (int size)
  * Build the bath of field_u .This contains all possible u_fields.
  * Note that this is a manual calculation/setting for the symmetry group under consideration.
  ***/
-void simulation::build_gauge_bath()
+void simulation::build_gauge_bath(symmetry& symmetry_object)
 { 
-        /***
-         * Note:
-         * bath_field_u[0][0] = 1;  could be written this->bath_field_u[0][0] = 1; 
-         * the latter is more clear, but not required and often considered to be bad practise.
-         * ***/
-        /** 0, Identity **/
-        bath_field_u[0][0] = 1; 
-        bath_field_u[0][4] = 1; 
-        bath_field_u[0][8] = 1; 
-        
-        /** 1, C2,z **/
-        bath_field_u[1][0] = -1; 
-        bath_field_u[1][4] = -1; 
-        bath_field_u[1][8] = 1;
-        
-        /** 2, -C4+,z **/
-        bath_field_u[2][1] = 1; 
-        bath_field_u[2][3] = -1; 
-        bath_field_u[2][8] = -1;
-        
-        /** 3, -C4-,z **/
-        bath_field_u[3][1] = -1; 
-        bath_field_u[3][3] = 1; 
-        bath_field_u[3][8] = -1;              
-        
-        /** 4, C2,y **/
-        bath_field_u[4][0] = -1; 
-        bath_field_u[4][4] = 1; 
-        bath_field_u[4][8] = -1;                      
-        
-        /** 5, C2,x **/
-        bath_field_u[5][0] = 1; 
-        bath_field_u[5][4] = -1; 
-        bath_field_u[5][8] = -1;      
-        
-        /** 6, m x,-x. z **/
-        bath_field_u[6][1] = -1; 
-        bath_field_u[6][3] = -1; 
-        bath_field_u[6][8] = 1;                       
-
-        /** 7, m x,x,z**/
-        bath_field_u[7][1] = 1; 
-        bath_field_u[7][3] = 1; 
-        bath_field_u[7][8] = 1;        
-        
+         symmetry_object.bath();
+	 for( int i = 0; i < 100; i++)
+	 {
+		copy( begin(symmetry_object.bath_field[i]), end(symmetry_object.bath_field[i]), bath_field_u[i]);
+	 }
 }
 
 
@@ -467,10 +427,8 @@ void simulation::flip_u_x(int i, double jactus_one, double jactus_two)
         double tmp_urx[9] = {0};
         copy(begin(mpc_urx[i]), end(mpc_urx[i]), begin(tmp_urx));
         
-        copy(begin(bath_field_u[j]),end(bath_field_u[j]),begin(field_u_x[i]));
-         
-        
-        
+        copy(begin(bath_field_u[j]),end(bath_field_u[j]),begin(field_u_x[i])); 
+	
         cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans,
         3,3,3,field_s[i],
         field_u_x[i], 3, field_r[i],3,
@@ -693,12 +651,12 @@ double simulation::orderparameter_d2d()
  * Calculates and reports the result for a specific beta
  * 
  ***/   
-data simulation::estimate_beta_c()
+data simulation::calculate()
 {
-        double total_energy_one =0, total_energy_two = 0, heat_capacity; 
-        double order, q_one = 0, q_two = 0, chi_order;
-        double order_two, p_one = 0, p_two = 0, chi_order_two;
-        double energy, energy_one = 0, energy_two = 0, chi_energy;
+        double total_energy =0, total_energy_squared = 0, heat_capacity; 
+        double order, q = 0, q_squared = 0, chi_order;
+        double order_two, p = 0, p_squared = 0, chi_order_two;
+        double ising_sum, ising = 0, ising_squared = 0, chi_energy;
         int i, j; 
         
         for (j = 0; j < sample_amount; j++)
@@ -707,62 +665,61 @@ data simulation::estimate_beta_c()
                 { 
                         flipper (dice(), dice(), dice(), dice(), dice());
                 }
-                total_energy_one += e_total;   
-                total_energy_two += e_total * e_total;        
+                total_energy += e_total;   
+                total_energy_squared += e_total * e_total;        
 
                 order = orderparameter_n(); 
-                q_two += order;
-                q_one += sqrt(order);                                   
+                q_squared += order;
+                q += sqrt(order);                                   
 
                 order_two = orderparameter_d2d();
-                p_two += order_two;
-                p_one += sqrt(order_two);
+                p_squared += order_two;
+                p += sqrt(order_two);
                 
-                energy = 0;
+                ising_sum = 0;
                 for(int k = 0; k < length_three; k++) 
                 {
-                        energy += field_s[k];
+                        ising_sum += field_s[k];
                 }
-                energy /= length_three;
-                energy_one += energy;
-                energy_two += energy*energy;
+                ising_sum /= length_three;
+                ising += ising_sum;
+                ising_squared += ising*ising;
         }        
 
-        total_energy_one /= sample_amount;
-        total_energy_two /= sample_amount;
+        total_energy /= sample_amount;
+        total_energy_squared /= sample_amount;
 
-        heat_capacity = (total_energy_two - total_energy_one * total_energy_one) * beta * beta / length_three;  
-        total_energy_one /= e_ground;      
+        heat_capacity = (total_energy_squared - total_energy * total_energy) * beta * beta / length_three;  
+        total_energy /= e_ground;      
 
-        q_one /=sample_amount;
-        q_two /= sample_amount;
+        q /=sample_amount;
+        q_squared /= sample_amount;
         
-        p_one /=sample_amount;
-        p_two /= sample_amount;
+        p /=sample_amount;
+        p_squared /= sample_amount;
         
         
-        chi_order = (q_two - q_one*q_one)*beta*length_three; 
-        chi_order_two = (p_two - p_one*p_one)*beta*length_three;       
+        chi_order = (q_squared - q*q)*beta*length_three; 
+        chi_order_two = (p_squared - p*p)*beta*length_three;       
         
-        p_one /= sqrt(2);
+        p /= sqrt(2);
 
-        energy_one /= sample_amount;
-        energy_two /= sample_amount;
-        chi_energy = (energy_two -energy_one*energy_one)*beta*length_three;
-
-//         printf("%2.3f\t%2.3f\t%2.3f\t%2.3f\t%2.3f\t%2.3f\t%2.3f\n", beta, total_energy_one, heat_capacity, energy_one, chi_energy, q_one, chi_order);  
+        ising /= sample_amount;
+        ising_squared /= sample_amount;
+        chi_energy = (ising_squared -ising*ising)*beta*length_three;
+ 
         data results;
        
         results.beta            = beta;
-        results.total_energy    = total_energy_one;
+        results.total_energy    = total_energy;
         results.heat_capacity   = heat_capacity;
-        results.energy          = energy_one;
+        results.energy          = ising;
         results.chi_energy      = chi_energy;
         results.chi_order_one   = chi_order;
-        results.order_one       = q_one;
+        results.order_one       = q;
         
         results.chi_order_two   = chi_order_two;
-        results.order_two       = p_one;
+        results.order_two       = p;
         
         results.j_one           = j_one;
         results.j_two           = j_two;
