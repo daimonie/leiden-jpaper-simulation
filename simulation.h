@@ -133,7 +133,7 @@ class simulation
                 
                 //Function time. Their explanations are in the implementation file (simulation.cpp)
                 simulation(int);
-                void build_gauge_bath(symmetry&);
+                void build_gauge_bath(symmetry*);
                 void uniform_initialization();
                 void random_initialization();
                 double site_energy(int i);   

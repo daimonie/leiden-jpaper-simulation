@@ -49,19 +49,14 @@ simulation::simulation (int size)
  * Build the bath of field_u .This contains all possible u_fields.
  * Note that this is a manual calculation/setting for the symmetry group under consideration.
  ***/
-void simulation::build_gauge_bath(symmetry& symmetry_object)
+void simulation::build_gauge_bath(symmetry* symmetry_object)
 { 
-	 u_order = symmetry_object.bath_size ();
-	 u_label = symmetry_object.label ();
-         symmetry_object.bath();
+	 u_order = symmetry_object->bath_size ();
+	 u_label = symmetry_object->label ();
+         symmetry_object->bath();
 	 for( int i = 0; i < u_order; i++)
-	 { 
-		printf("%s\t%d/%d\t%.3f\t%.3f\t%.3f\t%.3f\t%.3f\t%.3f\t%.3f\t%.3f\t%.3f \n", u_label.c_str(),i, u_order,
-		       symmetry_object.bath_field[i][0],symmetry_object.bath_field[i][1],symmetry_object.bath_field[i][2],
-			symmetry_object.bath_field[i][3],symmetry_object.bath_field[i][4],symmetry_object.bath_field[i][5],
-			symmetry_object.bath_field[i][6],symmetry_object.bath_field[i][7],symmetry_object.bath_field[i][8]
-		);
-		copy( begin(symmetry_object.bath_field[i]), end(symmetry_object.bath_field[i]), bath_field_u[i]);
+	 {  
+		copy( begin(symmetry_object->bath_field[i]), end(symmetry_object->bath_field[i]), bath_field_u[i]);
 	 }
 	 
 }
@@ -734,6 +729,8 @@ data simulation::calculate()
         results.j_three         = j_three;
         results.accuracy        = accuracy; 
         results.sample_amount   = sample_amount; 
+	
+	results.point_group	= u_label;
         
         return results;
 } 

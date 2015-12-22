@@ -5,7 +5,8 @@
 using namespace std;
 class symmetry
 {
-	public:
+	public: 
+		virtual ~symmetry(){}
 		virtual void bath()		= 0;
 		virtual string label()		= 0;
 		virtual int bath_size ()	= 0;
