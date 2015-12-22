@@ -63,7 +63,7 @@ int main()
 		
 		if( i == 0 )
 		{
-			symmetry_c2 gauge;
+			symmetry_c2 gauge; 
 			sweeps[i].build_gauge_bath (gauge);
 		}
 		else if( i == 1 )

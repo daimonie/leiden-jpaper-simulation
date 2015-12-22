@@ -51,13 +51,13 @@ simulation::simulation (int size)
  ***/
 void simulation::build_gauge_bath(symmetry& symmetry_object)
 { 
+	 u_order = symmetry_object.bath_size;
          symmetry_object.bath();
 	 for( int i = 0; i < 100; i++)
 	 {
 		copy( begin(symmetry_object.bath_field[i]), end(symmetry_object.bath_field[i]), bath_field_u[i]);
 	 }
 	 
-	 u_order = symmetry_object.bath_size;
 }
 
 
