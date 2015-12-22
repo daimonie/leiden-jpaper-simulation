@@ -1,13 +1,15 @@
 #ifndef SYMMETRY_CTWO_H
 #define SYMMETRY_CTWO_H
 
+#include <string>
 #include "symmetry.h"
+using namespace std;
 class symmetry_c2 : public symmetry
 {
-	public:
-		int bath_size	= 2;
-		void bath(); 
-		string label 	= "C2";
+	public: 
+		void bath();
+		string label();
+		int bath_size();
 };
 
 

@@ -23,3 +23,11 @@ void symmetry_s4::bath()
 	bath_field[3][8] = -1;
 
 }
+string symmetry_s4::label()
+{
+	return string("S4");
+}
+int symmetry_s4::bath_size ()
+{
+	return 4;
+}

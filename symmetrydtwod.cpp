@@ -35,3 +35,11 @@ void symmetry_d2d::bath()
         bath_field[7][3] = 1; 
         bath_field[7][8] = 1;   
 }
+string symmetry_d2d::label()
+{
+	return string("D2d");
+}
+int symmetry_d2d::bath_size ()
+{
+	return 8;
+}

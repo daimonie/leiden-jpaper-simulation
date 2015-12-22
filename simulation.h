@@ -11,6 +11,7 @@
 
 #include "data.h"
 #include "symmetry.h"
+using namespace std;
 class simulation
 {
         //everything is public, for simplicity.

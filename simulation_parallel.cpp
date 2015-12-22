@@ -124,7 +124,7 @@ int main()
         
         for(int i = 0; i < imax; i++)
         {
-                printf("Report J1/J3 = %.3f .\n", sweeps[i].j_one);
+                printf("Report J1/J3 = %.3f for symmetry point group %s (order %d) .\n", sweeps[i].j_one, sweeps[i].u_label.c_str(), sweeps[i].u_order);
                 for(unsigned int jj = 0; jj < results[i].size(); jj++)
                 {
                         auto result = results[i][jj];

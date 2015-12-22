@@ -46,3 +46,11 @@ void symmetry_d2h::bath()
 	bath_field[3], 3, bath_field[0],3,
 	0.0, bath_field[7],3);
 }
+string symmetry_d2h::label()
+{
+	return string("D2h");
+}
+int symmetry_d2h::bath_size ()
+{
+	return 8;
+}

@@ -1,13 +1,15 @@
 #ifndef SYMMETRY_DTWOH_H
 #define SYMMETRY_DTWOH_H
 
+#include <string>
 #include "symmetry.h"
+using namespace std;
 class symmetry_d2h : public symmetry
 {
 	public:
-		int bath_size	= 8;
-		void bath(); 
-		string label 	= "D2h";
+		void bath();
+		string label();
+		int bath_size();
 };
 
 

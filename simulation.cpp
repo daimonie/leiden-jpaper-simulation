@@ -51,11 +51,16 @@ simulation::simulation (int size)
  ***/
 void simulation::build_gauge_bath(symmetry& symmetry_object)
 { 
-	 u_order = symmetry_object.bath_size;
-	 u_label = symmetry_object.label;
+	 u_order = symmetry_object.bath_size ();
+	 u_label = symmetry_object.label ();
          symmetry_object.bath();
-	 for( int i = 0; i < 100; i++)
-	 {
+	 for( int i = 0; i < u_order; i++)
+	 { 
+		printf("%s\t%d/%d\t%.3f\t%.3f\t%.3f\t%.3f\t%.3f\t%.3f\t%.3f\t%.3f\t%.3f \n", u_label.c_str(),i, u_order,
+		       symmetry_object.bath_field[i][0],symmetry_object.bath_field[i][1],symmetry_object.bath_field[i][2],
+			symmetry_object.bath_field[i][3],symmetry_object.bath_field[i][4],symmetry_object.bath_field[i][5],
+			symmetry_object.bath_field[i][6],symmetry_object.bath_field[i][7],symmetry_object.bath_field[i][8]
+		);
 		copy( begin(symmetry_object.bath_field[i]), end(symmetry_object.bath_field[i]), bath_field_u[i]);
 	 }
 	 

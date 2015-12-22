@@ -19,3 +19,12 @@ void symmetry_c2v::bath()
 	bath_field[3][4] = 1; 
 	bath_field[3][8] = 1;
 }
+string symmetry_c2v::label()
+{
+	return string("C2v");
+}
+int symmetry_c2v::bath_size ()
+{
+	return 4;
+	
+}

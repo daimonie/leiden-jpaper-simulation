@@ -13,3 +13,11 @@ void symmetry_s2::bath()
 	bath_field[1][8] = -1;	
 
 }
+string symmetry_s2::label()
+{
+	return string("S2");
+}
+int symmetry_s2::bath_size ()
+{
+	return 2;
+}
