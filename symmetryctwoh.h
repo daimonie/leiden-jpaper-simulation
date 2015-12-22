@@ -5,6 +5,7 @@
 class symmetry_c2h : public symmetry
 {
 	public:
+		string label 	= "C2h";
 		int bath_size	= 4;
 		void bath(); 
 };

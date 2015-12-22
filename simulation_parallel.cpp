@@ -42,12 +42,12 @@ int main()
         vector <simulation> sweeps;
         vector <vector<data>> results;
          
-        double max_beta = 12.0;
-        int max_j = 100;
-        int imax = 20;
-        int samples = 500;
+        double max_beta = 5.0;
+        int max_j = 20;
+        int imax = 7;
+        int samples = 50;
 	
-	unsigned int j = 0; 
+	int j = 0; 
         results.resize(imax);
 	
         for(int i = 0; i < imax; i++)
@@ -125,9 +125,9 @@ int main()
         for(int i = 0; i < imax; i++)
         {
                 printf("Report J1/J3 = %.3f .\n", sweeps[i].j_one);
-                for(j = 0; j < results[i].size(); j++)
+                for(unsigned int jj = 0; jj < results[i].size(); jj++)
                 {
-                        auto result = results[i][j];
+                        auto result = results[i][jj];
                         result.report ();
                 }
         }

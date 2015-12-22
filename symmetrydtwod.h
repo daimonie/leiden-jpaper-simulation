@@ -7,6 +7,7 @@ class symmetry_d2d : public symmetry
 	public:
 		int bath_size	= 8;
 		void bath(); 
+		string label 	= "D2d";
 };
 
 

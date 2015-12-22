@@ -5,6 +5,7 @@
 class symmetry_c2v : public symmetry
 {
 	public:
+		string label 	= "C2v";
 		int bath_size	= 4;
 		void bath(); 
 };

@@ -7,6 +7,7 @@ class symmetry_c2 : public symmetry
 	public:
 		int bath_size	= 2;
 		void bath(); 
+		string label 	= "C2";
 };
 
 

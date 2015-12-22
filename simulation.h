@@ -7,6 +7,7 @@
 #include <boost/random/mersenne_twister.hpp>
 #include <boost/random/lagged_fibonacci.hpp>
 #include <boost/random/uniform_01.hpp>
+#include <string>
 
 #include "data.h"
 #include "symmetry.h"
@@ -20,6 +21,10 @@ class simulation
                  *      the symmetry group we want to consider.
                  ***/ 
                 int u_order = 8;
+		/***
+		 * When u_order is set via the symmetry object, a label is also saved.
+		 */
+		string u_label = "default";
                 /***
                  *  There are L3 grid points, and 4 perturbations.
                  *  When sampling, each fluctuation is [the number of grid points, times the number

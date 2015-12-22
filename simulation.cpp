@@ -52,6 +52,7 @@ simulation::simulation (int size)
 void simulation::build_gauge_bath(symmetry& symmetry_object)
 { 
 	 u_order = symmetry_object.bath_size;
+	 u_label = symmetry_object.label;
          symmetry_object.bath();
 	 for( int i = 0; i < 100; i++)
 	 {
