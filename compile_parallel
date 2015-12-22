@@ -2,5 +2,3 @@ g++ -O3 -g -fno-strict-aliasing -std=c++11 -Wall -Wextra -msse2 -DHAVE_SSE2=1  -
 echo "Running program:"
 ./simulate_para >> all_symmetries.txt
  
- 
- 

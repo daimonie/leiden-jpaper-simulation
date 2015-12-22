@@ -2,7 +2,7 @@
 reset
   
 set terminal pngcairo size 1000,400 enhanced font 'Verdana,10'
-set output 'figure.png'
+set output 'figure_data.png'
 
 set border linewidth 1.5
 set style line 11 lc rgb '#808080' lt 1
