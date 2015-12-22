@@ -41,17 +41,13 @@ int main()
         auto time_start = std::chrono::high_resolution_clock::now();
         vector <simulation> sweeps;
         vector <vector<data>> results;
-        
-<<<<<<< HEAD
+         
         double max_beta = 12.0;
         int max_j = 100;
         int imax = 20;
         int samples = 500;
-        
-=======
-        int imax = 7;
-	unsigned int j = 0;
->>>>>>> 42af5e7dec54a70cb34972e3f7b928643e778dff
+	
+	unsigned int j = 0; 
         results.resize(imax);
 	
         for(int i = 0; i < imax; i++)
@@ -62,14 +58,8 @@ int main()
         
         omp_set_num_threads(4);
         #pragma omp parallel for private(j)
-        for(int i = 0; i < imax; i++)
-<<<<<<< HEAD
+        for(int i = 0; i < imax; i++) 
         { 
-=======
-        {
-		
-		
->>>>>>> 42af5e7dec54a70cb34972e3f7b928643e778dff
                 sweeps[i].dice_mode = 2;
                 sweeps[i].generate_rotation_matrices (); 
 		
@@ -107,21 +97,12 @@ int main()
 		{
 			symmetry_s4 gauge;
 			sweeps[i].build_gauge_bath (gauge);
-		}
-                
-<<<<<<< HEAD
+		} 
                 sweeps[i].j_one = 1.0 / imax * i;
                 
                 sweeps[i].j_two = sweeps[i].j_one;
                 sweeps[i].j_three = 1.0;
                 sweeps[i].sample_amount = samples;
-=======
-                sweeps[i].j_one = 0.5;
-                
-                sweeps[i].j_two = sweeps[i].j_one;
-                sweeps[i].j_three = 1.0;
-                sweeps[i].sample_amount = 10;
->>>>>>> 42af5e7dec54a70cb34972e3f7b928643e778dff
                 sweeps[i].random_initialization ();
                 sweeps[i].mpc_initialisation ();
                 for (int ii = 0; ii < sweeps[i].length_three; ii++)
@@ -129,26 +110,15 @@ int main()
                         sweeps[i].e_total += sweeps[i].site_energy(ii);
                 }
                 sweeps[i].e_total /= 2;
-                sweeps[i].e_ground = sweeps[i].length_three*3*(sweeps[i].j_one + sweeps[i].j_two + sweeps[i].j_three);
-<<<<<<< HEAD
-                sweeps[i].accuracy = 0.15;
+                sweeps[i].e_ground = sweeps[i].length_three*3*(sweeps[i].j_one + sweeps[i].j_two + sweeps[i].j_three); 
+                sweeps[i].accuracy = 0.5;
                 
                 for( j = 0; j < max_j; j++)
                 {
                         sweeps[i].beta = max_beta / max_j * j;  
                         sweeps[i].thermalization (); 
                       
-                        results[i].push_back(sweeps[i].estimate_beta_c ()); 
-=======
-                sweeps[i].accuracy = 0.5;
-                
-                for(j = 0; j < 20; j++)
-                {
-                        sweeps[i].beta = 5.0/20 * j; 
-                        sweeps[i].thermalization (); 
-                        
-                        results[i].push_back(sweeps[i].calculate ());
->>>>>>> 42af5e7dec54a70cb34972e3f7b928643e778dff
+                        results[i].push_back(sweeps[i].calculate ());  
                 }
         }
         
