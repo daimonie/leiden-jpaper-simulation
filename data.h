@@ -3,6 +3,7 @@
 //just a data holder
 
 #include <string>
+using namespace std;
 class data
 {
          public:
@@ -20,7 +21,7 @@ class data
                 double j_three         = 0;  
                 double accuracy        = 0;
                 int sample_amount      = 0;
-                std::string point_group     = 0;	
+                string point_group     = "default";	
                 void report ();
 };
 #endif

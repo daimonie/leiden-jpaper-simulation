@@ -50,9 +50,9 @@ simulation::simulation (int size)
  * Note that this is a manual calculation/setting for the symmetry group under consideration.
  ***/
 void simulation::build_gauge_bath(symmetry* symmetry_object)
-{ 
+{  
 	 u_order = symmetry_object->bath_size ();
-	 u_label = symmetry_object->label ();
+	 u_label = symmetry_object->label (); 
          symmetry_object->bath();
 	 for( int i = 0; i < u_order; i++)
 	 {  
@@ -730,7 +730,7 @@ data simulation::calculate()
         results.accuracy        = accuracy; 
         results.sample_amount   = sample_amount; 
 	
-	results.point_group	= u_label;
+	results.point_group	= string(u_label);
         
         return results;
 } 
