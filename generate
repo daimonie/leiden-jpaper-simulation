@@ -1,10 +1,36 @@
 #!/bin/bash 
+rm *.txt
 
-for i in {0..10}
-do 
-        python get_data.py -f sweep_21_12_015_v2.txt -n $i >> figure_data.dat 
-        gnuplot figure.plt
-        mv figure_data.png figure_rough_$i.png
-        mv figure_data.dat figure_rough_$i.dat 
-        mv figure_rough_$i.* test_7
-done 
+echo "c2 small"
+./calculation c2 small >> data_c2_small.txt
+echo "c2v small"
+./calculation c2v small >> data_c2v_small.txt
+echo "c2h small"
+./calculation c2h small >> data_c2h_small.txt
+echo "d2d small"
+./calculation d2d small >> data_d2d_small.txt
+echo "d2h small"
+./calculation d2h small >> data_d2h_small.txt
+echo "s2 small"
+./calculation s2 small >> data_s2_small.txt
+echo "s4 small"
+./calculation s4 small >> data_s4_small.txt
+
+
+echo "c2 large"
+./calculation c2 large >> data_c2_large.txt
+echo "c2v large"
+./calculation c2v large >> data_c2v_large.txt
+echo "c2h large"
+./calculation c2h large >> data_c2h_large.txt
+echo "d2d large"
+./calculation d2d large >> data_d2d_large.txt
+echo "d2h large"
+./calculation d2h large >> data_d2h_large.txt
+echo "s2 large"
+./calculation s2 large >> data_s2_large.txt
+echo "s4 large"
+./calculation s4 large >> data_s4_large.txt
+
+mkdir results_0
+mv *.txt results_0

@@ -39,12 +39,12 @@ using namespace std;
 
 int main(int argc, char* argv[])
 {
-        auto time_start = std::chrono::high_resolution_clock::now();
 	/***
 	 * 	Note: Always preface  with $$ for random information.
 	 * 	That way, the python functions will *ignore* the lines.
 	 ***/
 	
+        auto time_start = std::chrono::high_resolution_clock::now();
 	//First, check if the arguments are proper.
 	//Return 0 terminates program.  
 	if(argc != 3)
@@ -58,12 +58,13 @@ int main(int argc, char* argv[])
 	
 	int samples = 10;
 	if(arg_size == "small")
-	{
-		printf("$$ Warning, size small = 4, samples not set, accuracy not set. \n");
+	{ 
+		samples = 5000;
 		printf("$$ Will simulate small (8) lattice for point group %s. \n", arg_symmetry.c_str()); 
 	}
 	else if(arg_size == "large")
 	{
+		samples = 2000;
 		printf("$$ Will simulate large (12) lattice for point group %s. \n", arg_symmetry.c_str());
 	}
 	else
@@ -71,13 +72,13 @@ int main(int argc, char* argv[])
 		printf("$$ Unknown lattice size. \n");
 		return 0;
 	}
+	
 	if(arg_symmetry != "c2" && arg_symmetry != "c2h" && arg_symmetry != "c2v" && arg_symmetry != "d2d"
 		&& arg_symmetry != "d2h" && arg_symmetry != "s2" && arg_symmetry != "s4")
 	{
 		printf("$$ Unknown point group. \n");
 		return 0;
-	}
-	
+	} 
 	//if the code is not terminated before this point, the arguments are well formed and we can just start calculating.
 	
 	//This should be fine, given that we copy from this object. Right?
@@ -122,43 +123,43 @@ int main(int argc, char* argv[])
 	 * We will simulate 0.1 < J < 1 at dJ = 0.01, and 1 < J < 2 at Dj=0.05.
 	 * We will thus require 99+20 values.	  
 	 ***/
-	int imax = 4;//119;
+	int imax = 119;
 
 	vector<simulation> sweeps;
 	vector<vector<data>> results;
 	 
 	results.resize(imax);
 	 
+	int lattice_size = 8;
 	if(arg_size == "large")
 	{ 
-		for(int i = 0; i < imax; i++)
-		{
-			sweeps.emplace_back( simulation(12) );
-		}
-	}  
-        else
+		lattice_size = 12;
+	}   
+	
+	for(int i = 0; i < imax; i++)
 	{
-		for(int i = 0; i < imax; i++)
-		{
-			sweeps.emplace_back( simulation(4) );
-		}
+		sweeps.emplace_back( simulation( lattice_size ) );
 	}
-	
-	
-        omp_set_num_threads(4);
-        #pragma omp parallel for
-        for(int i = 0; i < imax; i++) 
-        { 
+	//Let's do this before OMP.
+	for(unsigned int i = 0; i < sweeps.size(); i++)
+	{
                 sweeps[i].dice_mode = 2;
                 sweeps[i].generate_rotation_matrices (); 
 		
 		sweeps[i].build_gauge_bath(gauge);
-		
-		
-                sweeps[i].j_one = 0.01 * (i+1); 
-		if( sweeps[i].j_one > 1.0)
+	}
+	
+        omp_set_num_threads(4);
+        #pragma omp parallel for
+        for(unsigned int i = 0; i < sweeps.size(); i++) 
+        { 		
+		if( i > 99)
 		{
-			sweeps[i].j_one = 0.05 * (i+1); 
+			sweeps[i].j_one = 1.0 + 0.05 * (i-98); 
+		}
+		else
+		{ 
+			sweeps[i].j_one = 0.01 * (i+1); 		
 		}
 		
                 sweeps[i].j_two = sweeps[i].j_one;
@@ -180,33 +181,37 @@ int main(int argc, char* argv[])
                 sweeps[i].accuracy = 0.5;
                 
 		double beta_max = (-8.5)/(1.99)*sweeps[i].j_one + 10.0; 
+		if(beta_max > 10.0 || beta_max < 0)
+		{
+			printf("$$ Warning: beta_max=%.3f out of bounds.\n", beta_max);
+		}
 		//recall beta = inv T
-		double beta = 0.0;
-                // cool it down (Tinf -> T finite)
+		double beta = 0.0;  
+		// cool it down (Tinf -> T finite)
 		while( beta <= beta_max )
-                {
+		{
 			beta = beta + 0.05;
 			
-                        sweeps[i].beta = beta;  
-                        sweeps[i].thermalization (); 
-                      
-                        results[i].push_back(sweeps[i].calculate ());  
-                }
-                //Heat it up (T finite -> T inf)
-                while( beta > 0 )
-                {
+			sweeps[i].beta = beta;  
+			sweeps[i].thermalization (); 
+		
+			results[i].push_back(sweeps[i].calculate ());  
+		}
+		//Heat it up (T finite -> T inf)
+		while( beta > 0 )
+		{
 			beta = beta - 0.05;
 			
-                        sweeps[i].beta = beta;  
-                        sweeps[i].thermalization (); 
-                      
-                        results[i].push_back(sweeps[i].calculate ());  
-                }           
+			sweeps[i].beta = beta;  
+			sweeps[i].thermalization (); 
+		
+			results[i].push_back(sweeps[i].calculate ());  
+		}            
         }
         
-        for(int i = 0; i < imax; i++)
+        for(unsigned int i = 0; i < sweeps.size(); i++)
         {
-                printf("Report J1/J3 = %.3f for symmetry point group %s (order %d) .\n", sweeps[i].j_one, sweeps[i].u_label.c_str(), sweeps[i].u_order);
+                printf("$$ %.3f\t%s\t%d)\n", sweeps[i].j_one, sweeps[i].u_label.c_str(), sweeps[i].u_order);
                 for(unsigned int jj = 0; jj < results[i].size(); jj++)
                 {
                         auto result = results[i][jj];
