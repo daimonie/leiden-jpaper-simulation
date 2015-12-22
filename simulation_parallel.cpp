@@ -122,11 +122,6 @@ int main(int argc, char* argv[])
 	}
 	printf("$$ Setting gauge group to %s. \n", gauge->label().c_str());
 	
-	//report time, end program 
-        auto time_end = std::chrono::high_resolution_clock::now();        
-        auto microseconds = std::chrono::duration_cast<std::chrono::microseconds>( time_end - time_start).count();
-        printf("$$ Elapsed time %ld microseconds. \n", microseconds); 
-	
 	/***
 	 * We will simulate 0.1 < J < 1 at dJ = 0.01, and 1 < J < 2 at Dj=0.05.
 	 * We will thus require 99+20 values.	  
@@ -220,9 +215,12 @@ int main(int argc, char* argv[])
                         result.report ();
                 }
         }
-        
-        
 	
+	//report time, end program 
+        auto time_end = std::chrono::high_resolution_clock::now();        
+        auto microseconds = std::chrono::duration_cast<std::chrono::microseconds>( time_end - time_start).count();
+        printf("$$ Elapsed time %ld microseconds. \n", microseconds); 
+	//gauge was new'd, so it should be deleted
 	delete gauge;
 	return 0;
 }

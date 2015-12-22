@@ -1,3 +1,3 @@
-g++ -O3 -g -fno-strict-aliasing -std=c++11 -Wall -Wextra -msse2 -DHAVE_SSE2=1  -DDSFMT_MEXP=19937 -o simulate_para  simulation_parallel.cpp dSFMT*/dSFMT.c simulation.cpp data.cpp symmetryctwo.cpp symmetryctwoh.cpp symmetryctwov.cpp symmetrydtwod.cpp symmetrydtwoh.cpp symmetrystwo.cpp symmetrysfour.cpp -lgsl -lgslcblas -lm -fopenmp -lpthread 
+g++ -O3 -g -fno-strict-aliasing -std=c++11 -Wall -Wextra -msse2 -DHAVE_SSE2=1  -DDSFMT_MEXP=19937 -o calculation  simulation_parallel.cpp dSFMT*/dSFMT.c simulation.cpp data.cpp symmetryctwo.cpp symmetryctwoh.cpp symmetryctwov.cpp symmetrydtwod.cpp symmetrydtwoh.cpp symmetrystwo.cpp symmetrysfour.cpp -lgsl -lgslcblas -lm -fopenmp -lpthread 
 echo "Running program:"
-./simulate_para d2d small
+./calculation d2d small
