@@ -200,8 +200,14 @@ int main(int argc, char* argv[])
 		// cool it down (Tinf -> T finite)
 		while( beta <= beta_max )
 		{
-			beta = beta + 0.05;
-			
+			if(arg_size == "test")
+			{
+				beta = beta + 0.5;
+			}
+			else
+			{ 
+				beta = beta + 0.05;
+			}
 			sweeps[i].beta = beta;  
 			sweeps[i].thermalization (); 
 		
@@ -210,7 +216,14 @@ int main(int argc, char* argv[])
 		//Heat it up (T finite -> T inf)
 		while( beta > 0 )
 		{
-			beta = beta - 0.05;
+			if(arg_size == "test")
+			{
+				beta = beta - 0.5;
+			}
+			else
+			{ 
+				beta = beta - 0.05;
+			}
 			
 			sweeps[i].beta = beta;  
 			sweeps[i].thermalization (); 
