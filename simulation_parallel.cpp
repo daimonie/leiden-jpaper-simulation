@@ -159,7 +159,7 @@ int main(int argc, char* argv[])
 		sweeps[i].build_gauge_bath(gauge);
 	}
 	
-        omp_set_num_threads(4);
+        omp_set_num_threads(omp_get_max_threads());
         #pragma omp parallel for
         for(unsigned int i = 0; i < sweeps.size(); i++) 
         { 		
