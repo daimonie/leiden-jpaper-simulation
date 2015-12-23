@@ -142,7 +142,8 @@ int main(int argc, char* argv[])
 	}   
 	else if(arg_size == "test")
 	{ 
-		lattice_size = 12;
+		lattice_size = 4;
+		imax = 64;
 	}   
 	
 	for(int i = 0; i < imax; i++)
