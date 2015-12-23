@@ -188,7 +188,11 @@ int main(int argc, char* argv[])
                 sweeps[i].e_total /= 2;
                 sweeps[i].e_ground = sweeps[i].length_three*3*(sweeps[i].j_one + sweeps[i].j_two + sweeps[i].j_three); 
 		
-                sweeps[i].accuracy = 0.5;
+                sweeps[i].accuracy = 0.05;
+		if(arg_size == "test")
+		{
+			sweeps[i].accuracy = 0.5;
+		}
                 
 		double beta_max = (-8.5)/(1.99)*sweeps[i].j_one + 10.0; 
 		if(beta_max > 10.0 || beta_max < 0)
@@ -234,7 +238,7 @@ int main(int argc, char* argv[])
         
         for(unsigned int i = 0; i < sweeps.size(); i++)
         {
-                printf("$$ %.3f\t%s\t%d)\n", sweeps[i].j_one, sweeps[i].u_label.c_str(), sweeps[i].u_order);
+                printf("$$ %.3f\t%s\t%d\n", sweeps[i].j_one, sweeps[i].u_label.c_str(), sweeps[i].u_order);
                 for(unsigned int jj = 0; jj < results[i].size(); jj++)
                 {
                         auto result = results[i][jj];
