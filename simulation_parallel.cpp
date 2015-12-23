@@ -67,6 +67,11 @@ int main(int argc, char* argv[])
 		samples = 2000;
 		printf("$$ Will simulate large (12) lattice for point group %s. \n", arg_symmetry.c_str());
 	}
+	else if(arg_size == "test")
+	{
+		samples = 10;
+		printf("$$ Will simulate test (4) lattice for point group %s. \n", arg_symmetry.c_str());
+	}
 	else
 	{
 		printf("$$ Unknown lattice size. \n");
@@ -132,6 +137,10 @@ int main(int argc, char* argv[])
 	 
 	int lattice_size = 8;
 	if(arg_size == "large")
+	{ 
+		lattice_size = 12;
+	}   
+	else if(arg_size == "test")
 	{ 
 		lattice_size = 12;
 	}   
