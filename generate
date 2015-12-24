@@ -1,6 +1,37 @@
 #!/bin/bash 
 rm *.txt
 
+echo "Maris Cluster: Starting c2 test" | mail -s "Maris Cluster" joskodeboer@gmail.com
+./calculation c2 test >> data_c2_test.txt
+echo "Maris Cluster: Finished c2 test" | mailx -a data_c2_test.txt -s "Maris Cluster" joskodeboer@gmail.com
+
+echo "Maris Cluster: Starting  c2v test" | mail -s "Maris Cluster" joskodeboer@gmail.com
+./calculation c2v test >> data_c2v_test.txt
+echo "Maris Cluster: Finished  c2v test" | mailx -a data_c2v_test.txt -s "Maris Cluster" joskodeboer@gmail.com
+
+echo "Maris Cluster: Starting c2h test" | mail -s "Maris Cluster" joskodeboer@gmail.com
+./calculation c2h test >> data_c2h_test.txt
+echo "Maris Cluster: Finished c2h test" | mailx -a data_c2h_test.txt -s "Maris Cluster" joskodeboer@gmail.com
+
+echo "Maris Cluster: Starting  d2d test" | mail -s "Maris Cluster" joskodeboer@gmail.com
+./calculation d2d test >> data_d2d_test.txt
+echo "Maris Cluster: Finished  d2d test" | mailx -a data_d2d_test.txt -s "Maris Cluster" joskodeboer@gmail.com
+
+echo "Maris Cluster: Starting  d2h test" | mail -s "Maris Cluster" joskodeboer@gmail.com
+./calculation d2h test >> data_d2h_test.txt
+echo "Maris Cluster: Finished d2h test" | mailx -a data_d2h_test.txt -s "Maris Cluster" joskodeboer@gmail.com
+
+echo "Maris Cluster: Starting  s2 test" | mail -s "Maris Cluster" joskodeboer@gmail.com
+./calculation s2 test >> data_s2_test.txt
+echo "Maris Cluster: Finished  s2 test" | mailx -a data_s2_test.txt -s "Maris Cluster" joskodeboer@gmail.com
+
+echo "Maris Cluster: Starting  test" | mail -s "Maris Cluster" joskodeboer@gmail.com
+./calculation s4 test >> data_s4_test.txt
+echo "Maris Cluster: Finished  s4 test" | mailx -a data_s4_test.txt -s "Maris Cluster" joskodeboer@gmail.com
+
+
+
+
 echo "Maris Cluster: Starting c2 small" | mail -s "Maris Cluster" joskodeboer@gmail.com
 ./calculation c2 small >> data_c2_small.txt
 echo "Maris Cluster: Finished c2 small" | mailx -a data_c2_small.txt -s "Maris Cluster" joskodeboer@gmail.com
