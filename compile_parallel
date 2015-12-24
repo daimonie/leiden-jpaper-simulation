@@ -8,3 +8,4 @@ echo "Maris Cluster: Starting d2d test" | mail -s "Maris Cluster" joskodeboer@gm
 rm test.txt
 ./calculation d2d test >> test.txt
 echo "Maris Cluster: Finished d2d test" | mailx -a test.txt -s "Maris Cluster" joskodeboer@gmail.com
+

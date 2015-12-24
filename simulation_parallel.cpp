@@ -165,16 +165,17 @@ int main(int argc, char* argv[])
         { 		
 		if( i > 99)
 		{
-			sweeps[i].j_one = 1.0 + 0.05 * (i-98); 
+			sweeps[i].j_one = -1.0 + 0.05 * (i-98); 
 		}
 		else
 		{ 
-			sweeps[i].j_one = 0.01 * (i+1); 		
+			sweeps[i].j_one = -0.01 * (i+1); 		
 		}
 		
                 sweeps[i].j_two = sweeps[i].j_one;
-                sweeps[i].j_three = 1.0;
-		 
+                sweeps[i].j_three = -1.0;
+		
+ 
 		sweeps[i].sample_amount = samples; 
 			
                 //start at beta=0 (T=inf), then go to Bmax, then go down again. Hence, random.
@@ -194,7 +195,7 @@ int main(int argc, char* argv[])
 			sweeps[i].accuracy = 0.5;
 		}
                 
-		double beta_max = (-8.5)/(1.99)*sweeps[i].j_one + 10.0; 
+		double beta_max = -1*(-8.5)/(1.99)*sweeps[i].j_one + 10.0; 
 		if(beta_max > 10.0 || beta_max < 0)
 		{
 			printf("$$ Warning: beta_max=%.3f out of bounds.\n", beta_max);

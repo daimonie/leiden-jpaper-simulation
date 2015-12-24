@@ -17,7 +17,7 @@
 #include <gsl/gsl_cblas.h>
 #include <iomanip> 
 #include <chrono> 
-#include "dSFMT-src-2.2.3/dSFMT.h"
+#include "../dSFMT-src-2.2.3/dSFMT.h"
 
 #ifndef SIZE
 	#define SIZE 4
