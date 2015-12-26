@@ -1,7 +1,7 @@
 #!/bin/bash
 short=$(hostname -s)
-sym="c2v"
-size="small"
+sym="c2"
+size="large"
 echo "Maris Cluster: Starting $sym $size" | mail -s "Maris Cluster: $short" joskodeboer@gmail.com
 ./calculation $sym $size >>  "${short}_data_c2v_small.txt"
 echo "Maris Cluster: Finished $sym $size" | mailx -a data_c2v_small.txt -s "Maris Cluster: $short" joskodeboer@gmail.com
