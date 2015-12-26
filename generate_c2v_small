@@ -1,7 +1,0 @@
-#!/bin/bash
-
-$short=$(hostname -s)
-
-echo "Maris Cluster: Starting  c2v small" | mail -s "Maris Cluster: $short" joskodeboer@gmail.com
-./calculation c2v small >> "${short}_data_c2v_small.txt"
-echo "Maris Cluster: Finished  c2v small" | mailx -a data_c2v_small.txt -s "Maris Cluster: $short" joskodeboer@gmail.com
