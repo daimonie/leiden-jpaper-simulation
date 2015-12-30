@@ -67,9 +67,14 @@ int main(int argc, char* argv[])
 		samples = 1000;
 		printf("$$ Will simulate large (10) lattice for point group %s. \n", arg_symmetry.c_str());
 	}
-	else if(arg_size == "test")
+	else if(arg_size == "medium")
 	{
-		samples = 10;
+		samples = 1500;
+		printf("$$ Will simulate large (8) lattice for point group %s. \n", arg_symmetry.c_str());
+	}
+	else if(arg_size == "tiny")
+	{
+		samples = 25;
 		printf("$$ Will simulate test (4) lattice for point group %s. \n", arg_symmetry.c_str());
 	}
 	else
@@ -143,7 +148,18 @@ int main(int argc, char* argv[])
 	else if(arg_size == "tiny")
 	{ 
 		lattice_size = 4; 
+		imax = 4; //local testing
 	}    
+	else if(arg_size == "medium")
+	{ 
+		lattice_size = 8; 
+	}    
+	
+	if( imax > omp_get_max_threads() )
+	{
+		throw logic_error("Error: iMax > nproc.");
+	}
+	
 	
 	for(int i = 0; i < imax; i++)
 	{
@@ -154,23 +170,25 @@ int main(int argc, char* argv[])
 	{
                 sweeps[i].dice_mode = 2;
                 sweeps[i].generate_rotation_matrices (); 
-		
+		/***
+		 *  Explanation by Ke:
+		 * 
+		 *  tau is important there to make sure two samples are not autocorrelated.
+		 *  It estimate by a lattice with the size L = 12, for which the typical
+		 *  autocorrelation time is about 40 Monte Carlo steps. So tau = 100 makes
+		 *  two samples neighboring in time correlated by a factor \sim e^{-2} \sim 0.1.
+		 ***/
+		sweeps[i].tau = 100; 
 		sweeps[i].build_gauge_bath(gauge);
 	}
+	double beta_max = 0.0;
 	
         omp_set_num_threads(omp_get_max_threads());
-        #pragma omp parallel for
+        #pragma omp parallel for private(beta_max)
         for(unsigned int i = 0; i < sweeps.size(); i++) 
-        { 		
-		if( i > 99)
-		{
-			sweeps[i].j_one = -1.0 + 0.05 * (i-98); 
-		}
-		else
-		{ 
-			sweeps[i].j_one = -0.01 * (i+1); 		
-		}
-		
+        { 	 
+                sweeps[i].j_one = 1 * (i+1) * 0.05;
+		sweeps[i].j_one *= -1; 
                 sweeps[i].j_two = sweeps[i].j_one;
                 sweeps[i].j_three = -1.0;
 		
@@ -194,51 +212,24 @@ int main(int argc, char* argv[])
 			sweeps[i].accuracy = 0.5;
 		}
                 
-		double beta_max = -1*(-8.5)/(1.99)*sweeps[i].j_one + 10.0; 
-		if(beta_max > 10.0 || beta_max < 0)
+		beta_max = -1*(-8.5)/(2.00)*sweeps[i].j_one + 10.0;  
+		if(beta_max > 11.0 || beta_max < 0)
 		{
 			printf("$$ Warning: beta_max=%.3f out of bounds.\n", beta_max);
-		}
-		//recall beta = inv T
-		double beta = 0.0;  
+		} 
 		// cool it down (Tinf -> T finite)
-		while( beta <= beta_max )
-		{
-			if(arg_size == "test")
-			{
-				beta = beta + 0.5;
-			}
-			else
-			{ 
-				beta = beta + 0.05;
-			}
-			sweeps[i].beta = beta;  
+		sweeps[i].beta = 0.0;
+		while( sweeps[i].beta <= beta_max )
+		{ 
+			sweeps[i].beta += 0.05;
 			sweeps[i].thermalization (); 
 		
 			results[i].push_back(sweeps[i].calculate ());  
-		}
-		//Heat it up (T finite -> T inf)
-		while( beta > 0 )
-		{
-			if(arg_size == "test")
-			{
-				beta = beta - 0.5;
-			}
-			else
-			{ 
-				beta = beta - 0.05;
-			}
-			
-			sweeps[i].beta = beta;  
-			sweeps[i].thermalization (); 
-		
-			results[i].push_back(sweeps[i].calculate ());  
-		}            
+		}    
         }
         
         for(unsigned int i = 0; i < sweeps.size(); i++)
-        {
-                printf("$$ %.3f\t%s\t%d\n", sweeps[i].j_one, sweeps[i].u_label.c_str(), sweeps[i].u_order);
+        { 
                 for(unsigned int jj = 0; jj < results[i].size(); jj++)
                 {
                         auto result = results[i][jj];
