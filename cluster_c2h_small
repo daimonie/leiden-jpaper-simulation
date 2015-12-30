@@ -3,5 +3,5 @@ short=$(hostname -s)
 sym="c2h"
 size="small"
 echo "Maris Cluster: Starting $sym $size" | mail -s "Maris Cluster: $short" joskodeboer@gmail.com
-./calculation $sym $size >>  "${short}_data_c2v_small.txt"
+./calculation $sym $size >>  "${short}_data_${sym}_${size}.txt"
 echo "Maris Cluster: Finished $sym $size" | mailx -a data_c2v_small.txt -s "Maris Cluster: $short" joskodeboer@gmail.com
