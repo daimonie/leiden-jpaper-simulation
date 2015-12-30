@@ -59,13 +59,13 @@ int main(int argc, char* argv[])
 	int samples = 10;
 	if(arg_size == "small")
 	{ 
-		samples = 5000;
-		printf("$$ Will simulate small (8) lattice for point group %s. \n", arg_symmetry.c_str()); 
+		samples = 2000;
+		printf("$$ Will simulate small (6) lattice for point group %s. \n", arg_symmetry.c_str()); 
 	}
 	else if(arg_size == "large")
 	{
-		samples = 2000;
-		printf("$$ Will simulate large (12) lattice for point group %s. \n", arg_symmetry.c_str());
+		samples = 1000;
+		printf("$$ Will simulate large (10) lattice for point group %s. \n", arg_symmetry.c_str());
 	}
 	else if(arg_size == "test")
 	{
@@ -128,23 +128,22 @@ int main(int argc, char* argv[])
 	 * We will simulate 0.1 < J < 1 at dJ = 0.01, and 1 < J < 2 at Dj=0.05.
 	 * We will thus require 99+20 values.	  
 	 ***/
-	int imax = 119;
+	int imax = 48;
 
 	vector<simulation> sweeps;
 	vector<vector<data>> results;
 	 
 	results.resize(imax);
 	 
-	int lattice_size = 8;
+	int lattice_size = 6;
 	if(arg_size == "large")
 	{ 
-		lattice_size = 12;
+		lattice_size = 10;
 	}   
-	else if(arg_size == "test")
+	else if(arg_size == "tiny")
 	{ 
-		lattice_size = 4;
-		imax = 64;
-	}   
+		lattice_size = 4; 
+	}    
 	
 	for(int i = 0; i < imax; i++)
 	{
