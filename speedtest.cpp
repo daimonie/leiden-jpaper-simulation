@@ -39,12 +39,21 @@ using namespace std;
 
 int main(int argc, char* argv[])
 {
+	if(argc > 0)
+	{
+		for(int j = 0; j < argc; j++)
+		{
+			string argument = string(argv[j]);
+			printf("$$ Argument [%d]: %s \n", j, argument.c_str());
+		}
+		
+	}
+	auto time_start = std::chrono::high_resolution_clock::now();
 	/***
 	 * 	Note: Always preface  with $$ for random information.
 	 * 	That way, the python functions will *ignore* the lines.
 	 ***/
 	printf("$$ small speedtest on d2d 4/6/8. \n");
-	auto time_start = std::chrono::high_resolution_clock::now();
 	
 	vector<vector<data>> results;
 	 
@@ -52,9 +61,9 @@ int main(int argc, char* argv[])
 	 
 	symmetry* gauge = new symmetry_d2d;
 	
-	simulation tiny = new simulation(4);
-	simulation small = new simulation(6);
-	simulation medium = new simulation(8);
+	simulation tiny(4);
+	simulation small(6);
+	simulation medium(8);
 	
 	tiny.dice_mode = 2;
 	tiny.generate_rotation_matrices ();  
@@ -107,34 +116,10 @@ int main(int argc, char* argv[])
 	
 	auto time_end = std::chrono::high_resolution_clock::now();        
 	auto microseconds = std::chrono::duration_cast<std::chrono::microseconds>( time_end - time_start).count();
-	printf("$$ Initialisation took %d microseconds. \n", microseconds);
+	printf("$$ Initialisation took %ld microseconds. \n", microseconds);
 	
-	for( int s = 10; s < 2000; s += 10)
-	{  
-		auto tiny_start = std::chrono::high_resolution_clock::now();   
-		tiny.samples = s;
-		results[0].push_back(sweeps[i].calculate ());  
-		auto tiny_end = std::chrono::high_resolution_clock::now();   
-		auto tiny_microseconds = std::chrono::duration_cast<std::chrono::microseconds>( tiny_start - tiny_end).count();
-		
-		
-		auto small_start = std::chrono::high_resolution_clock::now();   
-		small.samples = s;
-		results[0].push_back(sweeps[i].calculate ());  
-		auto small_end = std::chrono::high_resolution_clock::now();   
-		auto small_microseconds = std::chrono::duration_cast<std::chrono::microseconds>( small_start - small_end).count();
-		
-		
-		auto medium_start = std::chrono::high_resolution_clock::now();   
-		medium.samples = s;
-		results[0].push_back(sweeps[i].calculate ());  
-		auto medium_end = std::chrono::high_resolution_clock::now();   
-		auto medium_microseconds = std::chrono::duration_cast<std::chrono::microseconds>( medium_start - medium_end).count();
-		
-		printf("%d\t%d\t%d\t%d\n", s, tiny_microseconds, small_microseconds, medium_microseconds);		
-	} 
-        auto time_end = std::chrono::high_resolution_clock::now();        
-        auto microseconds = std::chrono::duration_cast<std::chrono::microseconds>( time_end - time_start).count();
+        time_end = std::chrono::high_resolution_clock::now();        
+        microseconds = std::chrono::duration_cast<std::chrono::microseconds>( time_end - time_start).count();
         printf("$$ Elapsed time %ld microseconds. \n", microseconds); 
 	//gauge was new'd, so it should be deleted
 	delete gauge; 

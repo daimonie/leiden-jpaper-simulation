@@ -43,7 +43,6 @@ int main(int argc, char* argv[])
 	 * 	Note: Always preface  with $$ for random information.
 	 * 	That way, the python functions will *ignore* the lines.
 	 ***/
-	
         auto time_start = std::chrono::high_resolution_clock::now();
 	//First, check if the arguments are proper.
 	//Return 0 terminates program.  
