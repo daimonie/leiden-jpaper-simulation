@@ -41,7 +41,7 @@ class simulation
                  *      in total, rmc_number_total elements.
                  ***/
                 int rmc_number = 10; 
-                int rmc_number_total = rmc_number*rmc_number*rmc_number;  
+                int rmc_number_total = 1000;//rmc_number*rmc_number*rmc_number;  
                 /***
                  * What random engine do we want to use?
                  * - 0, dsfmt

@@ -42,7 +42,7 @@ simulation::simulation (int size)
         }
         
         std_engine      = std::mt19937_64(0); 
-        std_random_mt   = std::uniform_real_distribution<double> (0.0, 1.0);
+        std_random_mt   = std::uniform_real_distribution<double> (0.0, 1.0);   
 }
     
 /*** 
