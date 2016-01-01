@@ -1,0 +1,6 @@
+#!/bin/bash 
+ulimit -s 65536
+# ulimit -all
+g++ -O3 -g -fno-strict-aliasing -std=c++11 -Wall -Wextra -msse2 -DHAVE_SSE2=1  -DDSFMT_MEXP=19937 -o convergencetest  convergencetest.cpp dSFMT*/dSFMT.c simulation.cpp data.cpp symmetryctwo.cpp symmetryctwoh.cpp symmetryctwov.cpp symmetrydtwod.cpp symmetrydtwoh.cpp symmetrystwo.cpp symmetrysfour.cpp -lgsl -lgslcblas -lm -fopenmp -lpthread 
+
+./convergencetest Hello
