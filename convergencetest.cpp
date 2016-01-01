@@ -44,83 +44,74 @@ int main(int argc, char* argv[])
 		}
 		
 	}
+	//actually just allocating the variables. But I'm too lazy to change this for a program
+	//written in half an hour to run a single night.. :)
 	auto time_start = std::chrono::high_resolution_clock::now();
+	auto time_end = std::chrono::high_resolution_clock::now();        
+	auto microseconds = std::chrono::duration_cast<std::chrono::microseconds>( time_end - time_start).count(); 
+	
 	/***
 	 * 	Note: Always preface  with $$ for random information.
 	 * 	That way, the python functions will *ignore* the lines.
 	 ***/
-	printf("$$ Testing speed versus samples on d2d 4/6/8. \n");
-	
-	vector<vector<data>> results;
-	 
-	results.resize(3);
-	 
+	printf("$$ Testing speed versus convergence on d2d 4/6/8. Initialised at accuracy 0.05. \n");
+	  
 	symmetry* gauge = new symmetry_d2d;
-	 
-	vector<vector <simulation>> sweeps;
-	simulation tiny(4); 
 	
-	sweeps.resize(3);
+	vector<simulation> sweeps;
+	vector<long int> timer_array;
 	
-	
-	for(int i = 0; i < 3; i++)
-	{
-		int lattice_size = 2 * (i+1);
-		for(int j = 0; j < 90; j++)
+	for(int j = 0; j < 90; j++)
+	{ 
+		for(int i = 0; i < 3; i++)
 		{
-			sweeps[i].emplace_back( simulation( lattice_size ) );
+			int lattice_size = 2 * (i+1);
+			sweeps.emplace_back( simulation( lattice_size ) );
 		}
-	}
-	
-	for(unsigned int i = 0; i < sweeps.size(); i++)
-	{
-		for(unsigned int j = 0; j < sweeps.size(); j++)
+		
+		for(unsigned int i = 0; i < sweeps.size(); i++)
 		{
-			sweeps[i][j].build_gauge_bath(gauge);
-			sweeps[i][j].dice_mode = 2;
-			sweeps[i][j].generate_rotation_matrices ();  
-			sweeps[i][j].tau = 100; 
-			sweeps[i][j].j_one = -0.1;
-			sweeps[i][j].j_two = -0.1;
-			sweeps[i][j].j_three = -1.0;
-			sweeps[i][j].random_initialization ();  
-			sweeps[i][j].mpc_initialisation ();   
-			for (int ii = 0; ii < sweeps[i][j].length_three; ii++)
+			sweeps[i].build_gauge_bath(gauge);
+			sweeps[i].dice_mode = 2;
+			sweeps[i].generate_rotation_matrices ();  
+			sweeps[i].tau = 100; 
+			sweeps[i].j_one = -0.1;
+			sweeps[i].j_two = -0.1;
+			sweeps[i].j_three = -1.0;
+			sweeps[i].random_initialization ();  
+			sweeps[i].mpc_initialisation ();   
+			for (int ii = 0; ii < sweeps[i].length_three; ii++)
 			{
-				sweeps[i][j].e_total += sweeps[i][j].site_energy(ii);
+				sweeps[i].e_total += sweeps[i].site_energy(ii);
 			}
-			sweeps[i][j].beta = 0.45;
-			sweeps[i][j].e_total /= 2;
-			sweeps[i][j].e_ground = sweeps[i][j].length_three*3*(sweeps[i][j].j_one + sweeps[i][j].j_two + sweeps[i][j].j_three); 
+			sweeps[i].beta = 0.45;
+			sweeps[i].e_total /= 2;
+			sweeps[i].e_ground = sweeps[i].length_three*3*(sweeps[i].j_one + sweeps[i].j_two + sweeps[i].j_three); 
 			
-			
-			sweeps[i][j].accuracy = 0.05;  
-			sweeps[i][j].thermalization();
+			sweeps[i].accuracy = 0.05;  
+			sweeps[i].thermalization();
 		}
-	}
-	
-	auto time_end = std::chrono::high_resolution_clock::now();        
-	auto microseconds = std::chrono::duration_cast<std::chrono::microseconds>( time_end - time_start).count();
-	printf("$$ Initialisation took %ld microseconds. \n", microseconds);
-	 
-	for(unsigned int j = 0; j < sweeps.size(); j++)
-	{
-		vector<long int> timer_array;
+		 
 		timer_array.resize(sweeps.size());
 		for(unsigned int i = 0; i < sweeps.size(); i++)
 		{
 			time_start = std::chrono::high_resolution_clock::now();   
 			
-			sweeps[i][j].accuracy = 0.9 - 0.1 * j;  
-			sweeps[i][j].thermalization();
+			sweeps[i].beta = 0.5;
+			sweeps[i].accuracy = 0.91 - j * 0.01;  
+			sweeps[i].thermalization();
 			
 			time_end = std::chrono::high_resolution_clock::now();   
 			microseconds = std::chrono::duration_cast<std::chrono::microseconds>( time_end - time_start).count(); 
 			timer_array[i] = microseconds;
 		}
-		fprintf(stderr,"%d\t%ld\t%ld\t%ld\n", s, timer_array[0], timer_array[1], timer_array[2] );		
-		printf("%.3f\t%ld\t%ld\t%ld\n", sweeps[0][j].accuracy, timer_array[0], timer_array[1], timer_array[2] );
+		fprintf(stderr,"%.2f\t%ld\t%ld\t%ld\n", sweeps[0].accuracy, timer_array[0], timer_array[1], timer_array[2] );		
+		printf("%.2f\t%ld\t%ld\t%ld\n", sweeps[0].accuracy, timer_array[0], timer_array[1], timer_array[2] );
+		
+		sweeps.clear();
+		timer_array.clear ();
 	}
+	
 	//gauge was new'd, so it should be deleted
 	delete gauge; 
 	return 0;
