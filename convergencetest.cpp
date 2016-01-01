@@ -61,7 +61,8 @@ int main(int argc, char* argv[])
 	vector<simulation> sweeps;
 	vector<long int> timer_array;
 	
-	for(int j = 0; j < 90; j++)
+	int jmax = 90;
+	for(int j = 0; j < jmax; j++)
 	{ 
 		for(int i = 0; i < 3; i++)
 		{
@@ -84,29 +85,29 @@ int main(int argc, char* argv[])
 			{
 				sweeps[i].e_total += sweeps[i].site_energy(ii);
 			}
-			sweeps[i].beta = 0.45;
+			sweeps[i].beta = 0.1;
 			sweeps[i].e_total /= 2;
 			sweeps[i].e_ground = sweeps[i].length_three*3*(sweeps[i].j_one + sweeps[i].j_two + sweeps[i].j_three); 
 			
 			sweeps[i].accuracy = 0.05;  
 			sweeps[i].thermalization();
 		}
-		 
+		fprintf(stderr, "\n");
 		timer_array.resize(sweeps.size());
 		for(unsigned int i = 0; i < sweeps.size(); i++)
 		{
 			time_start = std::chrono::high_resolution_clock::now();   
 			
 			sweeps[i].beta = 0.5;
-			sweeps[i].accuracy = 0.91 - j * 0.01;  
+			sweeps[i].accuracy = 0.91 - j * 0.90/jmax;  
 			sweeps[i].thermalization();
 			
 			time_end = std::chrono::high_resolution_clock::now();   
 			microseconds = std::chrono::duration_cast<std::chrono::microseconds>( time_end - time_start).count(); 
 			timer_array[i] = microseconds;
 		}
-		fprintf(stderr,"%.2f\t%ld\t%ld\t%ld\n", sweeps[0].accuracy, timer_array[0], timer_array[1], timer_array[2] );		
-		printf("%.2f\t%ld\t%ld\t%ld\n", sweeps[0].accuracy, timer_array[0], timer_array[1], timer_array[2] );
+		fprintf(stderr,"%.4f\t%ld\t%ld\t%ld\n", sweeps[0].accuracy, timer_array[0], timer_array[1], timer_array[2] );		
+		printf("%.5f\t%ld\t%ld\t%ld\n", sweeps[0].accuracy, timer_array[0], timer_array[1], timer_array[2] );
 		
 		sweeps.clear();
 		timer_array.clear ();

@@ -205,13 +205,14 @@ void simulation::thermalization()
         double energy_one = 0.0;
         double energy_two = thermalization_times (thermalization_number_outer);
         
+	int i = 0;
         while (energy_ratio < 1-accuracy || energy_ratio > 1+accuracy)
         { 
                 energy_one = thermalization_times( thermalization_number_inner );
-                
+                i += thermalization_number_inner;
                 energy_ratio = energy_one/energy_two; 
                 energy_two = energy_one; 
-        }       
+        }        	
 }
 /*** 
  * After initialising, either uniformly or randomly, you need to cache these matrix products.
