@@ -64,7 +64,7 @@ int main(int argc, char* argv[])
 	
 	for(int i = 0; i < 3; i++)
 	{
-		int lattice_size = 2 * i;
+		int lattice_size = 2 * (i+1);
 		sweeps.emplace_back( simulation( lattice_size ) );
 	}
 	
@@ -94,19 +94,20 @@ int main(int argc, char* argv[])
 	auto microseconds = std::chrono::duration_cast<std::chrono::microseconds>( time_end - time_start).count();
 	printf("$$ Initialisation took %ld microseconds. \n", microseconds);
 	
-	for( int s = 10; s < 2000; s += 10)
+	for( int s = 10; s < 20000; s += 10)
 	{  
 		vector<long int> timer_array;
+		timer_array.resize(sweeps.size());
 		for(unsigned int i = 0; i < sweeps.size(); i++)
 		{
 			time_start = std::chrono::high_resolution_clock::now();   
 			sweeps[i].sample_amount = s;
 			results[i].push_back(sweeps[i].calculate ());  
 			time_end = std::chrono::high_resolution_clock::now();   
-			microseconds = std::chrono::duration_cast<std::chrono::microseconds>( time_end - time_start).count();
-			
-			timer_array.emplace_back( microseconds );
+			microseconds = std::chrono::duration_cast<std::chrono::microseconds>( time_end - time_start).count(); 
+			timer_array[i] = microseconds;
 		}
+		fprintf(stderr,"%d\t%ld\t%ld\t%ld\n", s, timer_array[0], timer_array[1], timer_array[2] );		
 		printf("%d\t%ld\t%ld\t%ld\n", s, timer_array[0], timer_array[1], timer_array[2] );		
 	}  
 	//gauge was new'd, so it should be deleted
