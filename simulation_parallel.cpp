@@ -73,7 +73,7 @@ int main(int argc, char* argv[])
 	}
 	else if(arg_size == "tiny")
 	{
-		samples = 25;
+		samples = 2500;
 		printf("$$ Will simulate test (4) lattice for point group %s. \n", arg_symmetry.c_str());
 	}
 	else
@@ -156,7 +156,7 @@ int main(int argc, char* argv[])
 	
 	if( imax > omp_get_max_threads() )
 	{
-		throw logic_error("Error: iMax > nproc.");
+		fprintf(stderr, "Error: iMax > nproc.  \n");
 	}
 	
 	
@@ -206,10 +206,6 @@ int main(int argc, char* argv[])
                 sweeps[i].e_ground = sweeps[i].length_three*3*(sweeps[i].j_one + sweeps[i].j_two + sweeps[i].j_three); 
 		
                 sweeps[i].accuracy = 0.05;
-		if(arg_size == "test")
-		{
-			sweeps[i].accuracy = 0.5;
-		}
                 
 		beta_max = -1*(-8.5)/(2.00)*sweeps[i].j_one + 10.0;  
 		if(beta_max > 11.0 || beta_max < 0)
@@ -224,9 +220,16 @@ int main(int argc, char* argv[])
 			sweeps[i].thermalization (); 
 		
 			results[i].push_back(sweeps[i].calculate ());  
+			if( i == 0)
+			{
+
+
+				auto time_end = std::chrono::high_resolution_clock::now();        
+				auto seconds = std::chrono::duration_cast<std::chrono::seconds>( time_end - time_start).count();	
+				fprintf(stderr, "time=%ld seconds, beta=%.3f .\n", seconds, sweeps[i].beta);			
+			}
 		}    
-        }
-        
+        } 
         for(unsigned int i = 0; i < sweeps.size(); i++)
         { 
                 for(unsigned int jj = 0; jj < results[i].size(); jj++)
