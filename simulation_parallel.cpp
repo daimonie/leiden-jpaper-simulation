@@ -207,7 +207,7 @@ int main(int argc, char* argv[])
 		beta_max = 8.5/(2.00)*sweep.j_one + 10.0;  
 		if(beta_max > 11.0 || beta_max < 0)
 		{
-			fprintf(stderr, "Warning: beta_max=%.3f out of bounds.\n", beta_max);
+			fprintf(stderr, "Warning: beta_max=%.3f out of bounds for J = %.3f.\n", beta_max, sweep.j_one);
 		} 
 		// cool it down (Tinf -> T finite)
 		sweep.beta = 0.0;
