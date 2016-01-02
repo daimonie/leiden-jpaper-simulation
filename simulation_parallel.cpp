@@ -204,7 +204,7 @@ int main(int argc, char* argv[])
                 sweep.e_ground = sweep.length_three*3*(sweep.j_one + sweep.j_two + sweep.j_three); 
 		
                 
-		beta_max = -1*(-8.5)/(2.00)*sweep.j_one + 10.0;  
+		beta_max = 8.5/(2.00)*sweep.j_one + 10.0;  
 		if(beta_max > 11.0 || beta_max < 0)
 		{
 			fprintf(stderr, "Warning: beta_max=%.3f out of bounds.\n", beta_max);
