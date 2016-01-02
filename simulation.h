@@ -58,6 +58,7 @@ class simulation
                 dsfmt_t dsfmt; 
                 std::mt19937_64 std_engine;
                 boost::random::mt19937 boost_rng_mt; 
+                boost::random::mt11213b boost_rng_mt_fast; 
                 boost::random::lagged_fibonacci44497 boost_rng_fib; 
                 boost::random::uniform_01<> boost_mt;  
                 std::uniform_real_distribution<double> std_random_mt;

@@ -59,22 +59,22 @@ int main(int argc, char* argv[])
 	if(arg_size == "small")
 	{ 
 		samples = 2000;
-		fprintf(stderr, "$$ Will simulate small (6) lattice for point group %s. \n", arg_symmetry.c_str()); 
+		fprintf(stderr, "$$ Will simulate small (6) lattice for point group %s, samples %d. \n", arg_symmetry.c_str(), samples); 
 	}
 	else if(arg_size == "large")
 	{
 		samples = 1000;
-		fprintf(stderr, "$$ Will simulate large (10) lattice for point group %s. \n", arg_symmetry.c_str());
+		fprintf(stderr, "$$ Will simulate large (10) lattice for point group %s, samples %d. \n", arg_symmetry.c_str(), samples);
 	}
 	else if(arg_size == "medium")
 	{
 		samples = 1500;
-		fprintf(stderr, "$$ Will simulate large (8) lattice for point group %s. \n", arg_symmetry.c_str());
+		fprintf(stderr, "$$ Will simulate large (8) lattice for point group %s, samples %d. \n", arg_symmetry.c_str(), samples);
 	}
 	else if(arg_size == "tiny")
 	{
 		samples = 25;
-		fprintf(stderr, "$$ Will simulate test (4) lattice for point group %s. \n", arg_symmetry.c_str());
+		fprintf(stderr, "$$ Will simulate test (4) lattice for point group %s, samples %d. \n", arg_symmetry.c_str(), samples);
 	}
 	else
 	{
@@ -180,7 +180,7 @@ int main(int argc, char* argv[])
 		 *  two samples neighboring in time correlated by a factor \sim e^{-2} \sim 0.1.
 		 ***/
 		sweep.tau = 100;
-		sweep.dice_mode = 2;
+		sweep.dice_mode = 4;
 		sweep.generate_rotation_matrices ();
                 sweep.accuracy = 0.05;
 		

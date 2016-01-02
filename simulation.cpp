@@ -755,6 +755,9 @@ double simulation::dice()
                 case 3:
                         return boost_mt(boost_rng_mt);
                 break;
+		case 4:
+			return boost_mt(boost_rng_mt_fast);
+		break;
                 default:
                         printf("Dice mode is not set... \n");
                         return 0.5;
