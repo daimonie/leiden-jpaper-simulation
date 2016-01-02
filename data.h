@@ -3,6 +3,7 @@
 //just a data holder
 
 #include <string>
+#include <stdio.h>
 using namespace std;
 class data
 {
@@ -23,5 +24,6 @@ class data
                 int sample_amount      = 0;
                 string point_group     = "default";	
                 void report ();
+		void shout (FILE *);
 };
 #endif

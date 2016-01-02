@@ -2,7 +2,7 @@
 #include <string>
 #include <ctime>
 #include "omp.h"
-
+#include <stdio.h>
 #include "data.h"
 #include "simulation.h"   
 #include "symmetryctwo.h"
@@ -133,8 +133,7 @@ int main(int argc, char* argv[])
 	 * We will thus require 99+20 values.	  
 	 ***/
 	int imax = 48;
-
-	vector<simulation> sweeps;
+ 
 	vector<vector<data>> results;
 	 
 	results.resize(imax);
@@ -157,18 +156,20 @@ int main(int argc, char* argv[])
 	if( imax > omp_get_max_threads() )
 	{
 		fprintf(stderr, "Error: iMax > nproc.  \n");
-	}
+	} 
+	//opens file, discards contents if exists
+	//this is apparently C code, not C++, but it works and is simple
+	FILE * backup_file_handler = fopen( ".simulation_backup", "w+");
 	
-	
-	for(int i = 0; i < imax; i++)
-	{
-		sweeps.emplace_back( simulation( lattice_size ) );
-	}
-	//Let's do this before OMP.
-	for(unsigned int i = 0; i < sweeps.size(); i++)
-	{
-                sweeps[i].dice_mode = 2;
-                sweeps[i].generate_rotation_matrices (); 
+        omp_set_num_threads(omp_get_max_threads());
+        #pragma omp parallel for
+        for(int i = 0; i < imax; i++) 
+        { 	
+		double beta_max = 0.0;
+		simulation sweep( lattice_size );
+		
+		sweep.build_gauge_bath( gauge );
+		
 		/***
 		 *  Explanation by Ke:
 		 * 
@@ -177,52 +178,50 @@ int main(int argc, char* argv[])
 		 *  autocorrelation time is about 40 Monte Carlo steps. So tau = 100 makes
 		 *  two samples neighboring in time correlated by a factor \sim e^{-2} \sim 0.1.
 		 ***/
-		sweeps[i].tau = 100; 
-		sweeps[i].build_gauge_bath(gauge);
-	}
-	double beta_max = 0.0;
-	
-        omp_set_num_threads(omp_get_max_threads());
-        #pragma omp parallel for private(beta_max)
-        for(unsigned int i = 0; i < sweeps.size(); i++) 
-        { 	 
-                sweeps[i].j_one = 1 * (i+1) * 0.05;
-		sweeps[i].j_one *= -1; 
-                sweeps[i].j_two = sweeps[i].j_one;
-                sweeps[i].j_three = -1.0;
+		sweep.tau = 100;
+		sweep.dice_mode = 2;
+		sweep.generate_rotation_matrices ();
+                sweep.accuracy = 0.05;
+		
+                sweep.j_one = 1 * (i+1) * 0.05;
+		sweep.j_one *= -1; 
+                sweep.j_two = sweep.j_one;
+                sweep.j_three = -1.0;
 		
  
-		sweeps[i].sample_amount = samples; 
+		sweep.sample_amount = samples; 
 			
                 //start at beta=0 (T=inf), then go to Bmax, then go down again. Hence, random.
-		sweeps[i].random_initialization ();
-                sweeps[i].mpc_initialisation ();
+		sweep.random_initialization ();
+                sweep.mpc_initialisation ();
 		
-                for (int ii = 0; ii < sweeps[i].length_three; ii++)
+                for (int ii = 0; ii < sweep.length_three; ii++)
                 {
-                        sweeps[i].e_total += sweeps[i].site_energy(ii);
+                        sweep.e_total += sweep.site_energy(ii);
                 }
-                sweeps[i].e_total /= 2;
-                sweeps[i].e_ground = sweeps[i].length_three*3*(sweeps[i].j_one + sweeps[i].j_two + sweeps[i].j_three); 
+                sweep.e_total /= 2;
+                sweep.e_ground = sweep.length_three*3*(sweep.j_one + sweep.j_two + sweep.j_three); 
 		
-                sweeps[i].accuracy = 0.05;
                 
-		beta_max = -1*(-8.5)/(2.00)*sweeps[i].j_one + 10.0;  
+		beta_max = -1*(-8.5)/(2.00)*sweep.j_one + 10.0;  
 		if(beta_max > 11.0 || beta_max < 0)
 		{
-			printf("$$ Warning: beta_max=%.3f out of bounds.\n", beta_max);
+			fprintf(stderr, "Warning: beta_max=%.3f out of bounds.\n", beta_max);
 		} 
 		// cool it down (Tinf -> T finite)
-		sweeps[i].beta = 0.0;
-		while( sweeps[i].beta <= beta_max )
+		sweep.beta = 0.0;
+		while( sweep.beta <= beta_max )
 		{ 
-			sweeps[i].beta += 0.05;
-			sweeps[i].thermalization (); 
+			sweep.beta += 0.05;
+			sweep.thermalization (); 
 		
-			results[i].push_back(sweeps[i].calculate ());   
+			results[i].push_back(sweep.calculate ());   
+			
+			results[i][results[i].size()-1].shout(stderr);
+			results[i][results[i].size()-1].shout(backup_file_handler);
 		}    
         } 
-        for(unsigned int i = 0; i < sweeps.size(); i++)
+        for(unsigned int i = 0; i < results.size(); i++)
         { 
                 for(unsigned int jj = 0; jj < results[i].size(); jj++)
                 {
