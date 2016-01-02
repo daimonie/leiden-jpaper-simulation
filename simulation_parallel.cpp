@@ -73,7 +73,7 @@ int main(int argc, char* argv[])
 	}
 	else if(arg_size == "tiny")
 	{
-		samples = 2500;
+		samples = 25;
 		printf("$$ Will simulate test (4) lattice for point group %s. \n", arg_symmetry.c_str());
 	}
 	else
@@ -146,7 +146,7 @@ int main(int argc, char* argv[])
 	}   
 	else if(arg_size == "tiny")
 	{ 
-		lattice_size = 4; 
+		lattice_size = 10; 
 		imax = 4; //local testing
 	}    
 	else if(arg_size == "medium")
@@ -219,15 +219,7 @@ int main(int argc, char* argv[])
 			sweeps[i].beta += 0.05;
 			sweeps[i].thermalization (); 
 		
-			results[i].push_back(sweeps[i].calculate ());  
-			if( i == 0)
-			{
-
-
-				auto time_end = std::chrono::high_resolution_clock::now();        
-				auto seconds = std::chrono::duration_cast<std::chrono::seconds>( time_end - time_start).count();	
-				fprintf(stderr, "time=%ld seconds, beta=%.3f .\n", seconds, sweeps[i].beta);			
-			}
+			results[i].push_back(sweeps[i].calculate ());   
 		}    
         } 
         for(unsigned int i = 0; i < sweeps.size(); i++)
