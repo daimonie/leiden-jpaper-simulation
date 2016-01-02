@@ -48,7 +48,7 @@ int main(int argc, char* argv[])
 	//Return 0 terminates program.  
 	if(argc != 3)
 	{
-		printf("$$ Three arguments are required, yet %d were given. \n", argc);
+		fprintf(stderr, "$$ Three arguments are required, yet %d were given. \n", argc);
 		return 0;
 	} 
 	
@@ -59,33 +59,33 @@ int main(int argc, char* argv[])
 	if(arg_size == "small")
 	{ 
 		samples = 2000;
-		printf("$$ Will simulate small (6) lattice for point group %s. \n", arg_symmetry.c_str()); 
+		fprintf(stderr, "$$ Will simulate small (6) lattice for point group %s. \n", arg_symmetry.c_str()); 
 	}
 	else if(arg_size == "large")
 	{
 		samples = 1000;
-		printf("$$ Will simulate large (10) lattice for point group %s. \n", arg_symmetry.c_str());
+		fprintf(stderr, "$$ Will simulate large (10) lattice for point group %s. \n", arg_symmetry.c_str());
 	}
 	else if(arg_size == "medium")
 	{
 		samples = 1500;
-		printf("$$ Will simulate large (8) lattice for point group %s. \n", arg_symmetry.c_str());
+		fprintf(stderr, "$$ Will simulate large (8) lattice for point group %s. \n", arg_symmetry.c_str());
 	}
 	else if(arg_size == "tiny")
 	{
 		samples = 25;
-		printf("$$ Will simulate test (4) lattice for point group %s. \n", arg_symmetry.c_str());
+		fprintf(stderr, "$$ Will simulate test (4) lattice for point group %s. \n", arg_symmetry.c_str());
 	}
 	else
 	{
-		printf("$$ Unknown lattice size. \n");
+		fprintf(stderr, "$$ Unknown lattice size. \n");
 		return 0;
 	}
 	
 	if(arg_symmetry != "c2" && arg_symmetry != "c2h" && arg_symmetry != "c2v" && arg_symmetry != "d2d"
 		&& arg_symmetry != "d2h" && arg_symmetry != "s2" && arg_symmetry != "s4")
 	{
-		printf("$$ Unknown point group. \n");
+		fprintf(stderr, "$$ Unknown point group. \n");
 		return 0;
 	} 
 	//if the code is not terminated before this point, the arguments are well formed and we can just start calculating.
@@ -123,10 +123,10 @@ int main(int argc, char* argv[])
 	}
 	else
 	{
-		printf("$$ Something went wrong. Terminating. \n");
+		fprintf(stderr, "$$ Something went wrong. Terminating. \n");
 		return 0;
 	}
-	printf("$$ Setting gauge group to %s. \n", gauge->label().c_str());
+	fprintf(stderr, "$$ Setting gauge group to %s. \n", gauge->label().c_str());
 	
 	/***
 	 * We will simulate 0.1 < J < 1 at dJ = 0.01, and 1 < J < 2 at Dj=0.05.
@@ -160,6 +160,7 @@ int main(int argc, char* argv[])
 	//opens file, discards contents if exists
 	//this is apparently C code, not C++, but it works and is simple
 	FILE * backup_file_handler = fopen( ".simulation_backup", "w+");
+	setbuf(backup_file_handler, NULL);
 	
         omp_set_num_threads(omp_get_max_threads());
         #pragma omp parallel for
@@ -212,12 +213,11 @@ int main(int argc, char* argv[])
 		sweep.beta = 0.0;
 		while( sweep.beta <= beta_max )
 		{ 
-			sweep.beta += 0.05;
+			sweep.beta += beta_max / 115.0;
 			sweep.thermalization (); 
 		
 			results[i].push_back(sweep.calculate ());   
-			
-			results[i][results[i].size()-1].shout(stderr);
+			 
 			results[i][results[i].size()-1].shout(backup_file_handler);
 		}    
         } 
@@ -232,7 +232,7 @@ int main(int argc, char* argv[])
 	//report time, end program 
         auto time_end = std::chrono::high_resolution_clock::now();        
         auto microseconds = std::chrono::duration_cast<std::chrono::microseconds>( time_end - time_start).count();
-        printf("$$ Elapsed time %ld microseconds. \n", microseconds); 
+        fprintf(stderr, "$$ Elapsed time %ld microseconds. \n", microseconds); 
 	//gauge was new'd, so it should be deleted
 	delete gauge; 
 	return 0;
