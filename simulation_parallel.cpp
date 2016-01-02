@@ -184,7 +184,7 @@ int main(int argc, char* argv[])
 		sweep.generate_rotation_matrices ();
                 sweep.accuracy = 0.05;
 		
-                sweep.j_one = 1 * (i+1) * 0.05;
+                sweep.j_one = 1 * (i+1) * 2.00 / imax;
 		sweep.j_one *= -1; 
                 sweep.j_two = sweep.j_one;
                 sweep.j_three = -1.0;
