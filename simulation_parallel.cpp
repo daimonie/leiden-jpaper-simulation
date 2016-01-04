@@ -58,17 +58,17 @@ int main(int argc, char* argv[])
 	int samples = 10;
 	if(arg_size == "small")
 	{ 
-		samples = 2000;
+		samples = 5000;
 		fprintf(stderr, "$$ Will simulate small (6) lattice for point group %s, samples %d. \n", arg_symmetry.c_str(), samples); 
 	}
 	else if(arg_size == "large")
 	{
-		samples = 1000;
+		samples = 5000;
 		fprintf(stderr, "$$ Will simulate large (10) lattice for point group %s, samples %d. \n", arg_symmetry.c_str(), samples);
 	}
 	else if(arg_size == "medium")
 	{
-		samples = 1500;
+		samples = 5000;
 		fprintf(stderr, "$$ Will simulate large (8) lattice for point group %s, samples %d. \n", arg_symmetry.c_str(), samples);
 	}
 	else if(arg_size == "tiny")
@@ -213,7 +213,7 @@ int main(int argc, char* argv[])
 		sweep.beta = 0.0;
 		while( sweep.beta <= beta_max )
 		{ 
-			sweep.beta += beta_max / 115.0;
+			sweep.beta += beta_max / 300.0;
 			sweep.thermalization (); 
 		
 			results[i].push_back(sweep.calculate ());   
@@ -233,6 +233,7 @@ int main(int argc, char* argv[])
         auto time_end = std::chrono::high_resolution_clock::now();        
         auto microseconds = std::chrono::duration_cast<std::chrono::microseconds>( time_end - time_start).count();
         fprintf(stderr, "$$ Elapsed time %ld microseconds. \n", microseconds); 
+        fprintf(backup_file_handler, "$$ Elapsed time %ld microseconds. \n", microseconds); 
 	//gauge was new'd, so it should be deleted
 	delete gauge; 
 	return 0;
