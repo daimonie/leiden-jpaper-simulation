@@ -1,0 +1,7 @@
+#!/bin/bash
+for file in *.txt; do
+        echo $filepython
+        
+        surf_plot.py -f maris050_data_c2_small.txt -m chi_two -s ${file//.txt/_}chi_two.png
+
+done  
