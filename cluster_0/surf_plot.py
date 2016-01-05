@@ -49,42 +49,42 @@ title = "Data file: %s" % filename
 
 if (mode == "specific_heat"):
     xlabel = "$\beta$"
-    ylabel = "$\frac{J_1}{J_3}$" 
+    ylabel = "$J_1\:J_3^{-1}$" 
     title = "Specific heat [%s]" % filename
     xdata = data[:,0]
     ydata = data[:,3]
     zdata = data[:,2]
 elif (mode == "energy"):
     xlabel = "$\beta$"
-    ylabel = "$\frac{J_1}{J_3}$" 
+    ylabel = "$J_1\:J_3^{-1}$" 
     title = "Energy [%s]" % filename
     xdata = data[:,0]
     ydata = data[:,3]
     zdata = data[:,1]
 elif (mode == "order_one"):
     xlabel = "$\beta$"
-    ylabel = "$\frac{J_1}{J_3}$" 
+    ylabel = "$J_1\:J_3^{-1}$" 
     title = "Order one [%s]" % filename
     xdata = data[:,0]
     ydata = data[:,3]
     zdata = data[:,6]
 elif (mode == "order_two"):
     xlabel = "$\beta$"
-    ylabel = "$\frac{J_1}{J_3}$" 
+    ylabel = "$J_1\:J_3^{-1}$" 
     title = "Order two [%s]" % filename
     xdata = data[:,0]
     ydata = data[:,3]
     zdata = data[:,7]
 elif (mode == "chi_one"):
     xlabel = "$\beta$"
-    ylabel = "$\frac{J_1}{J_3}$" 
+    ylabel = "$J_1\:J_3^{-1}$" 
     title = "Chi one [%s]" % filename
     xdata = data[:,0]
     ydata = data[:,3]
     zdata = data[:,8]
 elif (mode == "chi_two"):
     xlabel = r"$\beta$"
-    ylabel = r"$\frac{J_1}{J_3}$" 
+    ylabel = "$J_1\:J_3^{-1}$" 
     title = "Chi two [%s]" % filename
     xdata = data[:,0]
     ydata = data[:,3]
@@ -103,11 +103,11 @@ z = griddata(xdata, ydata, zdata, lin_x, lin_y, interp='linear')
 
 
 np.seterr('ignore')
-fig = plt.figure()
+fig = plt.figure(figsize=(20, 10))
 ax = fig.gca(projection='3d') 
 
-print "Setting (min,max) = (%.3f, %.3f) for colour scheme." % (z.min(), z.max())
-surf = ax.plot_surface(x, y, z, rstride=1, cstride=1, cmap=cm.winter, linewidth=1, vmin=z.min(), vmax=z.max()) 
+print "Setting (min,max) = (%.3f, %.3f) for colour scheme." % (z.min(), z.max()*.8)
+surf = ax.plot_surface(x, y, z, rstride=1, cstride=1, cmap=cm.winter, linewidth=1, vmin=z.min(), vmax=z.max()*.8) 
 
 
 plt.rc('text', usetex=True)
@@ -116,8 +116,8 @@ plt.rc('font', family='serif')
 ax.view_init(60, 160)  
 
 fig.colorbar(surf)
-plt.xlabel( xlabel ,fontsize=30, labelpad=20);
-plt.ylabel( ylabel ,fontsize=30, labelpad=20); 
+plt.xlabel( xlabel ,fontsize=30);
+plt.ylabel( ylabel ,fontsize=30); 
 plt.title( title ,fontsize=20);
 
 if(save == "plot"):
