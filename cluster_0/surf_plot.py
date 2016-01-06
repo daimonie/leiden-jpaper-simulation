@@ -93,21 +93,23 @@ elif (mode == "chi_two"):
 else:
     raise Exception("Incorrect mode.");
 
-
+xlabel = "beta"
+ylabel = "gamma"
 lin_x = np.linspace(min(xdata), max(xdata))
 lin_y = np.linspace(min(ydata), max(ydata))
 
 x, y = np.meshgrid(lin_x, lin_y)
 z = griddata(xdata, ydata, zdata, lin_x, lin_y, interp='linear')
 
+#z = np.clip(z, 0, 3)
 
 
 np.seterr('ignore')
 fig = plt.figure()
 ax = fig.gca(projection='3d') 
 
-print "Setting (min,max) = (%.3f, %.3f) for colour scheme." % (z.min(), z.max())
-surf = ax.plot_surface(x, y, z, rstride=1, cstride=1, cmap=cm.winter, linewidth=1, vmin=z.min(), vmax=z.max()) 
+print "Setting (min,max) = (%.3f, %.3f) for colour scheme." % (z.min(), z.max()*0.80)
+surf = ax.plot_surface(x, y, z, rstride=1, cstride=1, cmap=cm.afmhot, linewidth=1, vmin=z.min(), vmax=z.max()*0.80) 
 
 
 plt.rc('text', usetex=True)
