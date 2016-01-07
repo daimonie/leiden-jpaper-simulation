@@ -23,6 +23,7 @@
 #include <boost/random/lagged_fibonacci.hpp>
 #include <boost/random/uniform_01.hpp>
 
+#include "order.h"
 using namespace std;
 /***
  * 
@@ -605,64 +606,16 @@ void simulation::flip_u_z(int i, double jactus_one, double jactus_two)
         }
         
 }
-/*** 
- * Calculates order parameter
- ***/
-double simulation::orderparameter_n()
-{
-        double one_one = 0, two_two = 0, three_three = 0, one_two = 0, two_three = 0, one_three = 0; 
-        for(int i = 0; i < length_three; i++) 
-        {
-                one_one         += 1.5*field_r[i][6] * field_r[i][6] - 0.5; 
-                two_two         += 1.5*field_r[i][7] * field_r[i][7] - 0.5; 
-                three_three     += 1.5*field_r[i][8] * field_r[i][8] - 0.5; 
-                one_two         += 1.5*field_r[i][6] * field_r[i][7]; 
-                one_three       += 1.5*field_r[i][6] * field_r[i][8]; 
-                two_three       += 1.5*field_r[i][7] * field_r[i][8];
-                
-        }                               
-                                                
-        double q = (one_one*one_one + two_two*two_two + three_three *three_three + 2*one_two*one_two + 2*one_three*one_three + 2*two_three*two_three) / length_three / length_three;        
-        
-        return q;
-}       
-/***
- * New D_{2d} specific order parameter
- ***/
-double simulation::orderparameter_d2d()
-{ 
-//         double Q[3][3][3] = {{{0}}};
-        int a, b, c, i; 
-        
-        double q_sum = 0.0;
-        double order = 0;
-        for(a = 0; a < 3; a++)
-        {       for(b = 0; b < 3; b++)
-                {       for(c = 0; c < 3; c++)
-                        {       
-                                q_sum = 0.0;
-                                for(i = 0; i < length_three; i++)
-                                {
-                                        q_sum += field_s[i] * (field_r[i][a] * field_r[i][3+b] + field_r[i][b] * field_r[i][3+a]) * field_r[i][6+c];
-                                }  
-                                order += q_sum * q_sum;
-                        }
-                }
-        } 
-        return order / length_three / length_three;                    
-}
-/*** 
- * Calculates and reports the result for a specific beta
- * 
- ***/   
 data simulation::calculate()
 {
-        double total_energy =0, total_energy_squared = 0, heat_capacity; 
-        double order, q = 0, q_squared = 0, chi_order;
-        double order_two, p = 0, p_squared = 0, chi_order_two;
+        double total_energy =0, total_energy_squared = 0, heat_capacity;  
         double ising_sum, ising = 0, ising_squared = 0, chi_energy;
-        int i, j; 
+        int i = 0, j = 0; 
         
+	vector<double> orders;
+	vector<double> orders_squared;
+	double current_order = 0.0;
+	
         for (j = 0; j < sample_amount; j++)
         { 
                 for (i = 0; i < length_three*4*tau ; i++)
@@ -672,14 +625,13 @@ data simulation::calculate()
                 total_energy += e_total;   
                 total_energy_squared += e_total * e_total;        
 
-                order = orderparameter_n(); 
-                q_squared += order;
-                q += sqrt(order);                                   
-
-                order_two = orderparameter_d2d();
-                p_squared += order_two;
-                p += sqrt(order_two);
-                
+		for(int k = 0; k < (int)order_parameters.size(); k++)
+		{ 
+			current_order = order_parameters[k]->calculate(this);
+			orders_squared.emplace_back(current_order);
+			orders.emplace_back( sqrt(current_order));
+		} 
+		
                 ising_sum = 0;
                 for(int k = 0; k < length_three; k++) 
                 {
@@ -694,36 +646,32 @@ data simulation::calculate()
         total_energy_squared /= sample_amount;
 
         heat_capacity = (total_energy_squared - total_energy * total_energy) * beta * beta / length_three;  
-        total_energy /= e_ground;      
-
-        q /=sample_amount;
-        q_squared /= sample_amount;
-        
-        p /=sample_amount;
-        p_squared /= sample_amount;
-        
-        
-        chi_order = (q_squared - q*q)*beta*length_three; 
-        chi_order_two = (p_squared - p*p)*beta*length_three;       
-        
-        p /= sqrt(2);
+        total_energy /= e_ground;          
 
         ising /= sample_amount;
         ising_squared /= sample_amount;
         chi_energy = (ising_squared -ising*ising)*beta*length_three;
  
         data results;
-       
+	
+	for(int k = 0; k < (int)order_parameters.size(); k++)
+	{
+		
+		double q = orders[k] / sample_amount;
+		double q_squared = orders_squared[k] / sample_amount; 
+		
+		
+		double chi_order = (q_squared - q*q)*beta*length_three;  
+		
+		results.chi_order.emplace_back(chi_order);
+		results.order.emplace_back(q); 
+	}
         results.beta            = beta;
         results.total_energy    = total_energy;
         results.heat_capacity   = heat_capacity;
         results.energy          = ising;
         results.chi_energy      = chi_energy;
-        results.chi_order_one   = chi_order;
-        results.order_one       = q;
-        
-        results.chi_order_two   = chi_order_two;
-        results.order_two       = p;
+	
         
         results.j_one           = j_one;
         results.j_two           = j_two;
@@ -764,4 +712,19 @@ double simulation::dice()
                 break;
                         
         }
+}
+/***
+ * 	Different gauges have different symmetries.
+ *	The order param of such a symmetry is encoded in an order object.
+ ***/
+void simulation::set_order(int number, order * order_object)
+{
+	if( (int)order_parameters.size() < number )
+	{
+		order_parameters[number] = order_object;
+	}
+	else
+	{
+		order_parameters.emplace_back(order_object);
+	}
 }

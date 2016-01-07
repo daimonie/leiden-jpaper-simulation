@@ -12,6 +12,10 @@
 #include "symmetrydtwoh.h"
 #include "symmetrystwo.h"
 #include "symmetrysfour.h"
+#include "order.h"
+#include "order_dummy.h"
+#include "order_n.h"
+#include "order_d2d.h"
 //includes from previous implementation
 #include <iostream>
 #include <fstream> 
@@ -55,6 +59,7 @@ int main(int argc, char* argv[])
 	string arg_symmetry	= string(argv[1]);
 	string arg_size		= string(argv[2]);
 	
+	double beta_number = 300.0; 
 	int samples = 10;
 	if(arg_size == "small")
 	{ 
@@ -74,6 +79,7 @@ int main(int argc, char* argv[])
 	else if(arg_size == "tiny")
 	{
 		samples = 25;
+		beta_number = 10.0;
 		fprintf(stderr, "$$ Will simulate test (4) lattice for point group %s, samples %d. \n", arg_symmetry.c_str(), samples);
 	}
 	else
@@ -156,6 +162,7 @@ int main(int argc, char* argv[])
 	if( imax > omp_get_max_threads() )
 	{
 		fprintf(stderr, "Error: iMax > nproc.  \n");
+		imax = omp_get_max_threads(); 
 	} 
 	//opens file, discards contents if exists
 	//this is apparently C code, not C++, but it works and is simple
@@ -169,15 +176,11 @@ int main(int argc, char* argv[])
 		double beta_max = 0.0;
 		simulation sweep( lattice_size );
 		
-                orderobject * order_one = new order_d2d()
-                orderobject * order_two = new order_d4h() 
-                orderobject * order_three = new order_d4h_two() 
-                orderobject * order_four = new order_dummy() 
+                order * order_one = new order_n();
+                order * order_two = new order_d2d();  
                 
 		sweep.set_order(0, order_one);
-		sweep.set_order(1, order_two);
-		sweep.set_order(2, order_three);
-		sweep.set_order(3, order_four);
+		sweep.set_order(1, order_two); 
                 
 		sweep.build_gauge_bath( gauge );
 		
@@ -223,7 +226,7 @@ int main(int argc, char* argv[])
 		sweep.beta = 0.0;
 		while( sweep.beta <= beta_max )
 		{ 
-			sweep.beta += beta_max / 300.0;
+			sweep.beta += beta_max / beta_number;
 			sweep.thermalization (); 
 		
 			results[i].push_back(sweep.calculate ());   

@@ -8,9 +8,10 @@
 #include <boost/random/lagged_fibonacci.hpp>
 #include <boost/random/uniform_01.hpp>
 #include <string>
-
+#include <vector>
 #include "data.h"
 #include "symmetry.h"
+#include "order.h"
 using namespace std;
 class simulation
 {
@@ -131,7 +132,8 @@ class simulation
                 double mpc_urz[20*20*20][9]             = {{0}};
                 double field_s[20*20*20]                = {0};
                 double rmc_matrices[20*20*20][9]        = {{0}};
-                
+                //Order objects
+		vector<order*> order_parameters;
                 //Function time. Their explanations are in the implementation file (simulation.cpp)
                 simulation(int);
                 void build_gauge_bath(symmetry*);
@@ -147,10 +149,9 @@ class simulation
                 void flip_r(int, double, double, double);
                 void flip_u_x(int, double, double);
                 void flip_u_y(int, double, double);
-                void flip_u_z(int, double, double);
-                double orderparameter_n(); 
-                double orderparameter_d2d();
+                void flip_u_z(int, double, double); 
                 data calculate(); 
                 double dice ();
+		void set_order(int, order*);
 };
 #endif
