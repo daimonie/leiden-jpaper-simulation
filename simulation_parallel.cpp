@@ -169,6 +169,16 @@ int main(int argc, char* argv[])
 		double beta_max = 0.0;
 		simulation sweep( lattice_size );
 		
+                orderobject * order_one = new order_d2d()
+                orderobject * order_two = new order_d4h() 
+                orderobject * order_three = new order_d4h_two() 
+                orderobject * order_four = new order_dummy() 
+                
+		sweep.set_order(0, order_one);
+		sweep.set_order(1, order_two);
+		sweep.set_order(2, order_three);
+		sweep.set_order(3, order_four);
+                
 		sweep.build_gauge_bath( gauge );
 		
 		/***
