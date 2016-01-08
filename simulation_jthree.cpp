@@ -14,7 +14,8 @@
 #include "symmetrysfour.h"
 #include "order.h"
 #include "order_dummy.h"
-#include "order_n.h"
+#include "order_d4h.h"
+#include "order_d4h_2.h"
 #include "order_d2d.h"
 //includes from previous implementation
 #include <iostream>
@@ -176,11 +177,13 @@ int main(int argc, char* argv[])
 		double beta_max = 0.0;
 		simulation sweep( lattice_size );
 		
-                order * order_one = new order_n();
-                order * order_two = new order_d2d();  
+                order * order_one = new order_d2d();
+                order * order_two = new order_d4h();  
+                order * order_three = new order_d4h_2();  
                 
 		sweep.set_order(0, order_one);
 		sweep.set_order(1, order_two); 
+		sweep.set_order(2, order_three); 
                 
 		sweep.build_gauge_bath( gauge );
 		
