@@ -1,5 +1,5 @@
-#ifndef ORDER_DUMMY_H
-#define ORDER_DUMMY_H
+#ifndef ORDER_D4H_H
+#define ORDER_D4H_H
 
 #include "order.h"   
 class order_d4h : public order

@@ -37,7 +37,7 @@ double order_d4h_2::calculate(simulation * sweep)
 
 	return Q2;	 
 }
-double order_d4h::dfc(int a, int b)
+double order_d4h_2::dfc(int a, int b)
 {
 	if (a == b)
 	{

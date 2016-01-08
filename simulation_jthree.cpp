@@ -12,8 +12,7 @@
 #include "symmetrydtwoh.h"
 #include "symmetrystwo.h"
 #include "symmetrysfour.h"
-#include "order.h"
-#include "order_dummy.h"
+#include "order.h" 
 #include "order_d4h.h"
 #include "order_d4h_2.h"
 #include "order_d2d.h"
@@ -235,6 +234,10 @@ int main(int argc, char* argv[])
 			 
 			results[i][results[i].size()-1].shout(backup_file_handler);
 		}    
+		
+		delete order_one;
+		delete order_two;
+		delete order_three;
         } 
         for(unsigned int i = 0; i < results.size(); i++)
         { 
