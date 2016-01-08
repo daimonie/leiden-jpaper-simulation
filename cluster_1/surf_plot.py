@@ -44,42 +44,33 @@ file_handler = open( filename, "r" );
 data = np.genfromtxt(file_handler, dtype=None, usecols=range(0,10)); #excluding the symtype col
 
 filename = filename.replace("_", " - ")
-xlabel = "x"
-ylabel = "y" 
+    
+xlabel = "beta"
+ylabel = "gamma"
 
 title = "Data file: %s" % filename
 
-if (mode == "specific_heat"):
-    xlabel = "$\beta$"
-    ylabel = "$J_1\:J_3^{-1}$" 
+if (mode == "specific_heat"): 
     title = "Specific heat [%s]" % filename
     xdata = data[:,0]
     ydata = data[:,3]
     zdata = data[:,2]
-elif (mode == "energy"):
-    xlabel = "$\beta$"
-    ylabel = "$J_1\:J_3^{-1}$" 
+elif (mode == "energy"): 
     title = "Energy [%s]" % filename
     xdata = data[:,0]
     ydata = data[:,3]
     zdata = data[:,1]
-elif (mode == "order_one"):
-    xlabel = "$\beta$"
-    ylabel = "$J_1\:J_3^{-1}$" 
+elif (mode == "order_one"): 
     title = "Order one [%s]" % filename
     xdata = data[:,0]
     ydata = data[:,3]
     zdata = data[:,6]
-elif (mode == "order_two"):
-    xlabel = "$\beta$"
-    ylabel = "$J_1\:J_3^{-1}$" 
+elif (mode == "order_two"): 
     title = "Order two [%s]" % filename
     xdata = data[:,0]
     ydata = data[:,3]
     zdata = data[:,7]
-elif (mode == "chi_one"):
-    xlabel = "$\beta$"
-    ylabel = "$J_1\:J_3^{-1}$" 
+elif (mode == "chi_one"): 
     title = "Chi one [%s]" % filename
     xdata = data[:,0]
     ydata = data[:,3]
@@ -95,8 +86,11 @@ elif (mode == "chi_two"):
 else:
     raise Exception("Incorrect mode.");
 
-xlabel = "beta"
-ylabel = "gamma"
+if (save == "temperature"):
+    xlabel = r"$T$"
+    xdata = np.reciprocal(xdata);
+    
+    
 lin_x = np.linspace(min(xdata), max(xdata))
 lin_y = np.linspace(min(ydata), max(ydata))
 
@@ -117,14 +111,14 @@ surf = ax.plot_surface(x, y, z, rstride=1, cstride=1, cmap=cm.afmhot, linewidth=
 plt.rc('text', usetex=True)
 plt.rc('font', family='serif')
 
-ax.view_init(60, 160)  
+ax.view_init(60, 160)   
 
 fig.colorbar(surf)
 plt.xlabel( xlabel ,fontsize=30);
 plt.ylabel( ylabel ,fontsize=30); 
 plt.title( title ,fontsize=20);
 
-if(save == "plot"):
+if(save == "plot" or save == "temperature"):
     plt.show()
 else: 
     print "Saving to [%s]." % filename
