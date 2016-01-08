@@ -1,0 +1,14 @@
+#!/bin/bash
+for file in *data*.txt; do 
+
+
+        python  -W ignore::FutureWarning surf_plot.py -f $file -m energy -s ${file%%.*}_energy.png
+        python  -W ignore::FutureWarning surf_plot.py -f $file -m specific_heat -s ${file%%.*}_specific_heat.png 
+        
+        python  -W ignore::FutureWarning surf_plot.py -f $file -m order_one -s ${file%%.*}_order_one.png
+        python  -W ignore::FutureWarning surf_plot.py -f $file -m order_two -s ${file%%.*}_order_two.png 
+        
+        
+        python  -W ignore::FutureWarning surf_plot.py -f $file -m chi_one -s ${file%%.*}_chi_one.png
+        python  -W ignore::FutureWarning surf_plot.py -f $file -m chi_two -s ${file%%.*}_chi_two.png 
+done  
