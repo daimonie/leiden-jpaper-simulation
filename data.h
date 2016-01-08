@@ -4,6 +4,7 @@
 
 #include <string>
 #include <stdio.h>
+#include <vector>
 using namespace std;
 class data
 {
@@ -13,10 +14,8 @@ class data
                 double heat_capacity   = 0;
                 double energy          = 0;
                 double chi_energy      = 0;
-                double chi_order_one   = 0;
-                double order_one       = 0;
-                double chi_order_two   = 0;
-                double order_two       = 0;
+                vector<double> chi_order;
+                vector<double> order; 
                 double j_one           = 0;
                 double j_two           = 0;
                 double j_three         = 0;  

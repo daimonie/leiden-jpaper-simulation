@@ -27,12 +27,14 @@ parser	= argparse.ArgumentParser(prog="Surface Plot",
 parser.add_argument('-f', '--filename', help='Data file.', action='store', type = str)   
 parser.add_argument('-m', '--mode', help='What do we want to plot.', action='store', type = str)   
 parser.add_argument('-s', '--save', help='Save or show on screen?.', action='store', type = str, default = "plot")   
+parser.add_argument('-c', '--clip', help='clip.', action='store', type = float, default = 40.0)   
 args	= parser.parse_args() 
 
 
 filename    = args.filename
 mode        = args.mode
 save        = args.save
+clip_size   = args.clip
  
 
 print "Plotting from file [%s], mode [%s] " % (filename, mode)
@@ -93,21 +95,23 @@ elif (mode == "chi_two"):
 else:
     raise Exception("Incorrect mode.");
 
-
+xlabel = "beta"
+ylabel = "gamma"
 lin_x = np.linspace(min(xdata), max(xdata))
 lin_y = np.linspace(min(ydata), max(ydata))
 
 x, y = np.meshgrid(lin_x, lin_y)
 z = griddata(xdata, ydata, zdata, lin_x, lin_y, interp='linear')
 
+z = np.clip(z, 0, clip_size)
 
 
 np.seterr('ignore')
 fig = plt.figure(figsize=(20, 10))
 ax = fig.gca(projection='3d') 
-
-print "Setting (min,max) = (%.3f, %.3f) for colour scheme." % (z.min(), z.max()*.8)
-surf = ax.plot_surface(x, y, z, rstride=1, cstride=1, cmap=cm.winter, linewidth=1, vmin=z.min(), vmax=z.max()*.8) 
+ 
+print "Setting (min,max) = (%.3f, %.3f) for colour scheme." % (z.min(), z.max()*0.80)
+surf = ax.plot_surface(x, y, z, rstride=1, cstride=1, cmap=cm.afmhot, linewidth=1, vmin=z.min(), vmax=z.max()*0.80)  
 
 
 plt.rc('text', usetex=True)
