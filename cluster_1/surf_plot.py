@@ -32,7 +32,8 @@ parser.add_argument('-j', '--jnumber', help='What J to plot?', action='store', t
 parser.add_argument('-x', '--xlabel', help='Label for Horizontal axis?.', action='store', type = str, default = r"$\beta$")   
 parser.add_argument('-y', '--ylabel', help='Label for Vertical axis?.', action='store', type = str, default = r"$J_1$" )   
 parser.add_argument('--phi', help='first angle for view_init', action='store', type=int, default=90);
-parser.add_argument('--theta', help='first angle for view_init', action='store', type=int, default=90);
+parser.add_argument('--theta', help='first angle for view_init', action='store', type=int, default=180);
+parser.add_argument('--cols', help='Columns in data file, required for the order params', action='store', type=int, default=10);
 args	= parser.parse_args() 
 
 
@@ -45,13 +46,14 @@ xlabel      = args.xlabel
 ylabel      = args.ylabel
 phi         = args.phi
 theta       = args.theta
+cols        = args.cols
  
 
 print "Plotting from file [%s], mode [%s], labels (%s, %s)" % (filename, mode, xlabel, ylabel)
 
 file_handler = open( filename, "r" );
 
-data = np.genfromtxt(file_handler, dtype=None, usecols=range(0,10)); #excluding the symtype col
+data = np.genfromtxt(file_handler, dtype=None, usecols=range(0,cols)); #excluding the symtype col
 
 filename = filename.replace("_", " - ")
     
@@ -72,22 +74,32 @@ elif (mode == "order_one"):
     title = "Order one [%s]" % filename
     xdata = data[:,0]
     ydata = data[:,jnumber]
-    zdata = data[:,6]
-elif (mode == "order_two"): 
-    title = "Order two [%s]" % filename
-    xdata = data[:,0]
-    ydata = data[:,jnumber]
-    zdata = data[:,7]
+    zdata = data[:,6] 
 elif (mode == "chi_one"): 
     title = "Chi one [%s]" % filename
     xdata = data[:,0]
     ydata = data[:,jnumber]
-    zdata = data[:,8]
-elif (mode == "chi_two"):
+    zdata = data[:,7] 
+elif (mode == "order_two"): 
+    title = "Order two [%s]" % filename
+    xdata = data[:,0]
+    ydata = data[:,jnumber]
+    zdata = data[:,8] 
+elif (mode == "chi_two"): 
     title = "Chi two [%s]" % filename
     xdata = data[:,0]
     ydata = data[:,jnumber]
-    zdata = data[:,9]
+    zdata = data[:,9] 
+elif (mode == "order_three"): 
+    title = "Order Three [%s]" % filename
+    xdata = data[:,0]
+    ydata = data[:,jnumber]
+    zdata = data[:,10] 
+elif (mode == "chi_three"): 
+    title = "Chi Three [%s]" % filename
+    xdata = data[:,0]
+    ydata = data[:,jnumber]
+    zdata = data[:,11] 
 
 else:
     raise Exception("Incorrect mode.");
