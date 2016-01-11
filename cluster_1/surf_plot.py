@@ -27,7 +27,12 @@ parser	= argparse.ArgumentParser(prog="Surface Plot",
 parser.add_argument('-f', '--filename', help='Data file.', action='store', type = str)   
 parser.add_argument('-m', '--mode', help='What do we want to plot.', action='store', type = str)   
 parser.add_argument('-s', '--save', help='Save or show on screen?.', action='store', type = str, default = "plot")   
-parser.add_argument('-c', '--clip', help='clip.', action='store', type = float, default = 40.0)   
+parser.add_argument('-c', '--clip', help='Clip.', action='store', type = float, default = 40.0)   
+parser.add_argument('-j', '--jnumber', help='What J to plot?', action='store', type = int, default = 3)   
+parser.add_argument('-x', '--xlabel', help='Label for Horizontal axis?.', action='store', type = str, default = r"$\beta$")   
+parser.add_argument('-y', '--ylabel', help='Label for Vertical axis?.', action='store', type = str, default = r"$J_1$" )   
+parser.add_argument('--phi', help='first angle for view_init', action='store', type=int, default=90);
+parser.add_argument('--theta', help='first angle for view_init', action='store', type=int, default=90);
 args	= parser.parse_args() 
 
 
@@ -35,9 +40,14 @@ filename    = args.filename
 mode        = args.mode
 save        = args.save
 clip_size   = args.clip
+jnumber     = args.jnumber
+xlabel      = args.xlabel
+ylabel      = args.ylabel
+phi         = args.phi
+theta       = args.theta
  
 
-print "Plotting from file [%s], mode [%s] " % (filename, mode)
+print "Plotting from file [%s], mode [%s], labels (%s, %s)" % (filename, mode, xlabel, ylabel)
 
 file_handler = open( filename, "r" );
 
@@ -45,42 +55,38 @@ data = np.genfromtxt(file_handler, dtype=None, usecols=range(0,10)); #excluding 
 
 filename = filename.replace("_", " - ")
     
-xlabel = "beta"
-ylabel = "gamma"
 
 title = "Data file: %s" % filename
 
 if (mode == "specific_heat"): 
     title = "Specific heat [%s]" % filename
     xdata = data[:,0]
-    ydata = data[:,3]
+    ydata = data[:,jnumber]
     zdata = data[:,2]
 elif (mode == "energy"): 
     title = "Energy [%s]" % filename
     xdata = data[:,0]
-    ydata = data[:,3]
+    ydata = data[:,jnumber]
     zdata = data[:,1]
 elif (mode == "order_one"): 
     title = "Order one [%s]" % filename
     xdata = data[:,0]
-    ydata = data[:,3]
+    ydata = data[:,jnumber]
     zdata = data[:,6]
 elif (mode == "order_two"): 
     title = "Order two [%s]" % filename
     xdata = data[:,0]
-    ydata = data[:,3]
+    ydata = data[:,jnumber]
     zdata = data[:,7]
 elif (mode == "chi_one"): 
     title = "Chi one [%s]" % filename
     xdata = data[:,0]
-    ydata = data[:,3]
+    ydata = data[:,jnumber]
     zdata = data[:,8]
 elif (mode == "chi_two"):
-    xlabel = r"$\beta$"
-    ylabel = "$J_1\:J_3^{-1}$" 
     title = "Chi two [%s]" % filename
     xdata = data[:,0]
-    ydata = data[:,3]
+    ydata = data[:,jnumber]
     zdata = data[:,9]
 
 else:
@@ -111,7 +117,7 @@ surf = ax.plot_surface(x, y, z, rstride=1, cstride=1, cmap=cm.afmhot, linewidth=
 plt.rc('text', usetex=True)
 plt.rc('font', family='serif')
 
-ax.view_init(60, 160)   
+ax.view_init(phi, theta)   
 
 fig.colorbar(surf)
 plt.xlabel( xlabel ,fontsize=30);
@@ -121,5 +127,4 @@ plt.title( title ,fontsize=20);
 if(save == "plot" or save == "temperature"):
     plt.show()
 else: 
-    print "Saving to [%s]." % filename
-    fig.savefig(save, dpi=1000)
+    raise Exception("saving doesn't support latex. Just do it manually, you slacker.");
