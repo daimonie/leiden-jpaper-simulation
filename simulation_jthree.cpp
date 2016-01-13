@@ -64,17 +64,17 @@ int main(int argc, char* argv[])
 	int samples = 10;
 	if(arg_size == "small")
 	{ 
-		samples = 2000;
+		samples = 3000;
 		fprintf(stderr, "$$ Will simulate J3 from 2->0 for small (6) lattice for point group %s, samples %d. \n", arg_symmetry.c_str(), samples); 
 	}
 	else if(arg_size == "large")
 	{
-		samples = 2000;
+		samples = 3000;
 		fprintf(stderr, "$$ Will simulate J3 from 2->0 for  large (10) lattice for point group %s, samples %d. \n", arg_symmetry.c_str(), samples);
 	}
 	else if(arg_size == "medium")
 	{
-		samples = 2000;
+		samples = 3000;
 		fprintf(stderr, "$$ Will simulate  J3 from 2->0 for large (8) lattice for point group %s, samples %d. \n", arg_symmetry.c_str(), samples);
 	}
 	else if(arg_size == "tiny")
