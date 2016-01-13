@@ -100,6 +100,16 @@ elif (mode == "chi_three"):
     xdata = data[:,0]
     ydata = data[:,jnumber]
     zdata = data[:,11] 
+elif (mode == "order_four"): 
+    title = "Order Four [%s]" % filename
+    xdata = data[:,0]
+    ydata = data[:,jnumber]
+    zdata = data[:,12] 
+elif (mode == "chi_four"): 
+    title = "Chi Four [%s]" % filename
+    xdata = data[:,0]
+    ydata = data[:,jnumber]
+    zdata = data[:,13] 
 
 else:
     raise Exception("Incorrect mode.");

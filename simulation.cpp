@@ -612,10 +612,13 @@ data simulation::calculate()
         double ising_sum, ising = 0, ising_squared = 0, chi_energy;
         int i = 0, j = 0; 
         
-	vector<double> orders;
-	vector<double> orders_squared;
+	vector<vector<double>> orders;
+	vector<vector<double>> orders_squared;
 	double current_order = 0.0;
 	
+        orders.resize((int)order_parameters.size());
+        orders_squared.resize((int)order_parameters.size());
+        
         for (j = 0; j < sample_amount; j++)
         { 
                 for (i = 0; i < length_three*4*tau ; i++)
@@ -628,8 +631,8 @@ data simulation::calculate()
 		for(int k = 0; k < (int)order_parameters.size(); k++)
 		{ 
 			current_order = order_parameters[k]->calculate(this);
-			orders_squared.emplace_back(current_order);
-			orders.emplace_back( sqrt(current_order));
+			orders_squared[k].emplace_back(current_order);
+			orders[k].emplace_back( sqrt(current_order));
 		} 
 		
                 ising_sum = 0;
@@ -657,9 +660,19 @@ data simulation::calculate()
 	for(int k = 0; k < (int)order_parameters.size(); k++)
 	{
 		
-		double q = orders[k] / sample_amount;
-		double q_squared = orders_squared[k] / sample_amount; 
+// 		double q = orders[k] / sample_amount;
+// 		double q_squared = orders_squared[k] / sample_amount; 
 		
+                double q = 0.0;
+                double q_squared = 0.0;
+                
+                for( int c = 0; c < (int) orders[k].size(); c++)
+                {
+                    q           += orders[k][c] / sample_amount;
+                    q_squared   += orders_squared[k][c] / sample_amount;
+                        
+                }
+                
 		
 		double chi_order = (q_squared - q*q)*beta*length_three;  
 		

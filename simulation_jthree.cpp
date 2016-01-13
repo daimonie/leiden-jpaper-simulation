@@ -16,6 +16,7 @@
 #include "order_d4h.h"
 #include "order_d4h_2.h"
 #include "order_d2d.h"
+#include "order_n.h"
 //includes from previous implementation
 #include <iostream>
 #include <fstream> 
@@ -174,8 +175,8 @@ int main(int argc, char* argv[])
 		fprintf(stderr, "$$ Apparently, local computer. Setting test settings.\n");
                 
                 samples = 100;
-                beta_number = 5;
-                lattice_size = 4;
+                beta_number = 20;
+                lattice_size = 6;
         }
         omp_set_num_threads(omp_get_max_threads());
         #pragma omp parallel for
@@ -187,10 +188,12 @@ int main(int argc, char* argv[])
                 order * order_one = new order_d2d();
                 order * order_two = new order_d4h();  
                 order * order_three = new order_d4h_2();  
+                order * order_four = new order_n();  
                 
 		sweep.set_order(0, order_one);
 		sweep.set_order(1, order_two); 
 		sweep.set_order(2, order_three); 
+		sweep.set_order(3, order_four); 
                 
 		sweep.build_gauge_bath( gauge );
 		
@@ -209,7 +212,7 @@ int main(int argc, char* argv[])
 		
                 sweep.j_one = -1.0; 
                 sweep.j_two = sweep.j_one;
-                sweep.j_three = -2.0 + 2.0/imax*i;
+                sweep.j_three = -1.0/imax*i;
 		
  
 		sweep.sample_amount = samples; 
@@ -226,7 +229,7 @@ int main(int argc, char* argv[])
                 sweep.e_ground = sweep.length_three*3*(sweep.j_one + sweep.j_two + sweep.j_three); 
 		
                 
-		beta_max = 8.5/(2.00)*sweep.j_one + 10.0;  
+		beta_max = 5.0;  
 		if(beta_max > 11.0 || beta_max < 0)
 		{
 			fprintf(stderr, "Warning: beta_max=%.3f out of bounds for J = %.3f.\n", beta_max, sweep.j_one);

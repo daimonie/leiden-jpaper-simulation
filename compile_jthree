@@ -1,7 +1,7 @@
 #!/bin/bash 
 
 ulimit -s 65536
-g++ -g -O3 -fno-strict-aliasing -std=c++11 -Wall -Wextra -msse2 -DHAVE_SSE2=1  -DDSFMT_MEXP=19937 -o calc_three  simulation_jthree.cpp dSFMT*/dSFMT.c order_dummy.cpp order_d2d.cpp  order_d4h.cpp order_d4h_2.cpp simulation.cpp data.cpp symmetryctwo.cpp symmetryctwoh.cpp symmetryctwov.cpp symmetrydtwod.cpp symmetrydtwoh.cpp symmetrystwo.cpp symmetrysfour.cpp -lgsl -lgslcblas -lm -fopenmp -lpthread 
+g++ -g -O3 -fno-strict-aliasing -std=c++11 -Wall -Wextra -msse2 -DHAVE_SSE2=1  -DDSFMT_MEXP=19937 -o calc_three  simulation_jthree.cpp dSFMT*/dSFMT.c order_n.cpp order_dummy.cpp order_d2d.cpp  order_d4h.cpp order_d4h_2.cpp simulation.cpp data.cpp symmetryctwo.cpp symmetryctwoh.cpp symmetryctwov.cpp symmetrydtwod.cpp symmetrydtwoh.cpp symmetrystwo.cpp symmetrysfour.cpp -lgsl -lgslcblas -lm -fopenmp -lpthread 
  
 short=$(hostname -s)
 sym="d2d"
