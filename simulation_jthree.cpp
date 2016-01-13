@@ -138,7 +138,7 @@ int main(int argc, char* argv[])
 	 * We will simulate 0.1 < J < 1 at dJ = 0.01, and 1 < J < 2 at Dj=0.05.
 	 * We will thus require 99+20 values.	  
 	 ***/
-	int imax = 48;
+	int imax = omp_get_max_threads();
  
 	vector<vector<data>> results;
 	 
@@ -169,6 +169,14 @@ int main(int argc, char* argv[])
 	FILE * backup_file_handler = fopen( ".simulation_backup", "w+");
 	setbuf(backup_file_handler, NULL);
 	
+        if( imax < 10 )
+        {
+		fprintf(stderr, "$$ Apparently, local computer. Setting test settings.\n");
+                
+                samples = 100;
+                beta_number = 5;
+                lattice_size = 4;
+        }
         omp_set_num_threads(omp_get_max_threads());
         #pragma omp parallel for
         for(int i = 0; i < imax; i++) 

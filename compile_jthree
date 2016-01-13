@@ -6,6 +6,6 @@ g++ -g -O3 -fno-strict-aliasing -std=c++11 -Wall -Wextra -msse2 -DHAVE_SSE2=1  -
 short=$(hostname -s)
 sym="d2d"
 size="large"
-echo "Maris Cluster: Starting $sym $size" | mail -s "Maris Cluster: $short" joskodeboer@gmail.com
+# echo "Maris Cluster: Starting $sym $size" | mail -s "Maris Cluster: $short" joskodeboer@gmail.com
 ./calc_three $sym $size >>  "${short}_data_${sym}_${size}.txt"
-echo "Maris Cluster: Finished $sym $size" | mailx -a ${short}_data_c2v_small.txt -s "Maris Cluster: $short" joskodeboer@gmail.com
+# echo "Maris Cluster: Finished $sym $size" | mailx -a "${short}_data_${sym}_${size}.txt" -s "Maris Cluster: $short" joskodeboer@gmail.com
