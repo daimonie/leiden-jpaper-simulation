@@ -183,7 +183,7 @@ int main(int argc, char* argv[])
         for(int i = 0; i < imax; i++) 
         { 	
 		double beta_max = 0.0;
-		simulation sweep( lattice_size );
+ 		simulation sweep( lattice_size );
 		
                 order * order_one = new order_d2d();
                 order * order_two = new order_d4h();  
@@ -249,6 +249,7 @@ int main(int argc, char* argv[])
 		delete order_one;
 		delete order_two;
 		delete order_three;
+		delete order_four;
         } 
         for(unsigned int i = 0; i < results.size(); i++)
         { 
