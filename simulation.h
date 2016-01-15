@@ -150,7 +150,7 @@ class simulation
                 void flip_u_x(int, double, double);
                 void flip_u_y(int, double, double);
                 void flip_u_z(int, double, double); 
-                double energy_total(int i);
+                double energy_total();
                 data calculate(); 
                 double dice ();
 		void set_order(int, order*);
