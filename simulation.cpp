@@ -606,6 +606,10 @@ void simulation::flip_u_z(int i, double jactus_one, double jactus_two)
         }
         
 }
+double simulation::energy_total()
+{
+        return e_total;
+}
 data simulation::calculate()
 {
         double total_energy =0, total_energy_squared = 0, heat_capacity;  
@@ -625,8 +629,8 @@ data simulation::calculate()
                 { 
                         flipper (dice(), dice(), dice(), dice(), dice());
                 }
-                total_energy += e_total;   
-                total_energy_squared += e_total * e_total;        
+                total_energy += energy_total();   
+                total_energy_squared += e_total * energy_total();        
 
 		for(int k = 0; k < (int)order_parameters.size(); k++)
 		{ 
