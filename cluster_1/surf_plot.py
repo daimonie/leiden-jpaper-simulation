@@ -131,8 +131,15 @@ z = np.clip(z, 0, clip_size)
 np.seterr('ignore')
 fig = plt.figure(figsize=(20, 10))
 ax = fig.gca(projection='3d') 
+
+[xx,yy] = np.meshgrid(lin_x, lin_y);
+zz = xx * 0;
+
+#python -W ignore::FutureWarning surf_plot.py -f maris061_data_d2d_large.txt -m specific_heat -s plot -c 15
+
  
 print "Setting (min,max) = (%.3f, %.3f) for colour scheme." % (z.min(), z.max()*0.80)
+ax.plot_surface(xx, yy, zz, rstride=1, cstride=1, cmap=cm.afmhot, linewidth=1, vmin=z.min(), vmax=z.max()*0.80)  
 surf = ax.plot_surface(x, y, z, rstride=1, cstride=1, cmap=cm.afmhot, linewidth=1, vmin=z.min(), vmax=z.max()*0.80)  
 
 
