@@ -225,7 +225,7 @@ int main(int argc, char* argv[])
 		// cool it down (Tinf -> T finite)
 		sweep.beta = 0.0;
 		while( sweep.beta <= beta_max )
-		{ 
+		{ 	
 			sweep.beta += beta_max / beta_number;
 			sweep.thermalization (); 
 		
