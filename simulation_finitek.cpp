@@ -5,6 +5,7 @@
 #include <stdio.h>
 #include "data.h"
 #include "simulation.h"   
+#include "simulationfinite.h"   
 #include "symmetryctwo.h"
 #include "symmetryctwoh.h"
 #include "symmetryctwov.h"
@@ -62,7 +63,7 @@ int main(int argc, char* argv[])
 
     double beta_number = 200.0; 
 
-    samples = 25;
+    int samples = 100;
     beta_number = 10.0;
 
     symmetry* gauge;
@@ -82,7 +83,13 @@ int main(int argc, char* argv[])
     results.resize(imax);
 
     int lattice_size = 4;
-
+    
+    if( arg_size == "large" )
+    {
+        lattice_size = 6;
+        samples = 2000;
+        beta_number = 100;
+    }
     //opens file, discards contents if exists
     //this is apparently C code, not C++, but it works and is simple
     FILE * backup_file_handler = fopen( ".simulation_backup", "w+");
@@ -94,7 +101,7 @@ int main(int argc, char* argv[])
     for(int i = 0; i < imax; i++) 
     { 	
         double beta_max = 0.0;
-        simulationfinite sweep( lattice_size );
+        simulation_finite sweep( lattice_size );
 
         order * order_one = new order_d2d(); 
 
@@ -108,11 +115,11 @@ int main(int argc, char* argv[])
 
         sweep.accuracy = 0.05;
 
-        sweep.j_one = -1.0; 
-        sweep.j_two = -1.0;
+        sweep.j_one = -0.5; 
+        sweep.j_two = -0.5;
         sweep.j_three = -1.0;
 
-        sweep.finite_k = 2.0/48.0 * i;
+        sweep.finite_k = -2.0/imax * i;
 
 
         sweep.sample_amount = samples; 
@@ -120,20 +127,26 @@ int main(int argc, char* argv[])
         //start at beta=0 (T=inf), then go to Bmax, then go down again. Hence, random.
         sweep.random_initialization ();
         sweep.mpc_initialisation ();
-
+ 
+        sweep.e_total = 0.0;
         for (int ii = 0; ii < sweep.length_three; ii++)
-        {
-            sweep.e_total += sweep.site_energy(ii);
+        { 
+            int x_next = (ii + 1) % sweep.length_one == 0 ? ii + 1 - sweep.length_one : ii + 1; 
+            int y_next = (ii + sweep.length_one) % sweep.length_two < sweep.length_one ? ii + sweep.length_one - sweep.length_two : ii + sweep.length_one; 
+            int z_next = ii + sweep.length_two >= sweep.length_three ? ii + sweep.length_two - sweep.length_three : ii + sweep.length_two; 
+            
+             
+            sweep.e_total += sweep.energy_bond_x(ii, x_next);
+            sweep.e_total += sweep.energy_bond_y(ii, y_next);
+            sweep.e_total += sweep.energy_bond_z(ii, z_next);
+            sweep.e_total += sweep.energy_plaquette_xy(ii);
+            sweep.e_total += sweep.energy_plaquette_yz(ii);
+            sweep.e_total += sweep.energy_plaquette_zx(ii);
         }
         sweep.e_total /= 2;
-        sweep.e_ground = sweep.length_three*3*(sweep.j_one + sweep.j_two + sweep.j_three); 
-
-
-        beta_max = 5.0;  
-        if(beta_max > 11.0 || beta_max < 0)
-        {
-            fprintf(stderr, "Warning: beta_max=%.3f out of bounds for J = %.3f.\n", beta_max, sweep.j_one);
-        } 
+        sweep.e_ground = sweep.length_three*3*(sweep.j_one + sweep.j_two + sweep.j_three) + 3 * sweep.length_three * 3 * sweep.finite_k;  
+        
+        beta_max = beta_number * 0.7875;  
         // cool it down (Tinf -> T finite)
         sweep.beta = 0.0;
         while( sweep.beta <= beta_max )
@@ -146,10 +159,7 @@ int main(int argc, char* argv[])
             results[i][results[i].size()-1].shout(backup_file_handler);
         }    
 
-        delete order_one;
-        delete order_two;
-        delete order_three;
-        delete order_four;
+        delete order_one; 
     } 
     for(unsigned int i = 0; i < results.size(); i++)
     { 

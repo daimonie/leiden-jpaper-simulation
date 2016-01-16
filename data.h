@@ -19,6 +19,7 @@ class data
                 double j_one           = 0;
                 double j_two           = 0;
                 double j_three         = 0;  
+                double finite_k        = 0;
                 double accuracy        = 0;
                 int sample_amount      = 0;
                 string point_group     = "default";	

@@ -612,62 +612,58 @@ double simulation::energy_total()
 }
 data simulation::calculate()
 {
-        double total_energy =0, total_energy_squared = 0, heat_capacity;  
-        double ising_sum, ising = 0, ising_squared = 0, chi_energy;
-        int i = 0, j = 0; 
+    double total_energy =0, total_energy_squared = 0, heat_capacity;  
+    double ising_sum, ising = 0, ising_squared = 0, chi_energy;
+    int i = 0, j = 0; 
+    
+    vector<vector<double>> orders;
+    vector<vector<double>> orders_squared;
+    double current_order = 0.0;
+
+    orders.resize((int)order_parameters.size());
+    orders_squared.resize((int)order_parameters.size());
+    
+    for (j = 0; j < sample_amount; j++)
+    { 
+            for (i = 0; i < length_three*4*tau ; i++)
+            { 
+                    flipper (dice(), dice(), dice(), dice(), dice());
+            }
+            total_energy += energy_total();   
+            total_energy_squared += energy_total() * energy_total();        
         
-	vector<vector<double>> orders;
-	vector<vector<double>> orders_squared;
-	double current_order = 0.0;
-	
-        orders.resize((int)order_parameters.size());
-        orders_squared.resize((int)order_parameters.size());
-        
-        for (j = 0; j < sample_amount; j++)
-        { 
-                for (i = 0; i < length_three*4*tau ; i++)
-                { 
-                        flipper (dice(), dice(), dice(), dice(), dice());
-                }
-                total_energy += energy_total();   
-                total_energy_squared += energy_total() * energy_total();        
-		 
-		
-		for(int k = 0; k < (int)order_parameters.size(); k++)
-		{ 
-			current_order = order_parameters[k]->calculate(this);
-			orders_squared[k].emplace_back(current_order);
-			orders[k].emplace_back( sqrt(current_order));
-		} 
-		
-                ising_sum = 0;
-                for(int k = 0; k < length_three; k++) 
-                {
-                        ising_sum += field_s[k];
-                }
-                ising_sum /= length_three;
-                ising += ising_sum;
-                ising_squared += ising*ising;
-        }        
+    
+            for(int k = 0; k < (int)order_parameters.size(); k++)
+            { 
+                current_order = order_parameters[k]->calculate(this);
+                orders_squared[k].emplace_back(current_order);
+                orders[k].emplace_back( sqrt(current_order));
+            } 
+    
+            ising_sum = 0;
+            for(int k = 0; k < length_three; k++) 
+            {
+                    ising_sum += field_s[k];
+            }
+            ising_sum /= length_three;
+            ising += ising_sum;
+            ising_squared += ising*ising;
+    }        
 
-        total_energy /= sample_amount;
-        total_energy_squared /= sample_amount;
+    total_energy /= sample_amount;
+    total_energy_squared /= sample_amount;
 
-        heat_capacity = (total_energy_squared - total_energy * total_energy) * beta * beta / length_three;  
-        total_energy /= e_ground;          
+    heat_capacity = (total_energy_squared - total_energy * total_energy) * beta * beta / length_three;  
+    total_energy /= e_ground;          
 
-        ising /= sample_amount;
-        ising_squared /= sample_amount;
-        chi_energy = (ising_squared -ising*ising)*beta*length_three;
- 
-        data results;
+    ising /= sample_amount;
+    ising_squared /= sample_amount;
+    chi_energy = (ising_squared -ising*ising)*beta*length_three;
+
+    data results;
 	
 	for(int k = 0; k < (int)order_parameters.size(); k++)
-	{
-		
-// 		double q = orders[k] / sample_amount;
-// 		double q_squared = orders_squared[k] / sample_amount; 
-		
+	{ 
                 double q = 0.0;
                 double q_squared = 0.0;
                 
@@ -684,22 +680,22 @@ data simulation::calculate()
 		results.chi_order.emplace_back(chi_order);
 		results.order.emplace_back(q); 
 	}
-        results.beta            = beta;
-        results.total_energy    = total_energy;
-        results.heat_capacity   = heat_capacity;
-        results.energy          = ising;
-        results.chi_energy      = chi_energy;
-	
-        
-        results.j_one           = j_one;
-        results.j_two           = j_two;
-        results.j_three         = j_three;
-        results.accuracy        = accuracy; 
-        results.sample_amount   = sample_amount; 
-	
-	results.point_group	= string(u_label);
-        
-        return results;
+    results.beta            = beta;
+    results.total_energy    = total_energy;
+    results.heat_capacity   = heat_capacity;
+    results.energy          = ising;
+    results.chi_energy      = chi_energy;
+
+    
+    results.j_one           = j_one;
+    results.j_two           = j_two;
+    results.j_three         = j_three;
+    results.accuracy        = accuracy; 
+    results.sample_amount   = sample_amount; 
+
+    results.point_group	= string(u_label);
+    
+    return results;
 } 
 /***
  * Throws a die. The resulting value is often called jactus, or "throw of the dice".
