@@ -1,0 +1,11 @@
+#!/bin/bash 
+
+ulimit -s 65536
+g++ -g -O3 -fno-strict-aliasing -std=c++11 -Wall -Wextra -msse2 -DHAVE_SSE2=1  -DDSFMT_MEXP=19937 -o calc_k  simulation_finitek.cpp simulationfinite.cpp dSFMT*/dSFMT.c order_n.cpp order_dummy.cpp order_d2d.cpp  order_d4h.cpp order_d4h_2.cpp simulation.cpp data.cpp symmetryctwo.cpp symmetryctwoh.cpp symmetryctwov.cpp symmetrydtwod.cpp symmetrydtwoh.cpp symmetrystwo.cpp symmetrysfour.cpp -lgsl -lgslcblas -lm -fopenmp -lpthread 
+ 
+short=$(hostname -s)
+sym="d2d"
+size="tiny"
+# echo "Maris Cluster: Starting $sym $size" | mail -s "Maris Cluster: $short" joskodeboer@gmail.com
+./calc_k $sym $size # >>  "${short}_data_${sym}_${size}.txt"
+# echo "Maris Cluster: Finished $sym $size" | mailx -a "${short}_data_${sym}_${size}.txt" -s "Maris Cluster: $short" joskodeboer@gmail.com

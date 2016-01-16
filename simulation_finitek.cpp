@@ -88,7 +88,7 @@ int main(int argc, char* argv[])
     {
         lattice_size = 6;
         samples = 2000;
-        beta_number = 100;
+        beta_number = 300;
     }
     //opens file, discards contents if exists
     //this is apparently C code, not C++, but it works and is simple
