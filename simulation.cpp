@@ -312,23 +312,23 @@ void simulation::build_rotation_matrix(int i, double jactus_one, double jactus_t
  ***/
 void simulation::flipper (double jactus_one, double jactus_two, double jactus_three, double jactus_four, double jactus_five)
 { 
-        int site = int(length_three*jactus_one);  
+    
+        int site = int(length_three*jactus_one);   
         switch(int(4 * jactus_two)) 
         {  
-                case 0 :
-			flip_r(site, jactus_three, jactus_four, jactus_five); 
-                break;
-                case 1 :
-			flip_u_x(site, jactus_three, jactus_four);
-                break;
-                case 2 :
- 			flip_u_y(site, jactus_three, jactus_four); 
-                break;
-                case 3 :
-			flip_u_z(site, jactus_three, jactus_four); 
-                break;                                                                          
-        }           
-        
+            case 0 :
+                flip_r(site, jactus_three, jactus_four, jactus_five); 
+            break;
+            case 1 :
+                flip_u_x(site, jactus_three, jactus_four);
+            break;
+            case 2 :
+                flip_u_y(site, jactus_three, jactus_four); 
+            break;
+            case 3 :
+                flip_u_z(site, jactus_three, jactus_four); 
+            break;                                                                          
+        }            
 }
 
 /*** 
@@ -630,8 +630,9 @@ data simulation::calculate()
                         flipper (dice(), dice(), dice(), dice(), dice());
                 }
                 total_energy += energy_total();   
-                total_energy_squared += e_total * energy_total();        
-
+                total_energy_squared += energy_total() * energy_total();        
+		 
+		
 		for(int k = 0; k < (int)order_parameters.size(); k++)
 		{ 
 			current_order = order_parameters[k]->calculate(this);
