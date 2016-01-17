@@ -94,7 +94,7 @@ int main(int argc, char* argv[])
     //this is apparently C code, not C++, but it works and is simple
     FILE * backup_file_handler = fopen( ".simulation_backup", "w+");
     setbuf(backup_file_handler, NULL);
-
+    printf("Parameters; Lattice size %d, samples %d, beta number %d", lattice_size, samples, beta_number);
 
     omp_set_num_threads(omp_get_max_threads());
     #pragma omp parallel for
