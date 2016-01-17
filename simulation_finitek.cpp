@@ -86,9 +86,9 @@ int main(int argc, char* argv[])
     
     if( arg_size == "large" )
     {
-        lattice_size = 6;
+        lattice_size = 8;
         samples = 2000;
-        beta_number = 300;
+        beta_number = 100;
     }
     //opens file, discards contents if exists
     //this is apparently C code, not C++, but it works and is simple
@@ -115,11 +115,11 @@ int main(int argc, char* argv[])
 
         sweep.accuracy = 0.05;
 
-        sweep.j_one = -0.5; 
-        sweep.j_two = -0.5;
-        sweep.j_three = -1.0;
+        sweep.j_one = -1.0; 
+        sweep.j_two = -1.0;
+        sweep.j_three = -3.0;
 
-        sweep.finite_k = -2.0/imax * i;
+        sweep.finite_k = -3.0/imax * i;
 
 
         sweep.sample_amount = samples; 
@@ -146,7 +146,7 @@ int main(int argc, char* argv[])
         sweep.e_total /= 2;
         sweep.e_ground = sweep.length_three*3*(sweep.j_one + sweep.j_two + sweep.j_three) + 3 * sweep.length_three * 3 * sweep.finite_k;  
         
-        beta_max = beta_number * 0.7875;  
+        beta_max = 3.00;  
         // cool it down (Tinf -> T finite)
         sweep.beta = 0.0;
         while( sweep.beta <= beta_max )
