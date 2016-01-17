@@ -117,7 +117,7 @@ int main(int argc, char* argv[])
 
         sweep.j_one = -1.0; 
         sweep.j_two = -1.0;
-        sweep.j_three = -3.0;
+        sweep.j_three = -1.0;
 
         sweep.finite_k = -3.0/imax * i;
 
