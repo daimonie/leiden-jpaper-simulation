@@ -24,13 +24,19 @@ import matplotlib.pyplot as plt
 
 parser	= argparse.ArgumentParser(prog="Surface Plot",
   description = "Surface plot of data file")  
-parser.add_argument('-f', '--filename', help='Data file.', action='store', type = str)   
-parser.add_argument('-m', '--mode', help='What do we want to plot.', action='store', type = str)   
-parser.add_argument('-s', '--save', help='Save or show on screen?.', action='store', type = str, default = "plot")   
+parser.add_argument('-f', '--filename', help='Data file.', action='store', type = str, default = 'exception')   
+parser.add_argument('-m', '--mode', help='What do we want to plot.', action='store', type = str, default='xy')    
 parser.add_argument('-c', '--clip', help='Clip.', action='store', type = float, default = 40.0)   
-parser.add_argument('-j', '--jnumber', help='What J to plot?', action='store', type = int, default = 3)   
+
+parser.add_argument('--xnumber', help='Column representing x-axis?', action='store', type = int, default = 0)   
+parser.add_argument('--ynumber', help='Column representing y-axis?', action='store', type = int, default = 3)   
+parser.add_argument('--znumber', help='Column representing z-axis?', action='store', type = int, default = 2)   
+parser.add_argument('--wnumber', help='Column representing z-axis?', action='store', type = int, default = 4)   
+
 parser.add_argument('-x', '--xlabel', help='Label for Horizontal axis?.', action='store', type = str, default = r"$\beta$")   
 parser.add_argument('-y', '--ylabel', help='Label for Vertical axis?.', action='store', type = str, default = r"$J_1$" )   
+parser.add_argument('-z', '--zlabel', help='Title?.', action='store', type = str, default = r"$J_1$ run" )   
+
 parser.add_argument('--phi', help='first angle for view_init', action='store', type=int, default=90);
 parser.add_argument('--theta', help='first angle for view_init', action='store', type=int, default=180);
 parser.add_argument('--cols', help='Columns in data file, required for the order params', action='store', type=int, default=10);
@@ -38,16 +44,24 @@ args	= parser.parse_args()
 
 
 filename    = args.filename
-mode        = args.mode
-save        = args.save
+mode        = args.mode 
 clip_size   = args.clip
-jnumber     = args.jnumber
+
+xnumber     = args.xnumber
+ynumber     = args.ynumber
+znumber     = args.znumber
+wnumber     = args.wnumber
+
 xlabel      = args.xlabel
 ylabel      = args.ylabel
+zlabel      = args.zlabel
+
 phi         = args.phi
 theta       = args.theta
 cols        = args.cols
- 
+
+if filename == "exception":
+    raise Exception("You have to pass a data file.")
 
 print "Plotting from file [%s], mode [%s], labels (%s, %s)" % (filename, mode, xlabel, ylabel)
 
@@ -60,65 +74,19 @@ filename = filename.replace("_", " - ")
 
 title = "Data file: %s" % filename
 
-if (mode == "specific_heat"): 
-    title = "Specific heat [%s]" % filename
-    xdata = data[:,0]
-    ydata = data[:,jnumber]
-    zdata = data[:,2]
-elif (mode == "energy"): 
-    title = "Energy [%s]" % filename
-    xdata = data[:,0]
-    ydata = data[:,jnumber]
-    zdata = data[:,1]
-elif (mode == "order_one"): 
-    title = "Order one [%s]" % filename
-    xdata = data[:,0]
-    ydata = data[:,jnumber]
-    zdata = data[:,6] 
-elif (mode == "chi_one"): 
-    title = "Chi one [%s]" % filename
-    xdata = data[:,0]
-    ydata = data[:,jnumber]
-    zdata = data[:,7] 
-elif (mode == "order_two"): 
-    title = "Order two [%s]" % filename
-    xdata = data[:,0]
-    ydata = data[:,jnumber]
-    zdata = data[:,8] 
-elif (mode == "chi_two"): 
-    title = "Chi two [%s]" % filename
-    xdata = data[:,0]
-    ydata = data[:,jnumber]
-    zdata = data[:,9] 
-elif (mode == "order_three"): 
-    title = "Order Three [%s]" % filename
-    xdata = data[:,0]
-    ydata = data[:,jnumber]
-    zdata = data[:,10] 
-elif (mode == "chi_three"): 
-    title = "Chi Three [%s]" % filename
-    xdata = data[:,0]
-    ydata = data[:,jnumber]
-    zdata = data[:,11] 
-elif (mode == "order_four"): 
-    title = "Order Four [%s]" % filename
-    xdata = data[:,0]
-    ydata = data[:,jnumber]
-    zdata = data[:,12] 
-elif (mode == "chi_four"): 
-    title = "Chi Four [%s]" % filename
-    xdata = data[:,0]
-    ydata = data[:,jnumber]
-    zdata = data[:,13] 
-
+if (mode == "collapse"): 
+    title = "%s [%s]" % (zlabel, filename)
+    xdata = data[:,xnumber]
+    ydata = data[:,ynumber]
+    zdata = (data[:,znumber] + data[:,wnumber])/2
+elif (mode == "xy"): 
+    title = "%s [%s]" % (zlabel, filename)
+    xdata = data[:,xnumber]
+    ydata = data[:,ynumber]
+    zdata = data[:,znumber]
 else:
     raise Exception("Incorrect mode.");
-
-if (save == "temperature"):
-    xlabel = r"$T$"
-    xdata = np.reciprocal(xdata);
-    
-    
+ 
 lin_x = np.linspace(min(xdata), max(xdata))
 lin_y = np.linspace(min(ydata), max(ydata))
 
@@ -152,8 +120,5 @@ fig.colorbar(surf)
 plt.xlabel( xlabel ,fontsize=30);
 plt.ylabel( ylabel ,fontsize=30); 
 plt.title( title ,fontsize=20);
-
-if(save == "plot" or save == "temperature"):
-    plt.show()
-else: 
-    raise Exception("saving doesn't support latex. Just do it manually, you slacker.");
+ 
+plt.show() 

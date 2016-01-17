@@ -1,14 +1,3 @@
-#!/bin/bash
-for file in *data*.txt; do 
 
-
-        python  -W ignore::FutureWarning surf_plot.py -f $file -m energy -s ${file%%.*}_energy.png
-        python  -W ignore::FutureWarning surf_plot.py -f $file -m specific_heat -s ${file%%.*}_specific_heat.png 
-        
-        python  -W ignore::FutureWarning surf_plot.py -f $file -m order_one -s ${file%%.*}_order_one.png
-        python  -W ignore::FutureWarning surf_plot.py -f $file -m order_two -s ${file%%.*}_order_two.png 
-        
-        
-        python  -W ignore::FutureWarning surf_plot.py -f $file -m chi_one -s ${file%%.*}_chi_one.png
-        python  -W ignore::FutureWarning surf_plot.py -f $file -m chi_two -s ${file%%.*}_chi_two.png 
-done  
+#generates the D2d->D4h collapse. This is the average of the two different chi's, so that you can see that they converge.
+python -W ignore::FutureWarning surf_plot.py -f maris061_data_d2d_large_jthree.txt -m collapse --cols 13 --xnumber 0 --ynumber 5 --znumber 7 --wnumber 9 -x="\$\\beta\$" -y="\$J_3\$" -z="\$D_{2d}\\rightarrow D_{4h}\$ collapse" -c 12
