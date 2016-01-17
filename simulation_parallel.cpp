@@ -243,10 +243,10 @@ int main(int argc, char* argv[])
                 }
         }
 	//report time, end program 
-        auto time_end = std::chrono::high_resolution_clock::now();        
-        auto microseconds = std::chrono::duration_cast<std::chrono::microseconds>( time_end - time_start).count();
-        fprintf(stderr, "$$ Elapsed time %ld microseconds. \n", microseconds); 
-        fprintf(backup_file_handler, "$$ Elapsed time %ld microseconds. \n", microseconds); 
+    auto time_end = std::chrono::high_resolution_clock::now();        
+    auto microseconds = std::chrono::duration_cast<std::chrono::microseconds>( time_end - time_start).count();
+    fprintf(stderr, "$$ Elapsed time %ld microseconds. \n", microseconds); 
+    fprintf(backup_file_handler, "$$ Elapsed time %ld microseconds. \n", microseconds); 
 	//gauge was new'd, so it should be deleted
 	delete gauge; 
 	return 0;
