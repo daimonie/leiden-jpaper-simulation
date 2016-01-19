@@ -50,9 +50,11 @@ int main(int argc, char* argv[])
     int keep_at_temperature = 5;
     
     
-    double beta_max = 3.0 ;
-    double beta_number = beta_max / 0.25;
+    double beta_min = 1.0 ;
+    double beta_max = 4.0 ;
+    double beta_number = (beta_max - beta_min ) / 0.25;
     
+    keep_at_temperature = (int)(99.00 / beta_number);
     
     int tmax = keep_at_temperature * (int) beta_number;
     
@@ -99,7 +101,7 @@ int main(int argc, char* argv[])
 
 
         // cool it down (Tinf -> T finite)
-        sweep.beta = 0.0;
+        sweep.beta = beta_min;
         int tnumber = 0;
         
         printf("jone[%d] = %.3f \n", i, sweep.j_one);
