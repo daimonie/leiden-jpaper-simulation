@@ -19,6 +19,8 @@ from matplotlib import cm
 from matplotlib.ticker import LinearLocator, FormatStrFormatter
 import matplotlib.pyplot as plt
 
+from matplotlib.colors import BoundaryNorm
+from matplotlib.ticker import MaxNLocator
 #Commandline arguments instruction.
 
 
@@ -26,6 +28,7 @@ parser	= argparse.ArgumentParser(prog="Surface Plot",
   description = "Surface plot of data file")  
 parser.add_argument('-f', '--filename', help='Data file.', action='store', type = str, default = 'exception')   
 parser.add_argument('-m', '--mode', help='What do we want to plot.', action='store', type = str, default='xy')    
+parser.add_argument('--contourf', help='Plot a countourf?', action='store', type = str, default='no')    
 parser.add_argument('-c', '--clip', help='Clip.', action='store', type = float, default = 40.0)   
 
 parser.add_argument('--xnumber', help='Column representing x-axis?', action='store', type = int, default = 0)   
@@ -45,6 +48,7 @@ args	= parser.parse_args()
 
 filename    = args.filename
 mode        = args.mode 
+contourf        = args.contourf 
 clip_size   = args.clip
 
 xnumber     = args.xnumber
@@ -92,33 +96,60 @@ lin_y = np.linspace(min(ydata), max(ydata))
 
 x, y = np.meshgrid(lin_x, lin_y)
 z = griddata(xdata, ydata, zdata, lin_x, lin_y, interp='linear')
-
-z = np.clip(z, 0, clip_size)
-
-
-np.seterr('ignore')
-fig = plt.figure(figsize=(20, 10))
-ax = fig.gca(projection='3d') 
-
-[xx,yy] = np.meshgrid(lin_x, lin_y);
-zz = xx * 0;
-
-#python -W ignore::FutureWarning surf_plot.py -f maris061_data_d2d_large.txt -m specific_heat -s plot -c 15
-
  
-print "Setting (min,max) = (%.3f, %.3f) for colour scheme." % (z.min(), z.max()*0.80)
-ax.plot_surface(xx, yy, zz, rstride=1, cstride=1, cmap=cm.afmhot, linewidth=1, vmin=z.min(), vmax=z.max()*0.80)  
-surf = ax.plot_surface(x, y, z, rstride=1, cstride=1, cmap=cm.afmhot, linewidth=1, vmin=z.min(), vmax=z.max()*0.80)  
+if contourf == "no":
+    z = np.clip(z, 0, clip_size)
 
 
-plt.rc('text', usetex=True)
-plt.rc('font', family='serif')
+    np.seterr('ignore')
 
-ax.view_init(phi, theta)   
+    [xx,yy] = np.meshgrid(lin_x, lin_y);
+    zz = xx * 0;
 
-fig.colorbar(surf)
-plt.xlabel( xlabel ,fontsize=30);
-plt.ylabel( ylabel ,fontsize=30); 
-plt.title( title ,fontsize=20);
+    fig = plt.figure(figsize=(20, 10))
+    ax = fig.gca(projection='3d') 
+
+    print "Setting (min,max) = (%.3f, %.3f) for colour scheme." % (z.min(), z.max()*0.80)
+    ax.plot_surface(xx, yy, zz, rstride=1, cstride=1, cmap=cm.afmhot, linewidth=1, vmin=z.min(), vmax=z.max()*0.80)  
+    surf = ax.plot_surface(x, y, z, rstride=1, cstride=1, cmap=cm.afmhot, linewidth=1, vmin=z.min(), vmax=z.max()*0.80)  
+
+
+    plt.rc('text', usetex=True)
+    plt.rc('font', family='serif')
+
+    ax.view_init(phi, theta)   
+
+    fig.colorbar(surf)
+    plt.xlabel( xlabel ,fontsize=30);
+    plt.ylabel( ylabel ,fontsize=30); 
+    plt.title( title ,fontsize=20);
+    
+    plt.show() 
+else:
+    #z = np.clip(z, 0, clip_size)
  
-plt.show() 
+    fig, ax = plt.subplots()
+    
+
+    cmap = plt.get_cmap('afmhot') 
+
+    levels = MaxNLocator(nbins=100).tick_values(z.min(), clip_size)
+    
+    
+    ax2 = ax.twinx()
+    ax2.contourf(y,np.reciprocal(x),z*0, cmap=cmap, levels=levels, alpha=0)
+    ax2.set_ylabel("T", fontsize=30)
+    
+    cf = ax.contourf(y, x, z, cmap=cmap, levels=levels)
+    fig.colorbar(cf, ax=ax, shrink=0.9, pad=0.15)    
+    fig.colorbar(cf, ax=ax2, shrink=0.9, pad=0.15)    
+
+    plt.rc('text', usetex=True)
+    plt.rc('font', family='serif')
+     
+    ax.set_ylabel( xlabel ,fontsize=30);
+    ax.set_xlabel( ylabel ,fontsize=30); 
+    plt.title( title ,fontsize=20); 
+    plt.gca().invert_xaxis(); 
+    
+    plt.show() 
