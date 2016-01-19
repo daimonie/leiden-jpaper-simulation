@@ -3,4 +3,4 @@
 ulimit -s 65536
 g++ -g -O3 -fno-strict-aliasing -std=c++11 -Wall -Wextra -msse2 -DHAVE_SSE2=1  -DDSFMT_MEXP=19937 -o calculation  simulation_parallel.cpp dSFMT*/dSFMT.c order_dummy.cpp  order_n.cpp  order_d2d.cpp simulation.cpp data.cpp symmetryctwo.cpp symmetryctwoh.cpp symmetryctwov.cpp symmetrydtwod.cpp symmetrydtwoh.cpp symmetrystwo.cpp symmetrysfour.cpp -lgsl -lgslcblas -lm -fopenmp -lpthread 
 
- ./calculation d2d tiny
+ ./calculation d2d tiny one 100

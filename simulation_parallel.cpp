@@ -57,7 +57,9 @@ int main(int argc, char* argv[])
 	} 
 	
 	string arg_symmetry	= string(argv[1]);
-	string arg_size		= string(argv[2]);
+    string arg_size     = string(argv[2]);
+    string arg_cores    = string(argv[3]);
+    string arg_samples  = atof(argv[4]);
 	
 	double beta_number = 300.0; 
 	int samples = 10;
@@ -169,6 +171,27 @@ int main(int argc, char* argv[])
 	FILE * backup_file_handler = fopen( ".simulation_backup", "w+");
 	setbuf(backup_file_handler, NULL);
 	
+    if(arg_cores == "one")
+    {
+        imax = 1;
+        samples = arg_samples;
+    }
+    else if(arg_cores == "two")
+    {
+        imax = 2;
+        samples = arg_samples;
+    }
+    else if(arg_cores == "three")
+    {
+        imax = 2;
+        samples = arg_samples;
+    }
+    else
+    {
+        imax = omp_get_max_threads();
+    }
+    
+    
         omp_set_num_threads(omp_get_max_threads());
         #pragma omp parallel for
         for(int i = 0; i < imax; i++) 
