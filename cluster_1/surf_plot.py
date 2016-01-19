@@ -126,27 +126,23 @@ if contourf == "no":
     
     plt.show() 
 else:
-    #z = np.clip(z, 0, clip_size)
+    z = np.clip(z, 0, clip_size)
  
     fig, ax = plt.subplots()
     
 
     cmap = plt.get_cmap('afmhot') 
 
-    levels = MaxNLocator(nbins=100).tick_values(z.min(), clip_size)
-    
-    
-    ax2 = ax.twinx()
-    ax2.contourf(y,np.reciprocal(x),z*0, cmap=cmap, levels=levels, alpha=0)
-    ax2.set_ylabel("T", fontsize=30)
+    levels = MaxNLocator(nbins=100).tick_values(z.min(), z.max()) 
     
     cf = ax.contourf(y, x, z, cmap=cmap, levels=levels)
     fig.colorbar(cf, ax=ax, shrink=0.9, pad=0.15)    
-    fig.colorbar(cf, ax=ax2, shrink=0.9, pad=0.15)    
 
     plt.rc('text', usetex=True)
     plt.rc('font', family='serif')
-     
+    
+    ax.set_axis_bgcolor('black'); 
+    
     ax.set_ylabel( xlabel ,fontsize=30);
     ax.set_xlabel( ylabel ,fontsize=30); 
     plt.title( title ,fontsize=20); 
